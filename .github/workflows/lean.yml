@@ -1,0 +1,33 @@
+name: lean
+
+# Les formalisations Lean 4 rangées avec les documents (lecons/**/*.lean),
+# vérifiées contre le Mathlib figé dans lean/lake-manifest.json.
+on:
+  push:
+    branches: [main]
+    paths: ['lecons/**/*.lean', 'lean/**', '.github/workflows/lean.yml']
+  pull_request:
+    paths: ['lecons/**/*.lean', 'lean/**', '.github/workflows/lean.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lean:
+    name: Vérifier les preuves
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Installe la version de Lean de lean/lean-toolchain, récupère le cache
+      # précompilé de Mathlib et lance `lake build` (la racine, vide).
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: lean
+
+      # Chaque fichier, avertissements traités comme des erreurs ; `sorry`,
+      # `native_decide` et `axiom` refusés.
+      - name: Vérifier lecons/**/*.lean
+        working-directory: lean
+        run: ./check.sh

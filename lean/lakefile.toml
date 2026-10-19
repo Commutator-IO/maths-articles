@@ -1,0 +1,20 @@
+name = "lecons"
+defaultTargets = ["Lecons"]
+
+# Le projet Lake ne sert qu'à fournir Mathlib : les fichiers `.lean` vivent à
+# côté des documents, dans `lecons/<leçon>/`, et `check.sh` les vérifie un par
+# un avec `lake env lean`. Mêmes versions de Lean et de Mathlib que
+# grothendieck-project, figées par lake-manifest.json.
+
+# Un `sorry` est un avertissement, et une preuve qui en contient ne prouve
+# rien : la construction échoue sur l'un comme sur l'autre.
+[leanOptions]
+warningAsError = true
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "715a03a90adf491de40fbec8b456c179a623435f"
+
+[[lean_lib]]
+name = "Lecons"

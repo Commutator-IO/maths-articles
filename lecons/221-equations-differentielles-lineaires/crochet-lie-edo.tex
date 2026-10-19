@@ -1,0 +1,605 @@
+% Crochet de Lie, commutation et équations différentielles linéaires du second ordre
+% Compile avec pdflatex, xelatex ou lualatex.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+  \IfFileExists{lmodern.sty}{\usepackage{lmodern}}{}
+  \usepackage[french]{babel}
+\else
+  \usepackage{fontspec}
+  \usepackage{polyglossia}
+  \setdefaultlanguage{french}
+\fi
+\usepackage[margin=2.6cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+
+% ---------- Environnements ----------
+\theoremstyle{plain}
+\newtheorem{theoreme}{Théorème}[section]
+\newtheorem{proposition}[theoreme]{Proposition}
+\newtheorem{lemme}[theoreme]{Lemme}
+\theoremstyle{definition}
+\newtheorem{definition}[theoreme]{Définition}
+\newtheorem{exemple}[theoreme]{Exemple}
+\newtheorem{exercice}{Exercice}
+\theoremstyle{remark}
+\newtheorem{remarque}[theoreme]{Remarque}
+
+% ---------- Notations ----------
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Id}{\mathrm{Id}}
+\newcommand{\Dx}{D}
+\newcommand{\M}[1]{M_{#1}}
+\newcommand{\cro}[2]{\left[#1,\,#2\right]}
+\newcommand{\dd}{\mathrm{d}}
+
+\title{Crochet de Lie et équations différentielles linéaires\\[2pt]
+\large Comment la commutation explique (et remplace) la variation des constantes}
+\author{Michel Hua}
+\date{Octobre 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+On résout en L2 l'équation $y''+a(x)y'+b(x)y=f(x)$ par la méthode de variation des constantes, avec une condition auxiliaire, $C_1'\varphi_1+C_2'\varphi_2=0$, qui paraît tomber du ciel. Cet article propose deux lectures de cette méthode fondées sur une seule notion, le \emph{crochet de Lie} $[A,B]=AB-BA$. D'abord, en factorisant l'opérateur différentiel en deux opérateurs du premier ordre : c'est possible sans effort quand les coefficients commutent avec la dérivation, et le commutateur mesure exactement l'obstruction sinon. Ensuite, en regardant les translations par des solutions de l'équation homogène comme des transformations qui commutent : la variation des constantes est alors le changement de coordonnées qui les « redresse ». On termine par la forme matricielle, où la commutation décide si l'exponentielle donne la solution, puis on reprend les exemples d'une leçon filmée de Canal-U qui procède par « dérivée exacte » et par factorisation.
+\end{abstract}
+
+\paragraph{Leçons concernées.} 221 (Équations différentielles linéaires, systèmes d'équations différentielles linéaires), 220 (Équations différentielles ordinaires, exemples), 156 (Exponentielle de matrices).
+
+\paragraph{Développements possibles.} Factorisation de $L$ et équation de Riccati (proposition \ref{prop:riccati} et proposition \ref{prop:y1}) ; variation des constantes comme redressement de symétries qui commutent (section 5) ; condition de commutation pour l'exponentielle (proposition \ref{prop:expo}) et formule de Duhamel. Le fichier \texttt{CrochetLieEDO.lean} vérifie la plupart de ces énoncés avec Mathlib.
+
+\paragraph{Prérequis.} Équations différentielles linéaires d'ordre 1 et 2, wronskien, calcul matriciel ($2\times 2$), exponentielle de matrice. Les fonctions sont supposées de classe $C^\infty$ sur un intervalle $I\subset\R$, ce qui évite de discuter la régularité.
+
+\tableofcontents
+
+% ==========================================================
+\section{Rappel : la variation des constantes}
+% ==========================================================
+
+On considère sur $I$ l'équation
+\begin{equation}\label{eq:E}
+  y'' + a(x)\,y' + b(x)\,y = f(x), \tag{E}
+\end{equation}
+et l'équation homogène associée $(\mathrm{H})$, obtenue avec $f=0$. Si $(\varphi_1,\varphi_2)$ est un système fondamental de solutions de $(\mathrm{H})$, son wronskien
+\[
+  W = \varphi_1\varphi_2' - \varphi_2\varphi_1'
+\]
+ne s'annule pas sur $I$.
+
+La méthode classique cherche $y = C_1(x)\varphi_1 + C_2(x)\varphi_2$ en \emph{imposant}
+\begin{equation}\label{eq:condition}
+  C_1'\varphi_1 + C_2'\varphi_2 = 0 .
+\end{equation}
+Alors $y' = C_1\varphi_1' + C_2\varphi_2'$, et en reportant dans \eqref{eq:E} on obtient $C_1'\varphi_1' + C_2'\varphi_2' = f$. Le système de Cramer donne
+\begin{equation}\label{eq:vdc}
+  C_1' = -\frac{\varphi_2 f}{W}, \qquad C_2' = \frac{\varphi_1 f}{W},
+  \qquad\text{d'où}\qquad
+  y = -\varphi_1\!\int\!\frac{\varphi_2 f}{W} + \varphi_2\!\int\!\frac{\varphi_1 f}{W}.
+\end{equation}
+
+La méthode fonctionne, mais deux questions restent ouvertes : \emph{pourquoi} la condition \eqref{eq:condition} est-elle légitime, et \emph{pourquoi} tout se ramène-t-il à des primitives ? Les sections suivantes répondent à ces deux questions avec la même notion.
+
+% ==========================================================
+\section{Opérateurs différentiels et commutateur}
+% ==========================================================
+
+\begin{definition}
+On note $\Dx$ l'opérateur de dérivation, $\Dx y = y'$. Pour une fonction $q$, on note $\M{q}$ l'opérateur de multiplication, $\M{q}\,y = q\,y$. Quand il n'y a pas d'ambiguïté, on écrit simplement $q$ au lieu de $\M{q}$.
+\end{definition}
+
+Avec ces notations, \eqref{eq:E} s'écrit $Ly = f$ où
+\[
+  L = \Dx^2 + a\,\Dx + b .
+\]
+On compose les opérateurs comme des applications. \emph{Attention}, l'ordre compte : $\Dx\circ\M{q}$ n'est pas $\M{q}\circ\Dx$.
+
+\begin{definition}[Crochet de Lie, ou commutateur]
+Pour deux opérateurs linéaires $A$ et $B$, on pose
+\[
+  \cro{A}{B} = AB - BA .
+\]
+On dit que $A$ et $B$ \emph{commutent} si $\cro{A}{B}=0$.
+\end{definition}
+
+Le crochet est bilinéaire et antisymétrique ($\cro{B}{A}=-\cro{A}{B}$). Il vérifie aussi l'\emph{identité de Jacobi}
+\[
+  \cro{A}{\cro{B}{C}} + \cro{B}{\cro{C}{A}} + \cro{C}{\cro{A}{B}} = 0,
+\]
+qu'on peut vérifier en développant les douze termes.
+
+\begin{proposition}[Relation fondamentale]\label{prop:heisenberg}
+Pour toute fonction $q$,
+\[
+  \cro{\Dx}{\M{q}} = \M{q'} .
+\]
+En particulier $\cro{\Dx}{\M{x}} = \Id$, et $\Dx$ commute avec $\M{q}$ si et seulement si $q$ est constante.
+\end{proposition}
+
+\begin{proof}
+Pour toute fonction $y$, la règle de Leibniz donne
+\[
+  \cro{\Dx}{\M{q}}\,y = (qy)' - q\,y' = q'\,y .
+\]
+\end{proof}
+
+\begin{remarque}
+La relation $\cro{\Dx}{x}=1$ est la même que la relation de Heisenberg $[\hat p,\hat x] = -i\hbar$ de la mécanique quantique. Toute la suite repose sur cette égalité d'apparence modeste.
+\end{remarque}
+
+\begin{lemme}[Conjugaison]\label{lem:conj}
+Soit $q$ une fonction et $Q$ une primitive de $q$. Alors
+\[
+  \Dx - q = e^{Q}\circ \Dx \circ e^{-Q},
+\]
+où $e^{\pm Q}$ désigne la multiplication par $e^{\pm Q}$. Par conséquent, l'équation $(\Dx - q)\,y = g$ a pour solutions
+\[
+  y = e^{Q}\!\int e^{-Q}\, g .
+\]
+\end{lemme}
+
+\begin{proof}
+On calcule : $e^{Q}\big(e^{-Q}y\big)' = e^{Q}\big(e^{-Q}y' - q\,e^{-Q}y\big) = y' - qy$. Résoudre $e^{Q}\Dx\big(e^{-Q}y\big) = g$ revient à résoudre $\big(e^{-Q}y\big)' = e^{-Q}g$, et il suffit de prendre une primitive.
+\end{proof}
+
+Le lemme \ref{lem:conj} n'est rien d'autre que la méthode du facteur intégrant, écrite comme une conjugaison d'opérateurs. Il dit qu'\emph{un opérateur du premier ordre s'inverse toujours par deux multiplications et une primitive}. La stratégie générale en découle : écrire $L$ comme un produit d'opérateurs du premier ordre.
+
+% ==========================================================
+\section{Coefficients constants : la factorisation est gratuite}
+% ==========================================================
+
+Supposons $a$ et $b$ constants. Comme $\Dx$ commute avec les constantes, on peut manipuler $L$ comme un polynôme en $\Dx$. Si $r_1, r_2$ sont les racines (éventuellement complexes ou confondues) de $r^2 + ar + b$, on a
+\[
+  L = \Dx^2 + a\Dx + b = (\Dx - r_1)(\Dx - r_2).
+\]
+
+\begin{remarque}
+Cette factorisation n'est \emph{pas} évidente a priori. Le développement de $(\Dx - r_1)(\Dx - r_2)$ fait intervenir $\Dx\, r_2$, qu'on récrit $r_2\,\Dx$, et cette réécriture est justement $\cro{\Dx}{r_2}=0$.
+\end{remarque}
+
+On résout donc $Ly=f$ en deux étapes du premier ordre, en posant $z = (\Dx - r_2)y$ :
+\[
+  (\Dx - r_1)\,z = f, \qquad (\Dx - r_2)\,y = z .
+\]
+Le lemme \ref{lem:conj} donne
+\[
+  z = e^{r_1x}\!\int e^{-r_1 s} f(s)\,\dd s,
+  \qquad
+  y = e^{r_2x}\!\int e^{-r_2 t}\,z(t)\,\dd t .
+\]
+
+\begin{exemple}\label{ex:const}
+On résout $y'' - 3y' + 2y = x$. On a $L = (\Dx-1)(\Dx-2)$.
+\begin{itemize}[nosep]
+\item $(\Dx - 1)z = x$ : $z = e^{x}\int s\,e^{-s}\,\dd s = -x - 1 + A\,e^{x}$.
+\item $(\Dx - 2)y = z$ : une intégration par parties donne
+\[
+  y = e^{2x}\!\int e^{-2t}\big(-t-1+Ae^{t}\big)\,\dd t
+    = \frac{x}{2} + \frac34 - A\,e^{x} + B\,e^{2x}.
+\]
+\end{itemize}
+Vérification : pour $y_p = \frac x2 + \frac34$, on a $y_p'' - 3y_p' + 2y_p = 0 - \frac32 + x + \frac32 = x$.
+\end{exemple}
+
+On n'a eu besoin ni de deviner la forme de la solution particulière, ni d'imposer la condition \eqref{eq:condition}. On obtient néanmoins le même résultat que par \eqref{eq:vdc}, avec $\varphi_1 = e^{x}$ et $\varphi_2 = e^{2x}$, ce que le lecteur peut vérifier.
+
+% ==========================================================
+\section{Coefficients variables : le commutateur comme obstruction}
+% ==========================================================
+
+Si $a$ et $b$ dépendent de $x$, on cherche encore une factorisation $L = (\Dx - p)(\Dx - q)$ avec $p$ et $q$ des \emph{fonctions}. Développons en utilisant la proposition \ref{prop:heisenberg}, qui donne $\Dx\, q = q\,\Dx + q'$ :
+\begin{align*}
+  (\Dx - p)(\Dx - q)
+  &= \Dx^2 - \Dx\, q - p\,\Dx + pq \\
+  &= \Dx^2 - (q\,\Dx + \underbrace{q'}_{=\,\cro{\Dx}{q}}) - p\,\Dx + pq \\
+  &= \Dx^2 - (p+q)\,\Dx + \big(pq - q'\big).
+\end{align*}
+Par rapport au cas constant, le seul terme nouveau est $-q'$, qui provient \emph{exactement} du commutateur.
+
+En identifiant avec $L = \Dx^2 + a\Dx + b$, on obtient $p = -a - q$ et $pq - q' = b$, c'est-à-dire :
+
+\begin{proposition}\label{prop:riccati}
+L'opérateur $L = \Dx^2 + a\Dx + b$ se factorise en $(\Dx - p)(\Dx - q)$ si et seulement si $q$ vérifie l'\emph{équation de Riccati}
+\begin{equation}\label{eq:riccati}
+  q' + q^2 + a\,q + b = 0,
+\end{equation}
+et $p = -a - q$.
+\end{proposition}
+
+L'équation \eqref{eq:riccati} n'est pas linéaire, et en général on ne sait pas la résoudre par quadratures. Elle a cependant une interprétation simple.
+
+\begin{proposition}\label{prop:y1}
+Si $y_1$ est une solution de $(\mathrm{H})$ qui ne s'annule pas sur $I$, alors $q = y_1'/y_1$ vérifie \eqref{eq:riccati}. Autrement dit, connaître une solution de l'équation homogène, c'est connaître une factorisation de $L$.
+\end{proposition}
+
+\begin{proof}
+On a $q' = \dfrac{y_1''}{y_1} - \dfrac{y_1'^2}{y_1^2}$, donc $q' + q^2 + aq + b = \dfrac{y_1'' + a y_1' + b y_1}{y_1} = 0$.
+\end{proof}
+
+Une fois la factorisation connue, on résout $Ly=f$ par deux applications du lemme \ref{lem:conj}, comme au paragraphe précédent. C'est la \emph{méthode de réduction de l'ordre} (d'Alembert), présentée ici comme une factorisation.
+
+\begin{exemple}\label{ex:var}
+On résout $x^2y'' - 2xy' + 2y = x^3$ sur $]0,+\infty[$. Après division par $x^2$, on a $a = -2/x$, $b = 2/x^2$ et $f = x$. La fonction $y_1 = x$ est solution évidente de $(\mathrm{H})$, d'où $q = 1/x$ et $p = -a - q = 1/x$. Ainsi
+\[
+  L = \Big(\Dx - \frac1x\Big)\Big(\Dx - \frac1x\Big),
+  \qquad\text{avec}\qquad \Dx - \frac1x = x\circ \Dx \circ \frac1x .
+\]
+\begin{itemize}[nosep]
+\item $\big(\Dx - \frac1x\big) z = x$ : $z = x\int \frac{1}{s}\, s\,\dd s = x^2 + A\,x$.
+\item $\big(\Dx - \frac1x\big) y = z$ : $y = x\int \frac{t^2 + At}{t}\,\dd t = \dfrac{x^3}{2} + A\,x^2 + B\,x$.
+\end{itemize}
+La deuxième solution homogène $x^2$ apparaît d'elle-même, sans qu'on l'ait cherchée.
+\end{exemple}
+
+\begin{remarque}
+Les deux facteurs sont égaux ici, mais ils ne commutent pas en général : $(\Dx - p)(\Dx - q) \neq (\Dx - q)(\Dx - p)$ dès que $p' \neq q'$. On vérifie en effet que
+\[
+  \cro{\Dx - p}{\Dx - q} = -\cro{\Dx}{q} - \cro{p}{\Dx} = p' - q'.
+\]
+L'ordre des facteurs, indifférent à coefficients constants, devient donc significatif.
+\end{remarque}
+
+% ==========================================================
+\section{Le point de vue de Lie : des symétries qui commutent}
+% ==========================================================
+
+Cette section explique d'où vient la condition \eqref{eq:condition}. L'idée remonte à Sophus Lie (vers 1870--1880) : une équation différentielle qui possède assez de \emph{symétries} s'intègre par quadratures, et c'est la structure de ces symétries pour le crochet qui dit comment.
+
+\subsection{L'espace des phases}
+
+On transforme \eqref{eq:E} en système du premier ordre en posant $Y = \begin{pmatrix} y \\ y' \end{pmatrix}$ :
+\begin{equation}\label{eq:sys}
+  Y' = A(x)\,Y + F(x),
+  \qquad
+  A = \begin{pmatrix} 0 & 1 \\ -b & -a \end{pmatrix},
+  \quad
+  F = \begin{pmatrix} 0 \\ f \end{pmatrix}.
+\end{equation}
+À chaque instant $x$, l'état du système est un point du plan $(y, y')$, appelé \emph{espace des phases}.
+
+\subsection{Les symétries de translation}
+
+Soit $\varphi$ une solution de $(\mathrm{H})$ et $\Phi = \begin{pmatrix} \varphi \\ \varphi' \end{pmatrix}$. Si $Y$ résout \eqref{eq:sys}, alors $Y + t\,\Phi$ aussi, pour tout réel $t$, par linéarité. La transformation
+\[
+  T_t^{\varphi} : Y \longmapsto Y + t\,\Phi(x)
+\]
+envoie donc solutions sur solutions : c'est une \emph{symétrie} de l'équation. Quand $t$ varie, elle forme un groupe à un paramètre, puisque $T_t^\varphi \circ T_s^\varphi = T_{t+s}^\varphi$. Le \emph{champ de vecteurs} associé est le vecteur vitesse $\frac{\dd}{\dd t}\big|_{t=0} T_t^\varphi(Y) = \Phi$. Dans le langage de la géométrie différentielle, on l'écrit
+\[
+  X_\varphi = \varphi(x)\,\frac{\partial}{\partial y} + \varphi'(x)\,\frac{\partial}{\partial y'} .
+\]
+
+\begin{definition}[Crochet de deux champs de vecteurs]
+Un champ de vecteurs $X$ agit sur les fonctions $g(y,y')$ comme un opérateur de dérivation : $X g$ est la dérivée de $g$ dans la direction de $X$. Le crochet $\cro{X}{X'}$ est le commutateur de ces opérateurs :
+\[
+  \cro{X}{X'}\,g = X(X'g) - X'(Xg).
+\]
+\end{definition}
+
+On admettra le résultat suivant, classique en géométrie différentielle.
+
+\begin{theoreme}[admis]\label{thm:flots}
+Deux champs de vecteurs ont un crochet nul si et seulement si leurs flots commutent. Si de plus ils sont linéairement indépendants en chaque point, il existe des coordonnées locales $(C_1, C_2)$ dans lesquelles ils s'écrivent $\partial/\partial C_1$ et $\partial/\partial C_2$ (redressement simultané).
+\end{theoreme}
+
+Ici, on n'a même pas besoin du théorème : les translations $T^{\varphi_1}_t$ et $T^{\varphi_2}_s$ commutent visiblement, car $Y + t\Phi_1 + s\Phi_2 = Y + s\Phi_2 + t\Phi_1$. Les coefficients de $X_{\varphi_1}$ et $X_{\varphi_2}$ ne dépendent pas de $(y,y')$, donc $\cro{X_{\varphi_1}}{X_{\varphi_2}} = 0$.
+
+\subsection{Redresser les symétries, c'est faire varier les constantes}
+
+Les vecteurs $\Phi_1$ et $\Phi_2$ sont indépendants exactement quand leur déterminant, le wronskien $W$, est non nul. Les coordonnées qui redressent $X_{\varphi_1}$ et $X_{\varphi_2}$ sont alors les coordonnées $(C_1, C_2)$ dans la base $(\Phi_1, \Phi_2)$ :
+\begin{equation}\label{eq:coord}
+  Y = C_1\,\Phi_1 + C_2\,\Phi_2,
+  \qquad\text{c'est-à-dire}\qquad
+  \begin{cases}
+    y = C_1\varphi_1 + C_2\varphi_2, \\
+    y' = C_1\varphi_1' + C_2\varphi_2'.
+  \end{cases}
+\end{equation}
+En effet, translater $Y$ de $t\,\Phi_1$ revient à translater $C_1$ de $t$ : dans ces coordonnées, $X_{\varphi_1} = \partial/\partial C_1$.
+
+\begin{proposition}
+Dans les coordonnées \eqref{eq:coord}, le système \eqref{eq:sys} devient
+\[
+  C_1'\,\Phi_1 + C_2'\,\Phi_2 = F,
+\]
+qui ne dépend plus de $C_1$ ni de $C_2$. Il se résout donc par deux primitives, et l'on retrouve les formules \eqref{eq:vdc}.
+\end{proposition}
+
+\begin{proof}
+On dérive $Y = C_1\Phi_1 + C_2\Phi_2$ : $Y' = C_1'\Phi_1 + C_2'\Phi_2 + C_1\Phi_1' + C_2\Phi_2'$. Comme $\Phi_i' = A\Phi_i$, les deux derniers termes valent $AY$, et \eqref{eq:sys} se réduit à $C_1'\Phi_1 + C_2'\Phi_2 = F$. Ce système de Cramer, de déterminant $W$, s'écrit composante par composante
+\[
+  C_1'\varphi_1 + C_2'\varphi_2 = 0, \qquad C_1'\varphi_1' + C_2'\varphi_2' = f .
+\]
+\end{proof}
+
+\begin{remarque}[La réponse à la question de départ]
+La première ligne est \emph{exactement} la condition \eqref{eq:condition}. Elle n'a rien d'arbitraire : elle dit qu'on prend aussi des coordonnées pour $y'$, et pas seulement pour $y$, de façon à redresser les symétries dans tout l'espace des phases. Le fait qu'il ne reste que des primitives est la traduction de l'invariance par translation : l'équation ne peut pas dépendre de $C_i$ puisque translater $C_i$ ne change rien. Et on peut traiter $C_1$ et $C_2$ \emph{indépendamment} parce que les deux symétries \emph{commutent}.
+\end{remarque}
+
+\subsection{Quand les symétries ne commutent pas}
+
+L'équation homogène $(\mathrm{H})$ possède une symétrie de plus : la dilatation $Y \mapsto e^{t}\,Y$, de champ $S = y\,\partial_y + y'\,\partial_{y'}$. Un calcul direct donne
+\[
+  \cro{X_\varphi}{S} = X_\varphi .
+\]
+Ces deux symétries ne commutent pas, mais le crochet de $X_\varphi$ et $S$ redonne $X_\varphi$ : on dit que $X_\varphi$ engendre un \emph{idéal} et que l'algèbre $\langle X_\varphi, S\rangle$ est \emph{résoluble}.
+
+Le théorème d'intégration de Lie affirme qu'une équation d'ordre $n$ possédant une algèbre résoluble de $n$ symétries s'intègre par quadratures \emph{successives} : d'abord en utilisant l'idéal, puis le quotient. Avec une seule solution $\varphi$ connue, c'est précisément la situation de la section précédente : la factorisation $L = (\Dx - p)(\Dx - q)$ et les deux intégrations emboîtées traduisent la suite $\langle X_\varphi\rangle \subset \langle X_\varphi, S\rangle$.
+
+En résumé :
+\begin{itemize}[nosep]
+\item symétries qui \emph{commutent} (deux solutions connues) : primitives indépendantes, c'est la variation des constantes ;
+\item symétries formant une algèbre \emph{résoluble} (une solution connue) : primitives emboîtées, c'est la réduction de l'ordre.
+\end{itemize}
+
+% ==========================================================
+\section{Forme matricielle : quand l'exponentielle marche-t-elle ?}
+% ==========================================================
+
+Pour un système $Y' = A(x)Y$, on est tenté d'écrire, comme en dimension 1,
+\[
+  Y(x) = \exp\!\Big(\int_{x_0}^{x} A(s)\,\dd s\Big)\, Y(x_0).
+\]
+
+\begin{proposition}\label{prop:expo}
+Posons $B(x) = \int_{x_0}^x A(s)\,\dd s$. Si $A(x)$ et $B(x)$ commutent pour tout $x$, ce qui est le cas en particulier si $\cro{A(x)}{A(s)} = 0$ pour tous $x, s$, alors $\frac{\dd}{\dd x} e^{B(x)} = A(x)\, e^{B(x)}$, et la formule ci-dessus est correcte.
+\end{proposition}
+
+\begin{proof}[Idée de preuve]
+On dérive terme à terme $e^{B} = \sum_k B^k/k!$. La dérivée de $B^k$ est $\sum_{j} B^{j} A\, B^{k-1-j}$, et elle vaut $k\,A\,B^{k-1}$ uniquement si l'on peut faire passer $A$ à gauche de chaque $B^j$, c'est-à-dire si $\cro{A}{B}=0$.
+\end{proof}
+
+\begin{itemize}
+\item \textbf{Coefficients constants :} $A$ est constante, donc commute avec elle-même, et la formule de Duhamel
+\[
+  Y(x) = e^{(x-x_0)A}\Big(Y(x_0) + \int_{x_0}^x e^{-(s-x_0)A} F(s)\,\dd s\Big)
+\]
+donne directement la solution. C'est encore la variation des constantes, avec la matrice fondamentale $e^{(x-x_0)A}$.
+\item \textbf{Coefficients variables :} en général $\cro{A(x)}{A(s)} \neq 0$ et l'exponentielle est fausse. Le \emph{développement de Magnus} (hors programme) corrige l'exposant par des termes qui sont précisément des crochets :
+\[
+  \Omega(x) = \int_{x_0}^x A + \frac12 \int_{x_0}^{x}\!\!\int_{x_0}^{s_1} \cro{A(s_1)}{A(s_2)}\,\dd s_2\,\dd s_1 + \cdots
+\]
+\end{itemize}
+
+% ==========================================================
+\section{Exemples d'une leçon filmée (Canal-U)}\label{sec:video}
+% ==========================================================
+
+Une leçon vidéo de Canal-U consacrée aux équations différentielles linéaires d'ordre 1 et 2 ne parle ni de variation des constantes ni de commutateur. Elle utilise pourtant exactement les deux idées du lemme \ref{lem:conj} et de la section 3 : la conjugaison pour l'ordre 1, la factorisation pour l'ordre 2. On reprend ici ses exemples dans le langage de cet article.
+
+\subsection{Ordre 1 : la « dérivée exacte »}
+
+Pour $a(x)\,y' + b(x)\,y = f(x)$, avec $a$ qui ne s'annule pas, la leçon multiplie l'équation par une fonction $u(x)$ choisie pour que le membre de gauche devienne la dérivée d'un produit $(yB)' = y'B + yB'$. Il faut donc
+\[
+  B = u\,a, \qquad B' = u\,b,
+  \qquad\text{d'où}\qquad (ua)' = ub
+  \quad\text{et}\quad
+  u(x) = \frac{1}{a(x)}\exp\int_{x_0}^{x}\frac{b(t)}{a(t)}\,\dd t .
+\]
+L'équation devient $(yB)' = uf$, et une intégration donne
+\[
+  y(x) = \underbrace{\frac{C}{B(x)}}_{\text{homogène}} + \underbrace{\frac{1}{B(x)}\int_{x_0}^{x} u(t)\,f(t)\,\dd t}_{\text{particulière}} .
+\]
+
+\begin{remarque}[Lien avec le lemme \ref{lem:conj}]
+Multiplier par $u$ puis reconnaître $(yB)'$, c'est écrire
+\[
+  a\,y' + b\,y = \frac{1}{u}\,\Dx\,(B\,y),
+  \qquad\text{soit}\qquad
+  a\Big(\Dx + \frac ba\Big) = a\;B^{-1}\circ\Dx\circ B,
+\]
+c'est-à-dire la conjugaison du lemme \ref{lem:conj} avec $q = -b/a$ et $e^{-Q} = B$, à constante multiplicative près ($B/a$ est le multiplicateur $u$). La variation de la constante sur $y = C/B$ mène à $C' = uf$, qui est la même équation : les deux méthodes ne diffèrent que par la présentation.
+\end{remarque}
+
+\begin{remarque}[Le facteur intégrant et le crochet de Lie]
+Le lien avec le crochet est double.
+
+\emph{Côté opérateurs.} Pour deux opérateurs $A$ et $B$, la formule de Hadamard donne
+\[
+  e^{A}\,B\,e^{-A} = B + \cro{A}{B} + \frac{1}{2!}\cro{A}{\cro{A}{B}} + \cdots
+\]
+Avec $A = \M{Q}$ et $B = \Dx$, la proposition \ref{prop:heisenberg} donne $\cro{Q}{\Dx} = -\M{Q'}$, puis $\cro{Q}{\cro{Q}{\Dx}} = -\cro{Q}{Q'} = 0$, car deux multiplications commutent. La série s'arrête après un seul crochet :
+\[
+  e^{Q}\,\Dx\,e^{-Q} = \Dx - Q' = \Dx - q .
+\]
+Le facteur intégrant fonctionne donc parce que le crochet de $\Dx$ avec une multiplication est encore une multiplication, et que les multiplications commutent entre elles.
+
+\emph{Côté symétries.} Lie a montré en 1874 que si l'équation $M\,\dd x + N\,\dd y = 0$ admet la symétrie $X = \xi\,\partial_x + \eta\,\partial_y$, alors $\mu = 1/(\xi M + \eta N)$ est un facteur intégrant. Pour $y' + p\,y = f$, on a $M = py - f$ et $N = 1$, et la symétrie est la translation $X = \varphi\,\partial_y$ par une solution homogène $\varphi = e^{-\int p}$. On trouve
+\[
+  \mu = \frac{1}{\varphi} = e^{\int p},
+\]
+qui est exactement le facteur intégrant de la leçon (à la division par $a$ près). Le facteur intégrant est donc la version en dimension 1 du redressement de la section 5.
+\end{remarque}
+
+\begin{exemple}
+On résout $y'\sin x + y\cos x = \cos x$ sur un intervalle où $\sin x \neq 0$. Le membre de gauche est déjà une dérivée exacte ($u = 1$, $B = \sin x$) :
+\[
+  (y\sin x)' = \cos x
+  \;\Longrightarrow\;
+  y\sin x = \sin x + K
+  \;\Longrightarrow\;
+  y = 1 + \frac{K}{\sin x}.
+\]
+La formule générale donne bien $u = \frac{1}{\sin x}\exp\int\frac{\cos}{\sin} = 1$.
+\end{exemple}
+
+\begin{exemple}
+On résout $y'\cos x + y\sin x = \sin x$ sur un intervalle où $\cos x \neq 0$. On cherche $u$ tel que $(u\cos x)' = u\sin x$, soit $u'\cos x = 2u\sin x$, d'où $u = \dfrac{1}{\cos^2 x}$ et $B = \dfrac{1}{\cos x}$ :
+\[
+  \Big(\frac{y}{\cos x}\Big)' = \frac{\sin x}{\cos^2 x}
+  \;\Longrightarrow\;
+  \frac{y}{\cos x} = \frac{1}{\cos x} + C
+  \;\Longrightarrow\;
+  y = 1 + C\cos x .
+\]
+\end{exemple}
+
+\subsection{Ordre 2 : factoriser par conjugaison}
+
+Pour $ay'' + by' + cy = f(x)$ avec $a, b, c$ constants et $a \neq 0$, la leçon propose d'abord le « petit exercice » suivant : pour toute fonction $u$,
+\[
+  e^{px}\frac{\dd}{\dd x}\Big(e^{-px}\Big[e^{qx}\frac{\dd}{\dd x}\big(e^{-qx}u\big)\Big]\Big)
+  = u'' - (p+q)\,u' + pq\,u .
+\]
+Avec les notations de l'article, chaque bloc $e^{px}\frac{\dd}{\dd x}e^{-px}$ est l'opérateur $\Dx - p$ (lemme \ref{lem:conj}), et l'identité dit simplement
+\[
+  (\Dx - p)(\Dx - q) = \Dx^2 - (p+q)\,\Dx + pq .
+\]
+Elle n'est vraie que parce que $\cro{\Dx}{q} = 0$, $q$ étant constant.
+
+On choisit alors $p + q = -b/a$ et $pq = c/a$ : $p$ et $q$ sont les racines de l'équation caractéristique $ar^2 + br + c = 0$. L'équation s'écrit
+\[
+  e^{qx}\frac{\dd}{\dd x}\Big(e^{-qx}\Big[e^{px}\frac{\dd}{\dd x}\big(e^{-px}y\big)\Big]\Big) = \frac{f(x)}{a},
+\]
+et l'on « épluche » les deux couches par deux intégrations successives. On obtient
+\[
+  e^{-px}y(x) = m + m'\!\int_{x_0}^{x} e^{(q-p)t}\,\dd t + \int_{x_0}^{x} g(t)\,\dd t,
+  \qquad g(t) = \frac{e^{(q-p)t}}{a}\int_{x_0}^{t} f(s)\,e^{-qs}\,\dd s .
+\]
+\begin{itemize}[nosep]
+\item Si $p \neq q$, l'intégrale vaut $\frac{e^{(q-p)x} - e^{(q-p)x_0}}{q-p}$ et la partie homogène est $A\,e^{px} + B\,e^{qx}$.
+\item Si $p = q$, l'intégrale vaut $\int_{x_0}^{x} e^{0\cdot t}\,\dd t = x - x_0$ et la partie homogène est $A\,e^{px} + B\,x\,e^{px}$. Le facteur $x$ de la racine double n'a pas besoin d'être deviné : il sort du calcul.
+\end{itemize}
+
+La leçon s'arrête aux coefficients constants. À coefficients variables, la même tentative bute sur le terme $\cro{\Dx}{q} = q'$ et conduit à l'équation de Riccati (section 4).
+
+\subsection{Les exercices}
+
+\begin{exemple}
+On résout $y'' + 4y' + 3y = e^{-x} + \sin x$. Les racines de $r^2 + 4r + 3$ sont $-3$ et $-1$. Dans la leçon, l'étudiant découpe le second membre par superposition, écrit $\sin x = \frac{e^{ix}}{2i} - \frac{e^{-ix}}{2i}$, et devine une solution particulière de chaque morceau : $Axe^{-x}$ pour $e^{-x}$ (il trouve $A = \frac12$), $Be^{\pm ix}$ pour les deux autres. Il obtient
+\[
+  y = a\,e^{-3x} + b\,e^{-x} + \frac{x}{2}\,e^{-x} - \frac15\cos x + \frac1{10}\sin x,
+  \qquad (a,b) \in \R^2 .
+\]
+Par factorisation, le morceau $e^{-x}$ ne demande aucune intuition. On a $L = (\Dx + 3)(\Dx + 1)$ ; on pose $z = (\Dx + 1)y$ :
+\[
+  (\Dx + 3)\,z = e^{-x} \;\Longrightarrow\; z = e^{-3x}\!\int e^{2s}\,\dd s = \tfrac12\,e^{-x},
+  \qquad
+  (\Dx + 1)\,y = \tfrac12\,e^{-x} \;\Longrightarrow\; y = e^{-x}\!\int \tfrac12\,\dd t = \tfrac{x}{2}\,e^{-x}.
+\]
+La résonance, c'est-à-dire le facteur $x$, apparaît d'elle-même, alors que l'étudiant devait savoir à l'avance qu'il fallait essayer $Axe^{-x}$.
+\end{exemple}
+
+\begin{exemple}
+On résout $y'' + y' + y = \cos x$. Les racines de $r^2 + r + 1$ sont $j = -\frac12 + i\frac{\sqrt3}{2}$ et $j^2 = \bar{j}$. Les parties réelle et imaginaire de $e^{jx}$ donnent la solution homogène. Dans la leçon, l'étudiante teste $\sin x$ : $-\sin x + \cos x + \sin x = \cos x$, donc $\sin x$ est solution particulière, et
+\[
+  y = A\,e^{-x/2}\cos\!\Big(\frac{\sqrt3}{2}x\Big) + B\,e^{-x/2}\sin\!\Big(\frac{\sqrt3}{2}x\Big) + \sin x .
+\]
+La factorisation fonctionne aussi sur $\mathbb{C}$, avec $L = (\Dx - j)(\Dx - j^2)$. Comme les coefficients sont réels, on résout avec $e^{ix}$ et l'on prend la partie réelle :
+\[
+  (\Dx - j)\,z = e^{ix} \Rightarrow z = \frac{e^{ix}}{i - j},
+  \qquad
+  (\Dx - j^2)\,y = z \Rightarrow y = \frac{e^{ix}}{(i-j)(i-j^2)} .
+\]
+Or $(i-j)(i-j^2) = i^2 - i(j + j^2) + j^3 = -1 + i + 1 = i$, donc $y = -i\,e^{ix}$, dont la partie réelle est $\sin x$.
+\end{exemple}
+
+% ==========================================================
+\section{Synthèse}
+% ==========================================================
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{3.6cm}p{4.4cm}p{5.4cm}@{}}
+\toprule
+\textbf{Méthode} & \textbf{Ce qui doit commuter} & \textbf{Résultat} \\
+\midrule
+Factorisation de $L$ & $\Dx$ et les coefficients & immédiate si constants ; sinon équation de Riccati \\
+Variation des constantes & translations $X_{\varphi_1}, X_{\varphi_2}$ & deux primitives indépendantes, formule avec $W$ \\
+Réduction de l'ordre & $\langle X_\varphi, S\rangle$ seulement résoluble & deux primitives emboîtées \\
+Exponentielle de matrice & $A(x)$ et $A(s)$ & formule fermée si le crochet est nul \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Dans chaque cas, le crochet de Lie mesure ce qui empêche d'intégrer « d'un seul coup ». S'il est nul, tout se découple. Si les symétries forment une algèbre résoluble, on intègre par étapes. Sinon, il faut une information supplémentaire, typiquement une solution de l'équation de Riccati.
+
+% ==========================================================
+\section{Exercices}
+% ==========================================================
+
+\begin{exercice}
+Montrer que pour tout entier $n \geq 1$, $\cro{\Dx}{\M{x^n}} = n\,\M{x^{n-1}}$, puis que $\cro{\Dx^2}{\M{q}} = 2\,q'\,\Dx + q''$.
+\end{exercice}
+
+\begin{exercice}
+Résoudre $y'' - 2y' + y = e^{x}$ par factorisation $(\Dx-1)^2$, puis par variation des constantes, et comparer les calculs. \emph{Indication : on trouve $y_p = \frac{x^2}{2}e^{x}$.}
+\end{exercice}
+
+\begin{exercice}
+Vérifier que $y_1 = e^{x}$ est solution de $x\,y'' - (x+1)\,y' + y = 0$ sur $]0,+\infty[$. En déduire une factorisation de l'opérateur associé, puis toutes les solutions. \emph{Indication : on obtient $q=1$ et $p = 1/x$, puis la solution $x+1$.}
+\end{exercice}
+
+\begin{exercice}
+Calculer $\cro{X_\varphi}{S}$ en appliquant les deux champs à une fonction $g(y,y')$ quelconque, et retrouver $\cro{X_\varphi}{S} = X_\varphi$.
+\end{exercice}
+
+\begin{exercice}
+Soit $A(x) = \begin{pmatrix} 0 & 1 \\ 0 & x \end{pmatrix}$. Calculer $\cro{A(x)}{A(s)}$ et en déduire que la formule exponentielle de la proposition \ref{prop:expo} n'est pas applicable directement.
+\end{exercice}
+
+% ==========================================================
+\section{Corrigés des exercices}
+% ==========================================================
+
+\paragraph{Exercice 1.} Pour toute fonction $y$, la règle de Leibniz donne
+\[
+  \cro{\Dx}{\M{x^n}}\,y = (x^n y)' - x^n y' = n\,x^{n-1}\,y,
+\]
+ce qui est la proposition \ref{prop:heisenberg} avec $q = x^n$. Pour la seconde formule, on développe $\Dx^2 q - q\Dx^2 = \Dx(\Dx q - q\Dx) + (\Dx q - q\Dx)\Dx$, soit
+\[
+  \cro{\Dx^2}{\M{q}} = \Dx\,\cro{\Dx}{q} + \cro{\Dx}{q}\,\Dx = \Dx\,q' + q'\,\Dx .
+\]
+En appliquant encore la proposition \ref{prop:heisenberg} à $q'$, on a $\Dx\,q' = q'\,\Dx + q''$, d'où $\cro{\Dx^2}{\M{q}} = 2\,q'\,\Dx + q''$.
+
+\paragraph{Exercice 2.} \emph{Par factorisation.} On pose $z = (\Dx - 1)y$. L'équation $(\Dx - 1)z = e^{x}$ donne $z = e^{x}\int e^{-s}e^{s}\,\dd s = (x + A)\,e^{x}$, puis $(\Dx - 1)y = z$ donne
+\[
+  y = e^{x}\!\int (t + A)\,\dd t = \Big(\frac{x^2}{2} + A\,x + B\Big)e^{x}.
+\]
+\emph{Par variation des constantes.} Avec $\varphi_1 = e^{x}$ et $\varphi_2 = x\,e^{x}$, on trouve $W = e^{x}(1+x)e^{x} - x\,e^{x}e^{x} = e^{2x}$. Les formules \eqref{eq:vdc} donnent $C_1' = -x$ et $C_2' = 1$, donc $C_1 = -\frac{x^2}{2}$, $C_2 = x$ et $y_p = -\frac{x^2}{2}e^{x} + x\cdot x\,e^{x} = \frac{x^2}{2}e^{x}$.
+
+\emph{Comparaison.} La variation des constantes demande de connaître d'avance la seconde solution $x\,e^{x}$ et de calculer $W$. La factorisation n'utilise que la racine double $1$ : le facteur $x$ de la seconde solution et le $x^2$ de la solution particulière sortent des deux primitives.
+
+\paragraph{Exercice 3.} Avec $y_1 = e^{x}$, on a $x\,e^{x} - (x+1)\,e^{x} + e^{x} = 0$. Après division par $x$, l'équation s'écrit $y'' + a\,y' + b\,y = 0$ avec $a = -\frac{x+1}{x}$ et $b = \frac1x$. La proposition \ref{prop:y1} donne $q = y_1'/y_1 = 1$, puis $p = -a - q = \frac{x+1}{x} - 1 = \frac1x$. On vérifie l'équation de Riccati : $q' + q^2 + a\,q + b = 0 + 1 - \frac{x+1}{x} + \frac1x = 0$. Ainsi
+\[
+  L = \Big(\Dx - \frac1x\Big)(\Dx - 1).
+\]
+On pose $z = (\Dx - 1)y$. L'équation $\big(\Dx - \frac1x\big)z = 0$ donne $z = A\,x$, puis $(\Dx - 1)y = A\,x$ donne
+\[
+  y = e^{x}\!\int A\,t\,e^{-t}\,\dd t = -A\,(x+1) + B\,e^{x}.
+\]
+Les solutions sont donc les $y = C\,(x+1) + B\,e^{x}$, et l'on vérifie directement que $x + 1$ convient : $x\cdot 0 - (x+1)\cdot 1 + (x+1) = 0$.
+
+\paragraph{Exercice 4.} À $x$ fixé, $\varphi$ et $\varphi'$ sont des constantes, et l'on note $g_y$, $g_{y'}$, $g_{yy}$, \dots\ les dérivées partielles de $g$. D'une part,
+\[
+  X_\varphi(S g) = X_\varphi\big(y\,g_y + y'\,g_{y'}\big)
+  = \varphi\,g_y + \varphi'\,g_{y'} + T,
+\]
+où $T = \varphi\,(y\,g_{yy} + y'\,g_{yy'}) + \varphi'\,(y\,g_{yy'} + y'\,g_{y'y'})$ regroupe les termes du second ordre. D'autre part,
+\[
+  S(X_\varphi g) = S\big(\varphi\,g_y + \varphi'\,g_{y'}\big)
+  = y\,(\varphi\,g_{yy} + \varphi'\,g_{yy'}) + y'\,(\varphi\,g_{yy'} + \varphi'\,g_{y'y'}) = T,
+\]
+grâce au lemme de Schwarz. La différence ne garde que les termes du premier ordre : $\cro{X_\varphi}{S}\,g = \varphi\,g_y + \varphi'\,g_{y'} = X_\varphi\,g$.
+
+\paragraph{Exercice 5.} On calcule
+\[
+  A(x)A(s) = \begin{pmatrix} 0 & s \\ 0 & xs \end{pmatrix},
+  \qquad
+  A(s)A(x) = \begin{pmatrix} 0 & x \\ 0 & xs \end{pmatrix},
+  \qquad
+  \cro{A(x)}{A(s)} = \begin{pmatrix} 0 & s - x \\ 0 & 0 \end{pmatrix},
+\]
+qui n'est pas nul dès que $x \neq s$. L'hypothèse de la proposition \ref{prop:expo} porte en fait sur $A(x)$ et $B(x) = \int_0^x A = \begin{pmatrix} 0 & x \\ 0 & x^2/2 \end{pmatrix}$ ; elle échoue aussi, puisque
+\[
+  \cro{A(x)}{B(x)} = \begin{pmatrix} 0 & x^2/2 \\ 0 & x^3/2 \end{pmatrix} - \begin{pmatrix} 0 & x^2 \\ 0 & x^3/2 \end{pmatrix} = \begin{pmatrix} 0 & -x^2/2 \\ 0 & 0 \end{pmatrix} \neq 0
+\]
+pour $x \neq 0$. On ne peut donc pas conclure que $e^{B(x)}$ est une matrice fondamentale.
+
+\end{document}

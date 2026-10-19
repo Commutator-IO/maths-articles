@@ -1,0 +1,80 @@
+name: site
+
+# Le site : les vues de lecture rendues depuis lecons/**/*.tex, l'index des
+# leçons, les sources et les PDF. Vérifié sur chaque pull request ; publié sur
+# GitHub Pages depuis main seulement.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Une publication à la fois, sans annuler celle en cours.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Construire
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      # postinstall copie KaTeX dans public/vendor/katex/, que les vues de
+      # lecture chargent ; il n'est pas versionné.
+      - run: npm ci
+
+      # Les PDF sont construits ici, jamais versionnés. Un document qui ne
+      # compile pas n'empêche pas la publication : sa page n'aura simplement
+      # pas de lien PDF. C'est le workflow latex qui fait échouer la pull
+      # request dans ce cas.
+      - name: Installer Tectonic
+        run: |
+          curl -fsSL https://drop-sh.fullyjustified.net | sh
+          sudo mv tectonic /usr/local/bin/
+          tectonic --version
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/Tectonic
+          key: tectonic-${{ runner.os }}-v1
+      - name: Compiler les PDF
+        run: npm run pdf -- --require || echo "::warning::au moins un PDF n'a pas compilé (voir le workflow latex)"
+
+      # Un .tex qui sort du sous-ensemble pris en charge, un renvoi sans
+      # étiquette ou une formule que KaTeX refuse font échouer cette étape.
+      - name: Rendre les vues de lecture
+        run: npm run render
+
+      - uses: actions/configure-pages@v6
+        if: github.event_name != 'pull_request'
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v5
+        if: github.event_name != 'pull_request'
+        with:
+          path: dist
+
+  deploy:
+    name: Publier
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

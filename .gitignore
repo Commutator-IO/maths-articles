@@ -1,0 +1,11 @@
+node_modules/
+dist/
+public/vendor/katex/
+*.pdf
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+lean/.lake/
+.DS_Store

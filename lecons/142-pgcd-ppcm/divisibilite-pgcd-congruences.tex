@@ -1,0 +1,329 @@
+% Divisibilité, PGCD et congruences
+% Compile avec pdflatex, xelatex ou lualatex.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+  \IfFileExists{lmodern.sty}{\usepackage{lmodern}}{}
+  \usepackage[french]{babel}
+\else
+  \usepackage{fontspec}
+  \usepackage{polyglossia}
+  \setdefaultlanguage{french}
+\fi
+\usepackage[margin=2.6cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+
+% ---------- Environnements ----------
+\theoremstyle{plain}
+\newtheorem{theoreme}{Théorème}[section]
+\newtheorem{proposition}[theoreme]{Proposition}
+\newtheorem{lemme}[theoreme]{Lemme}
+\newtheorem{corollaire}[theoreme]{Corollaire}
+\theoremstyle{definition}
+\newtheorem{definition}[theoreme]{Définition}
+\newtheorem{exemple}[theoreme]{Exemple}
+\newtheorem{exercice}{Exercice}
+\theoremstyle{remark}
+\newtheorem{remarque}[theoreme]{Remarque}
+
+% ---------- Notations ----------
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\F}{\mathbb{F}}
+\newcommand{\GL}{\mathrm{GL}}
+\newcommand{\pgcd}{\wedge}
+\DeclareMathOperator{\ord}{ord}
+\DeclareMathOperator{\com}{com}
+
+\title{Divisibilité, PGCD et congruences\\[2pt]
+\large Exercices commentés pour l'agrégation}
+\author{Michel Hua}
+\date{Octobre 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+On reprend une feuille de révision de terminale (divisibilité, PGCD, congruences) en dégageant, derrière chaque exercice, l'énoncé général qui le rend évident : invariance du PGCD sous l'action de $\GL_2(\Z)$, théorème de Lamé, développement de Pierce, exposant du groupe $(\Z/n\Z)^\times$, obstruction modulo $16$ dans le problème de Waring pour les puissances quatrièmes, paramétrage des triplets pythagoriciens. Deux énoncés de la feuille d'origine étaient faux ; ils sont corrigés (remarques \ref{rem:faux-gl2} et \ref{rem:faux-2005}).
+\end{abstract}
+
+\paragraph{Leçons concernées.} 142 (PGCD et PPCM, algorithmes de calcul), 120 (Anneaux $\Z/n\Z$), 126 (Exemples d'équations en arithmétique), 121 (Nombres premiers).
+
+\paragraph{Développements possibles.} Théorème \ref{thm:gl2} avec sa réciproque ; théorème de Lamé \ref{thm:lame} ; propositions \ref{prop:waring15} et \ref{prop:waring16} ; théorème \ref{thm:pyth} et corollaire \ref{cor:60}.
+
+\paragraph{Notations.} Pour $a,b\in\Z$, on note $a\pgcd b\geq 0$ leur PGCD, avec $0\pgcd 0=0$.
+
+\tableofcontents
+
+% ==========================================================
+\section{Le PGCD sous l'action de \texorpdfstring{$\GL_2(\Z)$}{GL2(Z)}}
+% ==========================================================
+
+\begin{theoreme}\label{thm:gl2}
+Soit $M=\begin{pmatrix}\alpha&\beta\\\gamma&\delta\end{pmatrix}\in M_2(\Z)$, et pour $(a,b)\in\Z^2$ posons $\begin{pmatrix}a'\\b'\end{pmatrix}=M\begin{pmatrix}a\\b\end{pmatrix}$, $d=a\pgcd b$, $d'=a'\pgcd b'$.
+\begin{enumerate}[nosep]
+\item On a $d\mid d'$ et $d'\mid (\det M)\,d$.
+\item En particulier, si $M\in\GL_2(\Z)$, c'est-à-dire $\det M=\pm1$, alors $d'=d$.
+\item Réciproquement, si $d'=d$ pour tout $(a,b)\in\Z^2$, alors $\det M=\pm1$.
+\end{enumerate}
+\end{theoreme}
+
+\begin{proof}
+1. Tout diviseur commun de $a$ et $b$ divise $a'=\alpha a+\beta b$ et $b'=\gamma a+\delta b$, donc $d\mid d'$. Avec la comatrice, ${}^t\!\com(M)\,M=(\det M)\,I_2$, donc $(\det M)\,a$ et $(\det M)\,b$ sont des combinaisons entières de $a'$ et $b'$ : $d'$ les divise, donc divise leur PGCD $|\det M|\,d$.
+
+2. Si $\det M=\pm1$, on a $d\mid d'$ et $d'\mid d$, d'où $d=d'$ puisque les deux sont positifs.
+
+3. Supposons $\det M\neq\pm1$ et construisons $(a,b)$ avec $a\pgcd b=1<d'$.
+Si $\det M=0$, les colonnes de $M$ sont liées et il existe $(a,b)\neq(0,0)$, qu'on peut prendre premiers entre eux, avec $M\binom{a}{b}=0$ ; alors $d'=0\neq 1$.
+Sinon, soit $p$ premier divisant $\det M$. La réduction $\overline M\in M_2(\F_p)$ est non inversible, donc il existe $(u,v)\in\F_p^2$ non nul avec $\overline M\binom{u}{v}=0$. Quitte à échanger les rôles, $u\neq0$ ; on choisit $a\in\{1,\dots,p-1\}$ représentant $u$. Comme $a\pgcd p=1$, les entiers $v+kp$, $0\leq k<a$, parcourent toutes les classes modulo $a$ ; l'un d'eux, noté $b$, vérifie $b\equiv 1\pmod a$, donc $a\pgcd b=1$. Par construction $a'\equiv b'\equiv0\pmod p$, donc $p\mid d'$ et $d'\neq d$.
+\end{proof}
+
+\begin{remarque}\label{rem:faux-gl2}
+La feuille d'origine demandait de montrer que $a\pgcd b=(\alpha a+\beta b)\pgcd(\gamma a+\delta b)$ pour tous entiers $\alpha,\beta,\gamma,\delta$. C'est faux : avec $M=\begin{pmatrix}1&1\\1&-1\end{pmatrix}$ et $(a,b)=(1,1)$, on obtient $(2,0)$, de PGCD $2$. Le théorème \ref{thm:gl2} dit exactement quand c'est vrai.
+\end{remarque}
+
+\begin{remarque}
+Le théorème dit que l'orbite de $(a,b)$ sous $\GL_2(\Z)$ est contenue dans $\{(a',b') : a'\pgcd b'=d\}$. En fait elle lui est égale : l'algorithme d'Euclide est une suite de multiplications par des matrices $\begin{pmatrix}0&1\\1&-q\end{pmatrix}$ de déterminant $-1$, qui ramène $(a,b)$ à $(d,0)$. Les vecteurs primitifs de $\Z^2$ forment donc une seule orbite, celle de $(1,0)$.
+\end{remarque}
+
+\begin{exemple}\label{ex:pgcd-n}
+Soit $n\geq5$, $a=n^3-n^2-12n$ et $b=2n^2-7n-4$. On factorise
+\[
+  a=n(n-4)(n+3), \qquad b=(n-4)(2n+1).
+\]
+\begin{itemize}[nosep]
+\item On a $\binom{2n+1}{n+3}=\begin{pmatrix}2&1\\1&3\end{pmatrix}\binom{n}{1}$, de déterminant $5$, donc $(2n+1)\pgcd(n+3)$ divise $5\,(n\pgcd 1)=5$. Il vaut $5$ si et seulement si $n\equiv2\pmod5$, puisque $2n+1\equiv0$ et $n+3\equiv0\pmod 5$ équivalent tous deux à $n\equiv2\pmod5$.
+\item On a $\binom{n}{2n+1}=\begin{pmatrix}1&0\\2&1\end{pmatrix}\binom{n}{1}$, de déterminant $1$, donc $n\pgcd(2n+1)=1$.
+\item Par le lemme de Gauss, si $c\pgcd n=1$ alors $(nm)\pgcd c=m\pgcd c$. D'où
+\[
+  a\pgcd b=(n-4)\cdot\big(n(n+3)\pgcd(2n+1)\big)=(n-4)\cdot\big((n+3)\pgcd(2n+1)\big)
+  =\begin{cases} 5(n-4) & \text{si } n\equiv 2 \pmod 5,\\ n-4 & \text{sinon.}\end{cases}
+\]
+\end{itemize}
+Pour $n=7$ : $a=210$, $b=45$ et $a\pgcd b=15=5\cdot3$.
+\end{exemple}
+
+\subsection{Coût de l'algorithme d'Euclide}
+
+On note $(F_k)$ la suite de Fibonacci, $F_1=F_2=1$, $F_{k+2}=F_{k+1}+F_k$, et $\varphi=\frac{1+\sqrt5}2$.
+
+\begin{theoreme}[Lamé, 1844]\label{thm:lame}
+Soit $a>b\geq1$. Si l'algorithme d'Euclide appliqué à $(a,b)$ effectue $k$ divisions, alors $b\geq F_{k+1}$ et $a\geq F_{k+2}$. Par conséquent $k\leq 1+\log_\varphi b$.
+\end{theoreme}
+
+\begin{proof}
+On pose $r_0=a$, $r_1=b$ et $r_{i-1}=q_ir_i+r_{i+1}$ avec $0\leq r_{i+1}<r_i$, pour $1\leq i\leq k$, où $r_k\neq0$ et $r_{k+1}=0$. On a $r_k\geq1=F_2$. Ensuite $r_{k-1}=q_kr_k>r_k$ impose $q_k\geq2$, donc $r_{k-1}\geq2=F_3$. Pour $i<k$, $q_i\geq1$ donne $r_{i-1}\geq r_i+r_{i+1}$, et une récurrence descendante donne $r_{k-j}\geq F_{j+2}$ pour $0\leq j\leq k$. Avec $j=k-1$ et $j=k$, on obtient $b\geq F_{k+1}$ et $a\geq F_{k+2}$. Enfin $F_{k+1}\geq\varphi^{k-1}$ par récurrence, car $\varphi^2=\varphi+1$.
+\end{proof}
+
+\begin{remarque}
+La borne est atteinte pour deux termes consécutifs de la suite de Fibonacci : tous les quotients valent $1$, sauf le dernier, qui vaut $2$. Le coût est donc $O(\log b)$ divisions, linéaire en la taille des entrées.
+\end{remarque}
+
+% ==========================================================
+\section{Le développement de Pierce}
+% ==========================================================
+
+L'exercice 4 de la feuille d'origine décrit, sans le nommer, l'algorithme suivant.
+
+\begin{proposition}\label{prop:pierce}
+Soit $0<x<y$ deux entiers. On pose $r_0=x$, puis, tant que $r_{i-1}\neq0$, on effectue la division euclidienne $y=q_ir_{i-1}+r_i$ avec $0\leq r_i<r_{i-1}$. L'algorithme s'arrête après un nombre fini $n$ d'étapes, avec $r_n = 0$, et
+\[
+  \frac{x}{y}=\frac1{q_1}-\frac1{q_1q_2}+\frac1{q_1q_2q_3}-\cdots+\frac{(-1)^{n+1}}{q_1q_2\cdots q_n},
+  \qquad 1\leq q_1<q_2<\cdots<q_n .
+\]
+\end{proposition}
+
+\begin{proof}
+Les restes $r_0>r_1>\cdots$ sont des entiers positifs, donc l'algorithme s'arrête.
+Comme $y-r_i=q_ir_{i-1}$, on a, pour $i\geq1$,
+\[
+  \frac{r_{i-1}}{y}=\frac{1}{q_i}-\frac{1}{q_i}\cdot\frac{r_i}{y},
+\]
+et la formule s'obtient en itérant à partir de $i=1$ jusqu'à $r_n=0$.
+Pour la croissance stricte, supposons $q_{i+1}=q_i=q$. Alors $y=qr_{i-1}+r_i=qr_i+r_{i+1}$, d'où $q(r_{i-1}-r_i)=r_{i+1}-r_i$. Le membre de gauche est $>0$ et celui de droite $<0$, ce qui est absurde. De plus $q_{i+1}=\lfloor y/r_i\rfloor\geq\lfloor y/r_{i-1}\rfloor=q_i$ puisque $r_i<r_{i-1}$.
+\end{proof}
+
+\begin{exemple}
+Pour $17/45$ : $45=2\cdot17+11$, $45=4\cdot11+1$, $45=45\cdot1+0$. Donc
+\[
+  \frac{17}{45}=\frac12-\frac1{2\cdot4}+\frac1{2\cdot4\cdot45}
+  =\frac{180-45+1}{360}.
+\]
+Pour $2/(2k+1)$ avec $k\geq1$ : $2k+1=k\cdot2+1$ et $2k+1=(2k+1)\cdot1$, donc $\dfrac{2}{2k+1}=\dfrac1k-\dfrac1{k(2k+1)}$.
+\end{exemple}
+
+\begin{remarque}
+Le même algorithme, appliqué à un réel $t\in\,]0,1[$ (avec $q_i=\lfloor 1/t_{i-1}\rfloor$, $t_0=t$, $t_i=1-q_it_{i-1}$), s'arrête si et seulement si $t$ est rationnel. Par exemple $\frac1e=\sum_{k\geq0}\frac{(-1)^k}{k!}=\frac12-\frac1{2\cdot3}+\frac1{2\cdot3\cdot4}-\cdots$ a pour chiffres $q_i=i+1$. Le développement n'est pas unique sans condition supplémentaire, puisque $\frac1q-\frac1{q(q+1)}=\frac1{q+1}$.
+\end{remarque}
+
+% ==========================================================
+\section{Ordres et exposant de \texorpdfstring{$(\Z/n\Z)^\times$}{(Z/nZ)*}}
+% ==========================================================
+
+Pour $n\geq2$, on note $\lambda(n)$ l'exposant du groupe $(\Z/n\Z)^\times$ (fonction de Carmichael) : c'est le plus petit $m\geq1$ tel que $u^m\equiv1\pmod n$ pour tout $u$ premier à $n$. Par le théorème chinois, $\lambda(n)$ est le PPCM des $\lambda(p^k)$ pour $p^k\,\|\,n$, avec $\lambda(p^k)=p^{k-1}(p-1)$ pour $p$ impair, $\lambda(2)=1$, $\lambda(4)=2$ et $\lambda(2^k)=2^{k-2}$ pour $k\geq3$. Il divise l'indicatrice d'Euler $\varphi(n)$.
+
+\begin{exemple}[Exercices 9 et 12 de la feuille]
+\begin{enumerate}[nosep]
+\item On a $\lambda(10)=\operatorname{ppcm}(1,4)=4$, et les puissances de $7$ modulo $10$ forment le cycle $1,7,9,3$, de somme $20\equiv0$. Comme $401=4\cdot100+1$, on obtient $\sum_{i=0}^{400}7^i\equiv1\pmod{10}$ : le chiffre des unités est $1$. On peut aussi passer par $\frac{7^{401}-1}{6}$, mais diviser par $6$ demande de calculer modulo $60$. Comme $\lambda(60)=4$, on a $7^{401}\equiv7\pmod{60}$, donc $7^{401}-1\equiv6\pmod{60}$ et le quotient est $\equiv1\pmod{10}$.
+\item Soit $N=2004\cdot2014$, multiple de $4$. Alors $7^N\equiv3^N\equiv1\pmod{10}$, donc $\dfrac{(7^{2004})^{2014}-(3^{2004})^{2014}}{2014-2004}$ est un entier. Comme $\lambda(40)=\operatorname{ppcm}(2,4)=4$, on a même $40\mid 7^N-3^N$.
+\end{enumerate}
+\end{exemple}
+
+\begin{proposition}[Exercice 5 de la feuille]\label{prop:repunit}
+On note $R_k=\frac{10^k-1}{9}=\underbrace{1\cdots1}_{k}$.
+\begin{enumerate}[nosep]
+\item Tout entier $n\geq1$ possède un multiple dont l'écriture décimale ne comporte que des $0$ et des $1$.
+\item Si $n\pgcd 10=1$, alors $n\mid R_k$ si et seulement si $\ord_{9n}(10)\mid k$. En particulier $n$ divise un nombre formé uniquement de $1$.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+1. Parmi $R_1,\dots,R_{n+1}$, deux ont le même reste modulo $n$ (principe des tiroirs), disons $R_p$ et $R_{p'}$ avec $p<p'$. Alors $n$ divise $R_{p'}-R_p=10^p R_{p'-p}$, qui ne s'écrit qu'avec des $0$ et des $1$.
+
+2. On a $n\mid R_k\iff 9n\mid 10^k-1\iff 10^k\equiv1\pmod{9n}$, et $10$ est inversible modulo $9n$ car $n\pgcd10=1$.
+\end{proof}
+
+\begin{exemple}
+$\ord_7(10)=6$ et $\ord_9(10)=1$, donc $\ord_{63}(10)=6$ : $R_6=111111=7\cdot15873$.
+\end{exemple}
+
+\begin{proposition}[Exercice 13 de la feuille]
+Tout entier $n\geq1$ possède un multiple dont l'écriture décimale contient les dix chiffres.
+\end{proposition}
+
+\begin{proof}
+Soit $A=1234567890$ et $k$ tel que $10^k\geq n$. Les $n$ entiers consécutifs $A\cdot10^k+j$, $0\leq j<n$, commencent tous par les chiffres de $A$, et l'un d'eux est multiple de $n$.
+\end{proof}
+
+% ==========================================================
+\section{Puissances quatrièmes modulo 16 et problème de Waring}
+% ==========================================================
+
+\begin{lemme}\label{lem:mod16}
+Pour $x\in\Z$, $x^4\equiv0\pmod{16}$ si $x$ est pair et $x^4\equiv1\pmod{16}$ si $x$ est impair.
+\end{lemme}
+
+\begin{proof}
+Si $x$ est impair, $x^2=1+8m$, donc $x^4=1+16m+64m^2$.
+\end{proof}
+
+Une somme de $s$ puissances quatrièmes est donc congrue modulo $16$ au nombre de termes impairs, qui est compris entre $0$ et $s$.
+
+\begin{proposition}\label{prop:waring15}
+Un entier $N\equiv15\pmod{16}$ n'est pas somme de moins de $15$ puissances quatrièmes. En particulier $79=4\cdot2^4+15\cdot1^4$ n'est pas somme de moins de $19$ puissances quatrièmes.
+\end{proposition}
+
+\begin{proof}
+La première assertion découle du lemme \ref{lem:mod16}. Pour $79$, les seules puissances quatrièmes utilisables sont $1$ et $16$. Une écriture $79=16a+b$ utilise $a+b=79-15a$ termes, avec $a\leq4$, donc au moins $19$ termes.
+\end{proof}
+
+\begin{remarque}\label{rem:faux-2005}
+La feuille d'origine affirmait que $2005$ n'est pas somme de six puissances quatrièmes non nulles, tout en donnant l'égalité $2005=1^4+1^4+1^4+3^4+5^4+6^4$, qui la contredit. L'énoncé correct porte sur $2015$ : comme $2015=16\cdot125+15$, la proposition \ref{prop:waring15} montre que $2015$ n'est pas somme de six puissances quatrièmes, ni même de quatorze.
+\end{remarque}
+
+\begin{proposition}\label{prop:waring16}
+Pour tout $k\geq0$, l'entier $31\cdot16^k$ n'est pas somme de $15$ puissances quatrièmes (positives ou nulles). Il y a donc une infinité d'entiers qui ne sont pas somme de $15$ puissances quatrièmes.
+\end{proposition}
+
+\begin{proof}
+Par récurrence sur $k$. Pour $k=0$ : dans une écriture $31=\sum_{i=1}^{15}x_i^4$, le nombre de $x_i$ impairs est $\equiv15\pmod{16}$ et $\leq15$, donc tous les $x_i$ sont impairs. Comme $3^4=81>31$, ils valent tous $\pm1$ et la somme vaut $15\neq31$.
+Pour $k\geq1$ : si $31\cdot16^k=\sum_{i=1}^{15}x_i^4$, le nombre de $x_i$ impairs est $\equiv0\pmod{16}$ et $\leq15$, donc nul. Tous les $x_i$ sont pairs, et $31\cdot16^{k-1}=\sum(x_i/2)^4$, ce qui contredit l'hypothèse de récurrence.
+\end{proof}
+
+\begin{remarque}
+Notons $g(4)$ le plus petit $s$ tel que tout entier soit somme de $s$ puissances quatrièmes, et $G(4)$ le plus petit $s$ tel que tout entier assez grand le soit. Les propositions précédentes donnent $g(4)\geq19$ et $G(4)\geq16$. Ces bornes sont exactes : $G(4)=16$ (Davenport, 1939) et $g(4)=19$ (Balasubramanian, Deshouillers et Dress, 1986). La difficulté est entièrement dans les majorations.
+\end{remarque}
+
+% ==========================================================
+\section{Triplets pythagoriciens}
+% ==========================================================
+
+\begin{theoreme}\label{thm:pyth}
+Les solutions de $x^2+y^2=z^2$ en entiers $x,y,z\geq1$ avec $x\pgcd y=1$ et $y$ pair sont exactement
+\[
+  x=u^2-v^2,\qquad y=2uv,\qquad z=u^2+v^2,
+\]
+avec $u>v\geq1$, $u\pgcd v=1$ et $u\not\equiv v\pmod 2$.
+\end{theoreme}
+
+\begin{proof}
+Ces triplets conviennent : si un premier $p$ divisait $x$ et $y$, il diviserait $z$, donc $u^2$ et $v^2$, ce qui est exclu. Réciproquement, si $x\pgcd y=1$, alors $x$ et $y$ ne sont pas tous deux pairs. Ils ne sont pas non plus tous deux impairs, sinon $z^2\equiv2\pmod4$. Avec $y$ pair, $x$ et $z$ sont impairs, et
+\[
+  \frac{z+x}{2}\cdot\frac{z-x}{2}=\Big(\frac y2\Big)^2 .
+\]
+Un diviseur commun des deux facteurs divise leur somme $z$ et leur différence $x$. Or $x\pgcd z=1$, car un diviseur commun de $x$ et $z$ diviserait $y^2$. Les deux facteurs sont donc premiers entre eux, positifs, et leur produit est un carré : par factorialité de $\Z$, ce sont des carrés $u^2$ et $v^2$, ce qui donne le paramétrage. Les conditions sur $u$ et $v$ viennent de $x\pgcd y=1$ et de la parité de $x$.
+\end{proof}
+
+\begin{corollaire}[Exercice 3 de la feuille]\label{cor:60}
+Si $x^2+y^2=z^2$ avec $x,y,z\geq1$, alors $3\mid xy$, l'un de $x,y$ est multiple de $4$, et $5\mid xyz$. En particulier $60\mid xyz$, et $60$ est optimal puisque $(3,4,5)$ donne $60$.
+\end{corollaire}
+
+\begin{proof}
+On écrit $(x,y,z)=e\,(x_0,y_0,z_0)$ avec $(x_0,y_0,z_0)$ primitif et, quitte à échanger $x$ et $y$, $y_0=2uv$ comme dans le théorème. Il suffit de traiter le triplet primitif. L'un de $u,v$ est pair, donc $4\mid y_0$. On a $x_0y_0=2uv(u^2-v^2)$ : si $3\nmid uv$, alors $u^2\equiv v^2\equiv1\pmod3$, donc $3\mid u^2-v^2$. Enfin $x_0y_0z_0=2uv(u^4-v^4)$ : si $5\nmid uv$, le petit théorème de Fermat donne $u^4\equiv v^4\equiv1\pmod5$.
+\end{proof}
+
+\begin{remarque}
+On peut aussi raisonner directement sur les carrés modulo $3$, $8$ et $5$, comme le suggérait la feuille. Le paramétrage a deux autres interprétations : la factorisation $z^2=(x+iy)(x-iy)$ dans l'anneau factoriel $\Z[i]$, et le paramétrage rationnel du cercle unité par la droite de pente $t=v/u$ passant par $(-1,0)$.
+\end{remarque}
+
+% ==========================================================
+\section{Exercices}
+% ==========================================================
+
+\begin{exercice}
+Déterminer les $n\in\N$ tels que $n+1\mid 3n^2+15n+19$.
+\end{exercice}
+
+\begin{exercice}
+Soit $n\geq1$, $M=9n-1$ et $N=9n+1$. Calculer $M\pgcd N$ selon la parité de $n$, et montrer que $4\mid 81n^2-1$ si et seulement si $n$ est impair.
+\end{exercice}
+
+\begin{exercice}
+Un rectangle $a\times b$ ($a,b\geq1$ entiers) est découpé en $ab$ carrés unités. Combien de carrés la diagonale traverse-t-elle (en passant par leur intérieur) ?
+\end{exercice}
+
+\begin{exercice}
+Trouver tous les entiers $0<a<b<c$ avec $abc<2003$ tels que la somme de deux quelconques d'entre eux soit divisible par le troisième.
+\end{exercice}
+
+\begin{exercice}
+On a $1089\times9=9801$. Trouver un entier à quatre chiffres $N$ tel que $4N$ s'écrive avec les chiffres de $N$ dans l'ordre inverse.
+\end{exercice}
+
+\begin{exercice}
+Soit $s\geq1$. Montrer que les sommes de $s$ puissances quatrièmes ne recouvrent pas toutes les classes modulo $16$ si $s\leq14$, et les recouvrent toutes si $s\geq15$.
+\end{exercice}
+
+% ==========================================================
+\section{Corrigés}
+% ==========================================================
+
+\paragraph{Exercice 1.} On a $3n^2+15n+19=(n+1)(3n+12)+7$, donc $n+1\mid3n^2+15n+19\iff n+1\mid7\iff n\in\{0,6\}$.
+
+\paragraph{Exercice 2.} $M\pgcd N$ divise $N-M=2$. Si $n$ est pair, $M$ et $N$ sont impairs et $M\pgcd N=1$. Si $n$ est impair, ils sont pairs et $M\pgcd N=2$. Comme $81n^2-1=MN$, si $n$ est impair $M$ et $N$ sont pairs et $4\mid MN$ ; si $n$ est pair, $MN$ est impair.
+
+\paragraph{Exercice 3.} Soit $d=a\pgcd b$. La diagonale coupe les $a-1$ droites verticales et les $b-1$ droites horizontales intérieures. Elle passe dans un nouveau carré à chaque coupure, sauf quand elle franchit simultanément une verticale et une horizontale, c'est-à-dire en un point entier. Ces points sont les $\big(\frac{ja}{d},\frac{jb}{d}\big)$, $0<j<d$, au nombre de $d-1$. Le nombre de carrés traversés est donc $1+(a-1)+(b-1)-(d-1)=a+b-a\pgcd b$.
+
+\paragraph{Exercice 4.} On a $c\mid a+b$ et $0<a+b<2c$, donc $a+b=c$. Ensuite $b\mid a+c=2a+b$, donc $b\mid2a$ avec $0<2a<2b$, d'où $b=2a$ et $c=3a$. Réciproquement, $(a,2a,3a)$ convient : $3a\mid3a$, $2a\mid4a$ et $a\mid5a$. La condition $6a^3<2003$ donne $a\leq6$. Les solutions sont donc $(a,2a,3a)$ pour $1\leq a\leq6$.
+
+\paragraph{Exercice 5.} Écrivons $N=\overline{abcd}$. Comme $4N<10^4$, on a $a\leq2$ ; et $a$, chiffre des unités de $4N$, est pair, donc $a=2$. Ensuite $4d\equiv2\pmod{10}$ et $d\geq8$ (car $4N\geq8000$), donc $d=8$. L'égalité $4(2008+100b+10c)=8002+100c+10b$ se simplifie en $13b+1=2c$, donc $b=1$ et $c=7$. Ainsi $N=2178$ et $4\times2178=8712$. On montre plus généralement que $2178$, $21978$, $219978$, \dots\ conviennent pour le facteur $4$, et $1089$, $10989$, \dots\ pour le facteur $9$. En base $10$, seuls les facteurs $4$ et $9$ sont possibles (Sutcliffe, 1966).
+
+\paragraph{Exercice 6.} Par le lemme \ref{lem:mod16}, une somme de $s$ puissances quatrièmes est congrue modulo $16$ au nombre $j\in\{0,\dots,s\}$ de termes impairs, et toutes les valeurs de $j$ sont atteintes (avec $j$ termes égaux à $1$ et $s-j$ nuls). Les classes atteintes sont donc celles de $0,1,\dots,\min(s,15)$.
+
+\begin{thebibliography}{9}
+\bibitem{demazure} M. Demazure, \emph{Cours d'algèbre. Primalité, divisibilité, codes}, Cassini.
+\bibitem{gourdon} X. Gourdon, \emph{Les maths en tête. Algèbre et probabilités}, Ellipses.
+\bibitem{hw} G. H. Hardy, E. M. Wright, \emph{An Introduction to the Theory of Numbers}, Oxford University Press.
+\bibitem{pierce} T. A. Pierce, \emph{On an algorithm and its use in approximating roots of algebraic equations}, Amer. Math. Monthly 36 (1929).
+\end{thebibliography}
+
+\paragraph{Source.} Feuille de révision de terminale S (2013), d'après les manuels \emph{Hyperbole} et \emph{Bréal}. La partie « Continuité » de cette feuille est reprise dans la leçon 228.
+
+\end{document}
