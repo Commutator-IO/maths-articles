@@ -480,7 +480,7 @@ function environment(name, inner, doc) {
 
   switch (name) {
     case 'abstract':
-      return [`<div class="ltx_abstract"><h6 class="ltx_title ltx_title_abstract">Résumé</h6>${blocks(inner, doc).join('\n')}</div>`];
+      return [`<div class="ltx_abstract" id="resume"><h6 class="ltx_title ltx_title_abstract">Résumé</h6>${blocks(inner, doc).join('\n')}</div>`];
 
     case 'proof': {
       const opt = readOptional(inner, 0);

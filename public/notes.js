@@ -108,12 +108,27 @@
     return best;
   }
 
+  /**
+   * Le texte d'un élément, formules en TeX. `textContent` renverrait chaque
+   * formule trois fois (le MathML caché, son annotation, puis le rendu) :
+   * « modulo ppp » pour « modulo $p$ ».
+   */
+  function plainText(node) {
+    var c = node.cloneNode(true);
+    c.querySelectorAll('.katex').forEach(function (k) {
+      var tex = k.querySelector('annotation[encoding="application/x-tex"]');
+      k.replaceWith(tex ? '$' + tex.textContent.trim() + '$' : '');
+    });
+    return c.textContent.replace(/\s+/g, ' ').trim();
+  }
+
   function labelOf(id) {
     var el = id && document.getElementById(id);
     if (!el) return '';
+    if (el.matches('h2, h3')) return plainText(el);
+    if (el.classList.contains('ltx_abstract')) return 'Résumé';
     var tag = el.querySelector('.ltx_tag');
-    var title = el.matches('h2, h3') ? el.textContent : tag ? tag.textContent : '';
-    return title.replace(/\s+/g, ' ').trim();
+    return tag ? plainText(tag) : '';
   }
 
   // ---------------------------------------------------------------------
