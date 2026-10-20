@@ -10,12 +10,12 @@ Ces fiches servent de matériau pour écrire les plans de leçon et préparer le
 
 | Leçon | Intitulé | Documents | Sert aussi pour |
 |---|---|---|---|
-| 126 | Exemples d'équations en arithmétique | [entiers-quadratiques.tex](lecons/126-equations-arithmetique/entiers-quadratiques.tex) | 102, 122, 191 |
+| 126 | Exemples d'équations en arithmétique | [entiers-quadratiques.tex](lecons/126-equations-arithmetique/entiers-quadratiques.tex), [EntiersQuadratiques.lean](lecons/126-equations-arithmetique/EntiersQuadratiques.lean) | 102, 122, 191 |
 | 142 | PGCD et PPCM, algorithmes de calcul. Applications | [divisibilite-pgcd-congruences.tex](lecons/142-pgcd-ppcm/divisibilite-pgcd-congruences.tex) | 120, 121, 126 |
 | 221 | Équations différentielles linéaires. Systèmes d'équations différentielles linéaires. Exemples et applications | [crochet-lie-edo.tex](lecons/221-equations-differentielles-lineaires/crochet-lie-edo.tex), [CrochetLieEDO.lean](lecons/221-equations-differentielles-lineaires/CrochetLieEDO.lean) | 156, 220 |
-| 224 | Exemples de développements asymptotiques de suites et de fonctions | [autour-de-e.tex](lecons/224-developpements-asymptotiques/autour-de-e.tex) | 218, 223, 229, 230 |
-| 228 | Continuité, dérivabilité des fonctions réelles d'une variable réelle | [partie-entiere-regularite.tex](lecons/228-continuite-derivabilite/partie-entiere-regularite.tex) | 229 |
-| 236 | Illustrer par des exemples quelques méthodes de calcul d'intégrales | [calcul-integral.tex](lecons/236-calcul-integrales/calcul-integral.tex) | 218, 230, 235, 239, 246 |
+| 224 | Exemples de développements asymptotiques de suites et de fonctions | [autour-de-e.tex](lecons/224-developpements-asymptotiques/autour-de-e.tex), [AutourDeE.lean](lecons/224-developpements-asymptotiques/AutourDeE.lean) | 218, 223, 229, 230 |
+| 228 | Continuité, dérivabilité des fonctions réelles d'une variable réelle | [partie-entiere-regularite.tex](lecons/228-continuite-derivabilite/partie-entiere-regularite.tex), [PartieEntiereRegularite.lean](lecons/228-continuite-derivabilite/PartieEntiereRegularite.lean) | 229 |
+| 236 | Illustrer par des exemples quelques méthodes de calcul d'intégrales | [calcul-integral.tex](lecons/236-calcul-integrales/calcul-integral.tex), [CalculIntegral.lean](lecons/236-calcul-integrales/CalculIntegral.lean) | 218, 230, 235, 239, 246 |
 
 ## Site web
 

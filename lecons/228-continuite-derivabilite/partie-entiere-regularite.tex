@@ -54,7 +54,7 @@ En terminale, on étudie $f(x)=E(x)\sin(\pi x)$ sur $[-1,2]$. On trouve qu'elle 
 
 \paragraph{Leçons concernées.} 228 (Continuité, dérivabilité des fonctions réelles d'une variable réelle), 229 (Fonctions monotones, fonctions convexes), 218 (Formules de Taylor).
 
-\paragraph{Développements possibles.} Lemme de troncature \ref{lem:troncature} et théorème de recollement \ref{thm:recollement}, avec le corollaire \ref{cor:fm} ; théorème de Darboux \ref{thm:darboux} avec la proposition \ref{prop:limite-derivee} et l'exemple \ref{ex:x2sin}. Une formalisation Lean de la fiche (\texttt{PartieEntiereRegularite.lean}) est en cours.
+\paragraph{Développements possibles.} Lemme de troncature \ref{lem:troncature} et théorème de recollement \ref{thm:recollement}, avec le corollaire \ref{cor:fm} ; théorème de Darboux \ref{thm:darboux} avec la proposition \ref{prop:limite-derivee} et l'exemple \ref{ex:x2sin}. Le fichier \texttt{PartieEntiereRegularite.lean} vérifie avec Mathlib l'exemple \ref{ex:origine}, la proposition \ref{prop:produit}, le corollaire \ref{cor:Esin}, le corollaire \ref{cor:fm} pour $m=1$ et $m=2$, le corollaire \ref{cor:pas-de-saut}, et les exercices 2, 4 et 5 (pour l'exercice 5, à partir de la formule close de $G$), ainsi que le cas des entiers dans l'exercice 1 ; le lemme \ref{lem:troncature}, le théorème \ref{thm:recollement} et le lemme \ref{lem:ordre-sin} n'y sont pas formalisés en général.
 
 \paragraph{Prérequis.} Limites à gauche et à droite, dérivée, théorème des accroissements finis, formule de Leibniz pour la dérivée $n$-ième d'un produit.
 

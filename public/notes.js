@@ -164,6 +164,47 @@
       encodeURIComponent(title.slice(0, 120)) + '&body=' + encodeURIComponent(body.slice(0, 6000));
   }
 
+  /** Un passage court pour l'affichage : espaces de tête retirés, coupé à `max` caractères. */
+  function excerpt(text, max) {
+    var t = text.replace(/\s+/g, ' ').trim();
+    return t.length > max ? t.slice(0, max) + '…' : t;
+  }
+
+  /**
+   * Une seule issue pour toutes les notes de la page, dans l'ordre de lecture.
+   * L'adresse d'une issue pré-remplie a une longueur limitée (environ 8 000
+   * caractères une fois encodée) : les passages trop longs sont abrégés, et
+   * si le tout dépasse encore, la fin est coupée avec un avertissement.
+   */
+  function summaryIssueUrl(notes) {
+    var sorted = notes.slice().sort(function (a, b) { return a.start - b.start; });
+    var base = location.origin + location.pathname;
+    var title = '[' + (cfg.lecon || '') + '] Relecture : ' + sorted.length + ' remarque' + (sorted.length > 1 ? 's' : '') +
+      ' sur « ' + (cfg.title || document.title) + ' »';
+    var head =
+      '**Document :** ' + (cfg.title || document.title) + '\n' +
+      '**Page :** ' + base + '\n' +
+      (cfg.source ? '**Source :** `' + cfg.source + '`\n' : '') + '\n';
+    var parts = sorted.map(function (n, i) {
+      var tex = n.tex.length > 500 ? n.tex.slice(0, 500) + '…' : n.tex;
+      return '### ' + (i + 1) + '. ' + (n.label || 'Passage') + '\n' +
+        base + (n.anchor ? '#' + n.anchor : '') + '\n\n' +
+        tex.split('\n').map(function (l) { return '> ' + l; }).join('\n') + '\n\n' +
+        (n.comment || '_(pas de commentaire)_') + '\n';
+    });
+    var body = head;
+    var LIMIT = 5500;
+    for (var i = 0; i < parts.length; i++) {
+      if ((body + parts[i]).length > LIMIT) {
+        body += '\n_… ' + (parts.length - i) + ' remarque(s) de plus, coupée(s) pour la longueur de l\'adresse : ouvrez-les une par une depuis la liste des notes._\n';
+        break;
+      }
+      body += parts[i] + '\n';
+    }
+    return 'https://github.com/' + cfg.repo + '/issues/new?title=' +
+      encodeURIComponent(title.slice(0, 120)) + '&body=' + encodeURIComponent(body);
+  }
+
   // ---------------------------------------------------------------------
   // L'interface : un bouton près de la sélection, un panneau pour écrire,
   // et la liste des notes de la page.
@@ -237,7 +278,7 @@
     panel.innerHTML = '';
     panel.hidden = false;
     fab.hidden = true;
-    var q = el('blockquote', 'ma-quote', note.text.length > 400 ? note.text.slice(0, 400) + '…' : note.text);
+    var q = el('blockquote', 'ma-quote', excerpt(note.text, 400));
     var where = el('p', 'ma-where', note.label ? 'Près de : ' + note.label : '');
     var ta = el('textarea', 'ma-text');
     ta.placeholder = 'Votre commentaire (une erreur, une question, une suggestion…)';
@@ -301,12 +342,19 @@
     list.append(head);
     if (!notes.length) {
       list.append(el('p', 'ma-hint', 'Sélectionnez un passage du texte, puis « Commenter ».'));
+    } else {
+      var all = el('button', 'ma-btn ma-btn-primary ma-all', notes.length > 1
+        ? 'Une issue pour les ' + notes.length + ' notes'
+        : 'Ouvrir une issue');
+      all.type = 'button';
+      all.onclick = function () { window.open(summaryIssueUrl(load()), '_blank', 'noopener'); };
+      list.append(all);
     }
     var nodes = textNodes();
     var text = flatText(nodes);
     notes.forEach(function (n) {
       var item = el('div', 'ma-item');
-      item.append(el('blockquote', 'ma-quote', n.text.length > 160 ? n.text.slice(0, 160) + '…' : n.text));
+      item.append(el('blockquote', 'ma-quote', excerpt(n.text, 160)));
       if (n.comment) item.append(el('p', 'ma-comment', n.comment));
       var row = el('div', 'ma-row');
       var go = el('button', 'ma-btn ma-btn-quiet', 'Aller au passage');

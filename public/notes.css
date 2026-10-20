@@ -36,3 +36,4 @@
   .ma-panel, .ma-list { left: .5rem; right: .5rem; bottom: .5rem; width: auto; }
   .ma-list-btn { bottom: .75rem; right: .75rem; }
 }
+.ma-all { width: 100%; margin-bottom: .4rem; }
