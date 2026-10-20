@@ -1,5 +1,7 @@
 # Articles de mathématiques
 
+→ **[agreg.commutator.io](https://agreg.commutator.io)**
+
 Notes et fiches de niveau agrégation externe de mathématiques, rangées par leçon d'oral. Chaque dossier `lecons/<numéro>-<intitulé>/` contient les documents rattachés à cette leçon : articles, exercices commentés, développements, et éventuellement une formalisation Lean 4.
 
 La numérotation suit la liste des leçons de l'agrégation externe. Cette liste est publiée chaque année et peut changer : vérifiez les numéros sur la liste de la session préparée.
@@ -59,7 +61,7 @@ cd lean && lake exe cache get && ./check.sh
 | `latex.yml` | modification d'un `.tex` | Compile chaque document avec Tectonic (échoue si l'un ne compile pas) et garde les PDF 30 jours comme artefact |
 | `lean.yml` | modification d'un `.lean` ou de `lean/` | Vérifie les formalisations contre Mathlib |
 
-Le site est publié comme site de projet, à l'adresse `https://<utilisateur>.github.io/<dépôt>/` ; tous les liens sont relatifs. Pour un domaine personnalisé, ajoutez un fichier `public/CNAME`.
+Le site est publié sur **[agreg.commutator.io](https://agreg.commutator.io)**. Le domaine est déclaré dans les réglages GitHub Pages du dépôt et dans `public/CNAME`, que le workflow `site` vérifie à chaque publication. Tous les liens du site sont relatifs : il fonctionne aussi à l'adresse de projet `commutator-io.github.io/maths-articles/`.
 
 ## Origine des fiches
 
