@@ -657,7 +657,7 @@ function makeDoc(pre) {
         if (!key) throw new Error('\\bibitem sans clé');
         const n = String(k + 1);
         this.bib[key.arg.trim()] = n;
-        return `<li class="ltx_bibitem" id="bib-${escapeAttr(key.arg.trim())}"><span class="ltx_tag ltx_tag_bibitem">[${n}]</span> ${inline(p.slice(key.end).trim(), this)}</li>`;
+        return `<li class="ltx_bibitem" id="bib-${escapeAttr(key.arg.trim())}"><span class="ltx_tag ltx_tag_bibitem">[${n}]</span><span class="ltx_bibblock">${inline(p.slice(key.end).trim(), this)}</span></li>`;
       });
       this.toc.push({ level: 'section', num: null, html: 'Références', id: 'bib' });
       return `<section class="ltx_bibliography" id="bib"><h2 class="ltx_title ltx_title_bibliography">Références</h2><ul class="ltx_biblist">${items.join('\n')}</ul></section>`;

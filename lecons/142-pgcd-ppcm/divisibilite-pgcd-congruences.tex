@@ -63,7 +63,7 @@ En terminale, on calcule $(2n+1)\pgcd(n+3)$ en écrivant $2n+1=2(n+3)-5$, et l'o
 
 \paragraph{Prérequis.} Division euclidienne, algorithme d'Euclide, théorème de Bézout, lemme de Gauss, congruences, petit théorème de Fermat. Un peu de calcul matriciel $2\times2$.
 
-\paragraph{Notations.} Pour $a,b\in\Z$, on note $a\pgcd b\geq 0$ leur PGCD, avec $0\pgcd 0=0$.
+\paragraph{Notations.} Pour $a,b\in\Z$, on note $a\pgcd b\geq 0$ leur PGCD, avec $0\pgcd 0=0$. Les résultats de base (Bézout, lemme de Gauss, factorialité de $\Z$) sont supposés connus ; ils sont démontrés par exemple dans \cite{gourdon}.
 
 \tableofcontents
 
@@ -188,7 +188,7 @@ avec les quotients $q=4$, $1$, $2$. Le produit des trois matrices correspondante
 
 \subsection{Coût de l'algorithme d'Euclide}
 
-Puisque l'algorithme d'Euclide est l'outil central, on veut savoir combien il coûte. L'intuition est la suivante : l'algorithme est lent quand les quotients sont petits, car alors les restes diminuent peu. Le pire cas est celui où tous les quotients valent $1$. On retrouve alors la relation $r_{i-1}=r_i+r_{i+1}$, qui est celle de Fibonacci.
+Puisque l'algorithme d'Euclide est l'outil central, on veut savoir combien il coûte. L'intuition est la suivante : l'algorithme est lent quand les quotients sont petits, car alors les restes diminuent peu. Le pire cas est celui où tous les quotients valent $1$. On retrouve alors la relation $r_{i-1}=r_i+r_{i+1}$, qui est celle de Fibonacci. Le livre de Demazure \cite{demazure} replace ce résultat dans l'étude du coût des algorithmes arithmétiques.
 
 On note $(F_k)$ la suite de Fibonacci, $F_1=F_2=1$, $F_{k+2}=F_{k+1}+F_k$, et $\varphi=\frac{1+\sqrt5}2$.
 
@@ -242,7 +242,7 @@ On fait $k=5$ divisions, et l'on a bien $b=8=F_6=F_{k+1}$ et $a=13=F_7=F_{k+2}$.
 \section{Le développement de Pierce}
 % ==========================================================
 
-L'exercice 4 de la feuille d'origine décrit un algorithme sans le nommer. Il ressemble à l'algorithme d'Euclide, avec une différence : on divise toujours le \emph{même} nombre $y$ par les restes successifs, au lieu de diviser chaque reste par le suivant. On va voir que cela produit une écriture de $x/y$ comme somme alternée d'inverses d'entiers.
+L'exercice 4 de la feuille d'origine décrit un algorithme sans le nommer. Il ressemble à l'algorithme d'Euclide, avec une différence : on divise toujours le \emph{même} nombre $y$ par les restes successifs, au lieu de diviser chaque reste par le suivant. On va voir que cela produit une écriture de $x/y$ comme somme alternée d'inverses d'entiers. Elle porte le nom de T.~A.~Pierce, qui l'a étudiée en 1929 \cite{pierce}.
 
 \begin{proposition}\label{prop:pierce}
 Soit $0<x<y$ deux entiers. On pose $r_0=x$, puis, tant que $r_{i-1}\neq0$, on effectue la division euclidienne $y=q_ir_{i-1}+r_i$ avec $0\leq r_i<r_{i-1}$. L'algorithme s'arrête après un nombre fini $n$ d'étapes, avec $r_n = 0$, et
@@ -383,7 +383,7 @@ Pour $k\geq1$ : si $31\cdot16^k=\sum_{i=1}^{15}x_i^4$, le nombre de $x_i$ impair
 \end{proof}
 
 \begin{remarque}
-Notons $g(4)$ le plus petit $s$ tel que tout entier soit somme de $s$ puissances quatrièmes, et $G(4)$ le plus petit $s$ tel que tout entier assez grand le soit. Les propositions précédentes donnent $g(4)\geq19$ (à cause de $79$) et $G(4)\geq16$ (à cause des $31\cdot16^k$). Ces bornes sont exactes : $G(4)=16$ (Davenport, 1939) et $g(4)=19$ (Balasubramanian, Deshouillers et Dress, 1986). Les minorations sont élémentaires, comme on vient de le voir ; toute la difficulté est dans les majorations.
+Notons $g(4)$ le plus petit $s$ tel que tout entier soit somme de $s$ puissances quatrièmes, et $G(4)$ le plus petit $s$ tel que tout entier assez grand le soit. Les propositions précédentes donnent $g(4)\geq19$ (à cause de $79$) et $G(4)\geq16$ (à cause des $31\cdot16^k$). Ces bornes sont exactes : $G(4)=16$ (Davenport, 1939) et $g(4)=19$ (Balasubramanian, Deshouillers et Dress, 1986). Les minorations sont élémentaires, comme on vient de le voir ; toute la difficulté est dans les majorations. Le chapitre 21 de Hardy et Wright \cite{hw} raconte cette histoire et démontre une partie des majorations.
 \end{remarque}
 
 % ==========================================================
@@ -392,7 +392,7 @@ Notons $g(4)$ le plus petit $s$ tel que tout entier soit somme de $s$ puissances
 
 L'exercice 3 de la feuille demandait de montrer que $60$ divise $xyz$ dès que $x^2+y^2=z^2$. On peut le faire à coups de congruences. Mais on comprend mieux en décrivant d'abord \emph{toutes} les solutions : les divisibilités se lisent ensuite sur la formule.
 
-On se ramène aux triplets \emph{primitifs}, où $x\pgcd y=1$ : un triplet quelconque en est un multiple. L'idée centrale est une factorisation : $x^2=z^2-y^2$, ou plutôt, avec $y$ pair, $(y/2)^2$ s'écrit comme produit de deux entiers premiers entre eux. Dans $\Z$, un tel produit ne peut être un carré que si chaque facteur en est un.
+On se ramène aux triplets \emph{primitifs}, où $x\pgcd y=1$ : un triplet quelconque en est un multiple. L'idée centrale est une factorisation : $x^2=z^2-y^2$, ou plutôt, avec $y$ pair, $(y/2)^2$ s'écrit comme produit de deux entiers premiers entre eux. Dans $\Z$, un tel produit ne peut être un carré que si chaque facteur en est un. Ce paramétrage est classique ; on le trouve, avec d'autres équations du même genre, au chapitre 13 de Hardy et Wright \cite{hw}.
 
 \begin{theoreme}\label{thm:pyth}
 Les solutions de $x^2+y^2=z^2$ en entiers $x,y,z\geq1$ avec $x\pgcd y=1$ et $y$ pair sont exactement
@@ -524,9 +524,20 @@ Soit $s\geq1$. Montrer que les sommes de $s$ puissances quatrièmes ne recouvren
 
 \paragraph{Exercice 2.} $M\pgcd N$ divise $N-M=2$, donc vaut $1$ ou $2$. Si $n$ est pair, $M$ et $N$ sont impairs et $M\pgcd N=1$. Si $n$ est impair, ils sont pairs et $M\pgcd N=2$. Comme $81n^2-1=MN$ : si $n$ est impair, $M$ et $N$ sont pairs et $4\mid MN$ ; si $n$ est pair, $MN$ est impair.
 
-\paragraph{Exercice 3.} Soit $d=a\pgcd b$. On compte les carrés en suivant la diagonale. Elle coupe les $a-1$ droites verticales et les $b-1$ droites horizontales intérieures. Elle entre dans un nouveau carré à chaque coupure, sauf quand elle franchit simultanément une verticale et une horizontale, c'est-à-dire en un point entier. Ces points sont les $\big(\frac{ja}{d},\frac{jb}{d}\big)$, $0<j<d$, au nombre de $d-1$. Le nombre de carrés traversés est donc $1+(a-1)+(b-1)-(d-1)=a+b-a\pgcd b$.
+\paragraph{Exercice 3.} Commençons par compter sur un exemple, le rectangle $6\times4$ de la figure \ref{fig:diagonale}. Suivons la diagonale depuis le coin $(0,0)$ : elle part dans un premier carré. Ensuite, chaque fois qu'elle traverse un trait du quadrillage, elle entre dans un nouveau carré.
+\begin{itemize}[nosep]
+\item Elle traverse les traits verticaux intérieurs $x=1,2,3,4,5$ : cela fait $5$ entrées.
+\item Elle traverse les traits horizontaux intérieurs $y=1,2,3$ : cela fait $3$ entrées.
+\item Si toutes ces traversées avaient lieu en des points différents, on compterait $1+5+3=9$ carrés.
+\item Mais au point $(3,2)$, elle traverse un trait vertical et un trait horizontal \emph{en même temps}, exactement par un coin. Elle n'entre alors que dans un seul nouveau carré, celui en diagonale, et on a compté cette entrée deux fois.
+\end{itemize}
+Il reste $9-1=8$ carrés, ce sont les huit carrés grisés de la figure.
 
-Par exemple, pour un rectangle $6\times4$ (figure \ref{fig:diagonale}), on a $d=2$. La diagonale coupe $5$ verticales et $3$ horizontales, mais franchit les deux à la fois au seul point entier intérieur $(3,2)$. Elle traverse donc $1+5+3-1=6+4-2=8$ carrés.
+Le cas général suit le même compte. Dans un rectangle $a\times b$, la diagonale part dans un carré, traverse $a-1$ traits verticaux et $b-1$ traits horizontaux, et on retire une entrée pour chaque coin où elle passe, c'est-à-dire pour chaque point entier intérieur de la diagonale. Reste à compter ces points. La diagonale est la droite $y=\frac ba\,x$. Pour $0<x<a$ entier, $y$ est entier si et seulement si $a$ divise $bx$. Écrivons $d=a\pgcd b$, $a=da'$ et $b=db'$ avec $a'\pgcd b'=1$ : la condition devient $a'\mid b'x$, c'est-à-dire $a'\mid x$ par le lemme de Gauss. Les points entiers intérieurs sont donc ceux d'abscisse $a', 2a', \dots, (d-1)a'$ : il y en a $d-1$. Le nombre de carrés traversés est
+\[
+  1+(a-1)+(b-1)-(d-1)=a+b-a\pgcd b .
+\]
+Pour $6\times4$, on retrouve $6+4-2=8$, avec un seul point entier intérieur, $(3,2)$, puisque $6\pgcd4=2$.
 
 \begin{figure}[h]
 \centering
@@ -551,10 +562,10 @@ Par exemple, pour un rectangle $6\times4$ (figure \ref{fig:diagonale}), on a $d=
 \paragraph{Exercice 6.} Par le lemme \ref{lem:mod16}, une somme de $s$ puissances quatrièmes est congrue modulo $16$ au nombre $j\in\{0,\dots,s\}$ de termes impairs. Toutes les valeurs de $j$ sont atteintes, avec $j$ termes égaux à $1$ et $s-j$ nuls. Les classes atteintes sont donc celles de $0,1,\dots,\min(s,15)$ : toutes si $s\geq15$, et seulement $s+1<16$ d'entre elles si $s\leq14$.
 
 \begin{thebibliography}{9}
-\bibitem{demazure} M. Demazure, \emph{Cours d'algèbre. Primalité, divisibilité, codes}, Cassini.
-\bibitem{gourdon} X. Gourdon, \emph{Les maths en tête. Algèbre et probabilités}, Ellipses.
-\bibitem{hw} G. H. Hardy, E. M. Wright, \emph{An Introduction to the Theory of Numbers}, Oxford University Press.
-\bibitem{pierce} T. A. Pierce, \emph{On an algorithm and its use in approximating roots of algebraic equations}, Amer. Math. Monthly 36 (1929).
+\bibitem{demazure} M. Demazure, \emph{Cours d'algèbre. Primalité, divisibilité, codes}, Cassini. Un cours d'arithmétique tourné vers les algorithmes : algorithme d'Euclide et son coût, tests de primalité, codes correcteurs.
+\bibitem{gourdon} X. Gourdon, \emph{Les maths en tête. Algèbre et probabilités}, Ellipses. Le manuel de référence des classes préparatoires et de l'agrégation pour les bases : PGCD, Bézout, lemme de Gauss, anneaux $\Z/n\Z$.
+\bibitem{hw} G. H. Hardy, E. M. Wright, \emph{An Introduction to the Theory of Numbers}, Oxford University Press (1\textsuperscript{re} édition 1938, 6\textsuperscript{e} édition revue par D.~R.~Heath-Brown et J.~H.~Silverman, 2008). Le grand classique de la théorie des nombres, en anglais ; on y trouve les triplets pythagoriciens (chapitre 13) et le problème de Waring (chapitre 21).
+\bibitem{pierce} T. A. Pierce, \emph{On an algorithm and its use in approximating roots of algebraic equations}, Amer. Math. Monthly 36 (1929). L'article d'origine du développement de la section 2.
 \end{thebibliography}
 
 \paragraph{Source.} Feuille de révision de terminale S (2003), d'après les manuels \emph{Hyperbole} et \emph{Bréal}. La partie « Continuité » de cette feuille est reprise dans la leçon 228.
