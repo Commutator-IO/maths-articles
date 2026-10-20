@@ -18,6 +18,8 @@
 \usepackage{enumitem}
 \usepackage{microtype}
 \usepackage[hidelinks]{hyperref}
+\usepackage{tikz}
+\input{../figures/tikz-setup.tex}
 
 % ---------- Environnements ----------
 \theoremstyle{plain}
@@ -43,7 +45,7 @@
 \DeclareMathOperator{\tr}{tr}
 
 \title{Entiers quadratiques : unités de $\Z[\sqrt2]$\\ et polygones réguliers du réseau\\[2pt]
-\large Exercices commentés pour l'agrégation}
+\large Deux exercices de terminale et ce qu'ils cachent}
 \author{Michel Hua}
 \date{Octobre 2026}
 
@@ -51,65 +53,122 @@
 \maketitle
 
 \begin{abstract}
-On reprend deux exercices de terminale. Le premier montre qu'aucun triangle équilatéral n'a ses sommets sur un quadrillage, par l'irrationalité de $\sqrt3$. Le second établit que, pour tout $q\in\N$, $(1+\sqrt2)^q=\sqrt{n+1}+\sqrt n$ pour un entier $n$. Derrière le second se trouve la structure du groupe des unités de $\Z[\sqrt d]$ : on montre que les unités de $\Z[\sqrt2]$ sont les $\pm(1+\sqrt2)^k$, ce qui résout les équations $x^2-2y^2=\pm1$, et que $\Z[\sqrt2]$ est euclidien. Derrière le premier se trouve un énoncé plus fort : un polygone régulier à $n$ sommets dans $\Z^2$ n'existe que pour $n=4$, et dans $\Z^d$ que pour $n\in\{3,4,6\}$. La preuve repose sur un argument de trace : une rotation qui préserve un réseau a une trace entière.
+On part de deux exercices de terminale. Le premier demande si un triangle équilatéral peut avoir ses sommets sur un quadrillage. Le second demande de montrer que chaque puissance $(1+\sqrt2)^q$ s'écrit $\sqrt{n+1}+\sqrt n$ avec $n$ entier. Les deux se résolvent en quelques lignes, mais chacun cache une idée plus générale. Derrière le second, il y a le groupe des unités de l'anneau $\Z[\sqrt2]$ : on montre que ce sont exactement les $\pm(1+\sqrt2)^k$, ce qui résout l'équation de Pell-Fermat $x^2-2y^2=\pm1$, et que cet anneau est euclidien. Derrière le premier, il y a un argument de trace : une rotation qui préserve un réseau a une trace entière. On en déduit que le seul polygone régulier à sommets entiers dans le plan est le carré.
 \end{abstract}
 
 \paragraph{Leçons concernées.} 126 (Exemples d'équations en arithmétique), 122 (Anneaux principaux), 191 (Exemples d'utilisation des techniques d'algèbre en géométrie), 102 (Groupe des nombres complexes de module $1$, racines de l'unité).
 
 \paragraph{Développements possibles.} Théorème \ref{thm:unites} et corollaire \ref{cor:z2} (unités de $\Z[\sqrt2]$ et équation $x^2-2y^2=\pm1$) ; proposition \ref{prop:euclide} et exercice \ref{exo:premiers} ; théorème \ref{thm:polygones} avec l'exercice \ref{exo:zd}.
 
-\paragraph{Notations.} Dans tout le texte, $d\geq2$ est un entier qui n'est pas un carré parfait. On note $\Z[\sqrt d]=\{a+b\sqrt d : a,b\in\Z\}$ et $\Q(\sqrt d)=\{r+s\sqrt d : r,s\in\Q\}$, vus comme sous-anneaux de $\R$.
+\paragraph{Prérequis.} Irrationalité de $\sqrt2$, anneaux et groupes, anneaux principaux, matrices $2\times2$, rotations du plan.
+
+\paragraph{Notations.} Dans tout le texte, $d\geq2$ est un entier qui n'est pas un carré parfait. On note $\Z[\sqrt d]=\{a+b\sqrt d : a,b\in\Z\}$ et $\Q(\sqrt d)=\{r+s\sqrt d : r,s\in\Q\}$. Ce sont des sous-anneaux de $\R$.
 
 \tableofcontents
 
 % ==========================================================
-\section{Unités de \texorpdfstring{$\Z[\sqrt d]$}{Z[sqrt d]} et équation de Pell-Fermat}
+\section{Deux questions de terminale}
+% ==========================================================
+
+\paragraph{Première question.} Sur une feuille quadrillée, peut-on dessiner un triangle équilatéral dont les trois sommets sont des nœuds du quadrillage ? On essaie. Le triangle $(0,0)$, $(2,0)$, $(1,2)$ est isocèle, mais ses côtés valent $2$, $\sqrt5$ et $\sqrt5$. On n'arrive jamais à égaliser les trois (figure \ref{fig:quadrillage}). Nous verrons pourquoi : la hauteur d'un triangle équilatéral de côté $\ell$ vaut $\frac{\sqrt3}2\ell$, et $\sqrt3$ est irrationnel.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=1.6]
+  \foreach \x in {0,...,3} \foreach \y in {0,...,3} \fill[gray!60] (\x,\y) circle (1.4pt);
+  \draw[gray!30] (-0.4,-0.4) grid (3.4,3.4);
+  \draw[thick,accent] (0,0) -- (2,0) -- (1,2) -- cycle;
+  \draw[thick,dashed,accent2] (0,0) -- (1,1.732) -- (2,0);
+  \fill[accent2] (1,1.732) circle (2pt) node[left=4pt] {$(1,\sqrt{3})$};
+  \fill[accent] (1,2) circle (2pt) node[above=2pt] {$(1,2)$};
+  \draw[<->,accent2] (1.15,1.732) -- (1.15,2) node[midway,right=2pt,font=\scriptsize] {$2-\sqrt{3}$};
+  \node[below] at (0,0) {$(0,0)$};
+  \node[below] at (2,0) {$(2,0)$};
+\end{tikzpicture}
+\caption{Sur la base $(0,0)$, $(2,0)$, le troisième sommet du triangle équilatéral est $(1,\sqrt3)$ : il tombe entre deux nœuds. Le nœud le plus proche, $(1,2)$, donne un triangle seulement isocèle.}\label{fig:quadrillage}
+\end{figure}
+
+\paragraph{Seconde question.} Développons les premières puissances de $1+\sqrt2$ :
+\[
+\begin{array}{c|ccccc}
+q&1&2&3&4&5\\\hline
+(1+\sqrt2)^q&1+\sqrt2&3+2\sqrt2&7+5\sqrt2&17+12\sqrt2&41+29\sqrt2\\
+&\sqrt1+\sqrt2&\sqrt9+\sqrt8&\sqrt{49}+\sqrt{50}&\sqrt{289}+\sqrt{288}&\sqrt{1681}+\sqrt{1682}
+\end{array}
+\]
+À chaque fois, on obtient la somme des racines de deux entiers \emph{consécutifs}. L'exercice demande de montrer que c'est toujours le cas : pour tout $q\in\N$, il existe $n\in\N$ tel que
+\[
+  (1+\sqrt2)^q=\sqrt{n+1}+\sqrt n .
+\]
+Si l'on écrit $(1+\sqrt2)^q=a_q+b_q\sqrt2$, cela revient à dire que $a_q^2$ et $2b_q^2$ sont consécutifs, c'est-à-dire que $a_q^2-2b_q^2=\pm1$.
+
+\paragraph{Ce qu'on va faire.} La seconde question parle d'une équation, $x^2-2y^2=\pm1$, et la section \ref{sec:unites} la résout complètement. La bonne notion est celle d'\emph{unité} d'un anneau. La première question parle de géométrie, et la section \ref{sec:polygones} la généralise à tous les polygones réguliers. Dans les deux cas, l'outil de base est le même : un nombre irrationnel ne peut pas être égal à un quotient d'entiers.
+
+% ==========================================================
+\section{Unités de \texorpdfstring{$\Z[\sqrt d]$}{Z[sqrt d]} et équation de Pell-Fermat}\label{sec:unites}
 % ==========================================================
 
 \subsection{Norme et conjugaison}
 
+Pour calculer dans $\Z[\sqrt d]$, on veut pouvoir identifier les coefficients : si $a+b\sqrt d=a'+b'\sqrt d$, on aimerait conclure $a=a'$ et $b=b'$. C'est exactement l'irrationalité de $\sqrt d$.
+
 \begin{lemme}\label{lem:irr}
-Le réel $\sqrt d$ est irrationnel. Par conséquent, si $r,s\in\Q$ vérifient $r+s\sqrt d=0$, alors $r=s=0$, et l'écriture d'un élément de $\Q(\sqrt d)$ sous la forme $r+s\sqrt d$ est unique.
+Le réel $\sqrt d$ est irrationnel. Par conséquent, si $r,s\in\Q$ vérifient $r+s\sqrt d=0$, alors $r=s=0$. En particulier, l'écriture d'un élément de $\Q(\sqrt d)$ sous la forme $r+s\sqrt d$ est unique.
 \end{lemme}
 
 \begin{proof}
-Supposons $\sqrt d=p/q$ avec $p,q\geq1$ et $p\pgcd q=1$. Alors $p^2=dq^2$. Si un nombre premier $\ell$ divisait $q$, il diviserait $p^2$, donc $p$, ce qui contredit $p\pgcd q=1$. Ainsi $q=1$ et $d=p^2$ est un carré, ce qui est exclu. Si $r+s\sqrt d=0$ avec $s\neq0$, alors $\sqrt d=-r/s\in\Q$, ce qui est absurde. Donc $s=0$, puis $r=0$. L'unicité de l'écriture s'en déduit par différence.
+Supposons $\sqrt d=p/q$ avec $p,q\geq1$ et $p\pgcd q=1$. Alors $p^2=dq^2$. Si un nombre premier $\ell$ divisait $q$, il diviserait $p^2$, donc $p$. C'est impossible puisque $p\pgcd q=1$. Donc $q=1$ et $d=p^2$ est un carré, ce qui est exclu.
+
+Si maintenant $r+s\sqrt d=0$ avec $s\neq0$, on aurait $\sqrt d=-r/s\in\Q$. Donc $s=0$, puis $r=0$. L'unicité de l'écriture s'obtient en appliquant ceci à la différence de deux écritures.
 \end{proof}
 
+Dans la feuille d'origine, on montrait par une récurrence que $(1+\sqrt2)^q=a_q+b_q\sqrt2$, puis, par une seconde récurrence, que $(1-\sqrt2)^q=a_q-b_q\sqrt2$ avec les \emph{mêmes} coefficients. Cette seconde récurrence cache un fait simple : changer $\sqrt2$ en $-\sqrt2$ respecte les opérations. On donne un nom à cette opération.
+
 \begin{definition}
-La \emph{conjugaison} est l'application $\sigma:\Q(\sqrt d)\to\Q(\sqrt d)$, $r+s\sqrt d\mapsto r-s\sqrt d$, bien définie par le lemme \ref{lem:irr}. La \emph{norme} est $\Nm(x)=x\,\sigma(x)$, c'est-à-dire $\Nm(r+s\sqrt d)=r^2-ds^2$.
+La \emph{conjugaison} est l'application $\sigma:\Q(\sqrt d)\to\Q(\sqrt d)$, $r+s\sqrt d\mapsto r-s\sqrt d$. Elle est bien définie grâce au lemme \ref{lem:irr}. La \emph{norme} est $\Nm(x)=x\,\sigma(x)$, c'est-à-dire
+\[
+  \Nm(r+s\sqrt d)=(r+s\sqrt d)(r-s\sqrt d)=r^2-ds^2 .
+\]
 \end{definition}
+
+L'équation $x^2-2y^2=\pm1$ s'écrit donc $\Nm(x+y\sqrt2)=\pm1$. La proposition suivante rassemble ce qu'on sait de la norme. Le point important est le troisième : les solutions de l'équation sont exactement les éléments inversibles de l'anneau.
 
 \begin{proposition}\label{prop:norme}
 \begin{enumerate}[nosep]
-\item $\sigma$ est un automorphisme involutif de l'anneau $\Q(\sqrt d)$, qui stabilise $\Z[\sqrt d]$.
-\item La norme est multiplicative, prend des valeurs entières sur $\Z[\sqrt d]$, et $\Nm(x)=0$ si et seulement si $x=0$.
-\item Un élément $x\in\Z[\sqrt d]$ est inversible dans $\Z[\sqrt d]$ si et seulement si $\Nm(x)=\pm1$, et alors $x^{-1}=\Nm(x)\,\sigma(x)$.
+\item $\sigma$ est un automorphisme de l'anneau $\Q(\sqrt d)$, égal à son propre inverse, qui envoie $\Z[\sqrt d]$ dans lui-même.
+\item La norme est multiplicative : $\Nm(xy)=\Nm(x)\Nm(y)$. Elle est entière sur $\Z[\sqrt d]$, et $\Nm(x)=0$ si et seulement si $x=0$.
+\item Un élément $x\in\Z[\sqrt d]$ est inversible dans $\Z[\sqrt d]$ si et seulement si $\Nm(x)=\pm1$. Dans ce cas, $x^{-1}=\Nm(x)\,\sigma(x)$.
 \end{enumerate}
 \end{proposition}
 
 \begin{proof}
-1. L'additivité est claire. Pour $x=r+s\sqrt d$ et $x'=r'+s'\sqrt d$, on a $xx'=(rr'+dss')+(rs'+r's)\sqrt d$, et
+1. L'additivité est claire. Pour la multiplicativité, on écrit $x=r+s\sqrt d$ et $x'=r'+s'\sqrt d$. On a $xx'=(rr'+dss')+(rs'+r's)\sqrt d$, et
 \[
   \sigma(x)\sigma(x')=(r-s\sqrt d)(r'-s'\sqrt d)=(rr'+dss')-(rs'+r's)\sqrt d=\sigma(xx').
 \]
-Enfin $\sigma(1)=1$, $\sigma\circ\sigma=\mathrm{id}$, et $\sigma$ envoie $\Z[\sqrt d]$ dans lui-même.
+Enfin $\sigma(1)=1$ et $\sigma\circ\sigma=\mathrm{id}$. Si $r,s$ sont entiers, $r-s\sqrt d$ est dans $\Z[\sqrt d]$.
 
-2. $\Nm(xx')=xx'\sigma(x)\sigma(x')=\Nm(x)\Nm(x')$. Si $x\in\Z[\sqrt d]$, $\Nm(x)=a^2-db^2\in\Z$. Si $\Nm(r+s\sqrt d)=0$ avec $s\neq0$, alors $d=(r/s)^2$ et $\sqrt d=|r/s|\in\Q$, ce qui contredit le lemme \ref{lem:irr} ; donc $s=0$, puis $r=0$.
+2. On a $\Nm(xx')=xx'\,\sigma(x)\sigma(x')=x\sigma(x)\cdot x'\sigma(x')=\Nm(x)\Nm(x')$. Pour $x\in\Z[\sqrt d]$, $\Nm(x)=a^2-db^2\in\Z$. Supposons $\Nm(r+s\sqrt d)=0$. Si $s\neq0$, alors $d=(r/s)^2$ et $\sqrt d=|r/s|\in\Q$, ce qui contredit le lemme \ref{lem:irr}. Donc $s=0$, puis $r^2=0$.
 
-3. Si $xy=1$ avec $x,y\in\Z[\sqrt d]$, alors $\Nm(x)\Nm(y)=1$ dans $\Z$, donc $\Nm(x)=\pm1$. Réciproquement, si $\Nm(x)=\pm1$, alors $x\cdot\Nm(x)\sigma(x)=\Nm(x)^2=1$ et $\Nm(x)\sigma(x)\in\Z[\sqrt d]$.
+3. Si $xy=1$ avec $x,y\in\Z[\sqrt d]$, alors $\Nm(x)\Nm(y)=\Nm(1)=1$. Ce sont deux entiers de produit $1$, donc $\Nm(x)=\pm1$. Réciproquement, si $\Nm(x)=\pm1$, on a $x\cdot\Nm(x)\sigma(x)=\Nm(x)^2=1$, et $\Nm(x)\sigma(x)$ est bien dans $\Z[\sqrt d]$.
 \end{proof}
 
-Ainsi, résoudre l'équation de Pell-Fermat $x^2-dy^2=\pm1$ dans $\Z^2$, c'est déterminer le groupe $\Z[\sqrt d]^\times$.
+La multiplicativité de la norme répond déjà à la question de départ. Comme $\Nm(1+\sqrt2)=1-2=-1$, on a $\Nm\big((1+\sqrt2)^q\big)=(-1)^q$, c'est-à-dire $a_q^2-2b_q^2=(-1)^q$. La feuille d'origine ne faisait pas autre chose, avec $\sigma$ caché dans la seconde récurrence. Mais on peut aller plus loin et se demander si les $(1+\sqrt2)^q$ sont les \emph{seules} solutions.
 
 \subsection{Structure du groupe des unités}
+
+Le groupe des unités $\Z[\sqrt d]^\times$ contient toujours $1$ et $-1$. On veut décrire les autres. L'idée est de les ranger sur la droite réelle : on va voir qu'il y a une plus petite unité strictement plus grande que $1$, et que toutes les autres en sont des puissances. Le lemme suivant dit qu'une unité $>1$ a des coefficients positifs, ce qui empêche les unités de s'accumuler près de $1$.
 
 \begin{lemme}\label{lem:positif}
 Si $u=a+b\sqrt d\in\Z[\sqrt d]^\times$ vérifie $u>1$, alors $a\geq1$ et $b\geq1$. En particulier $u\geq1+\sqrt d$.
 \end{lemme}
 
 \begin{proof}
-Par la proposition \ref{prop:norme}, $\sigma(u)=\Nm(u)/u=\pm1/u\in\,]-1,1[$. Donc $2a=u+\sigma(u)>1-1=0$ et $2b\sqrt d=u-\sigma(u)>1-1=0$. Comme $a$ et $b$ sont entiers, $a\geq1$ et $b\geq1$.
+L'idée est que le conjugué d'une grande unité est petit. Par la proposition \ref{prop:norme}, $u\,\sigma(u)=\pm1$, donc $\sigma(u)=\pm1/u$ appartient à $]-1,1[$. On récupère les coefficients par demi-somme et demi-différence :
+\[
+  2a=u+\sigma(u)>1-1=0,\qquad 2b\sqrt d=u-\sigma(u)>1-1=0 .
+\]
+Comme $a$ et $b$ sont entiers, $a\geq1$ et $b\geq1$.
 \end{proof}
 
 \begin{theoreme}\label{thm:unites}
@@ -120,29 +179,35 @@ Si $\Z[\sqrt d]^\times\neq\{\pm1\}$, alors $\Z[\sqrt d]^\times$ possède un plus
 On dit que $\varepsilon_d$ est l'\emph{unité fondamentale} de $\Z[\sqrt d]$.
 \end{theoreme}
 
+L'idée de la preuve est celle de la division euclidienne, mais pour la multiplication. Si $u$ est une unité positive, on l'encadre entre deux puissances consécutives de $\varepsilon_d$. En divisant par la plus petite, on obtient une unité comprise entre $1$ et $\varepsilon_d$. Par minimalité de $\varepsilon_d$, ce « reste » vaut $1$.
+
 \begin{proof}
-\emph{Existence de $\varepsilon_d$.} Soit $u$ une unité différente de $\pm1$. Alors $|u|\neq1$ puisque $u$ est réel, et l'un des quatre réels $u,-u,u^{-1},-u^{-1}$, qui sont des unités, est $>1$ ; notons-le $M$. Par le lemme \ref{lem:positif}, une unité $a+b\sqrt d\in\,]1,M]$ vérifie $1\leq a\leq M$ et $1\leq b\leq M/\sqrt d$ ; il n'y en a donc qu'un nombre fini, et au moins une, $M$. On note $\varepsilon_d$ la plus petite.
+\emph{Existence de $\varepsilon_d$.} Soit $u$ une unité différente de $\pm1$. Comme $u$ est réel, $|u|\neq1$. L'un des quatre réels $u,-u,u^{-1},-u^{-1}$ est donc $>1$ ; c'est une unité, notée $M$. Par le lemme \ref{lem:positif}, une unité $a+b\sqrt d$ comprise dans $]1,M]$ vérifie $1\leq a\leq M$ et $1\leq b\leq M/\sqrt d$. Il n'y en a donc qu'un nombre fini, et il y en a au moins une, $M$ lui-même. On note $\varepsilon_d$ la plus petite.
 
-\emph{Descente.} Soit $u$ une unité. Quitte à remplacer $u$ par $-u$, on peut supposer $u>0$. Comme $\varepsilon_d>1$, il existe un unique $k\in\Z$ tel que $\varepsilon_d^{\,k}\leq u<\varepsilon_d^{\,k+1}$, à savoir $k=\lfloor\ln u/\ln\varepsilon_d\rfloor$. Alors $v=u\,\varepsilon_d^{-k}$ est une unité vérifiant $1\leq v<\varepsilon_d$. Par minimalité de $\varepsilon_d$, on ne peut avoir $v>1$, donc $v=1$ et $u=\varepsilon_d^{\,k}$.
+\emph{Descente.} Soit $u$ une unité. Quitte à remplacer $u$ par $-u$, on suppose $u>0$. Comme $\varepsilon_d>1$, il existe un unique $k\in\Z$ tel que $\varepsilon_d^{\,k}\leq u<\varepsilon_d^{\,k+1}$, à savoir $k=\lfloor\ln u/\ln\varepsilon_d\rfloor$. Alors $v=u\,\varepsilon_d^{-k}$ est une unité, et $1\leq v<\varepsilon_d$. Par minimalité de $\varepsilon_d$, on ne peut pas avoir $v>1$. Donc $v=1$ et $u=\varepsilon_d^{\,k}$.
 
-Enfin $(\pm1,k)\mapsto\pm\varepsilon_d^{\,k}$ est un morphisme de groupes surjectif, injectif car $\pm\varepsilon_d^{\,k}=1$ impose $\varepsilon_d^{\,k}=1$, donc $k=0$, et le signe $+$.
+\emph{Isomorphisme.} L'application $(\pm1,k)\mapsto\pm\varepsilon_d^{\,k}$ est un morphisme de groupes, surjectif d'après ce qui précède. Il est injectif : si $\pm\varepsilon_d^{\,k}=1$, alors le signe est $+$ (car $\varepsilon_d^{\,k}>0$), puis $k=0$ (car $\varepsilon_d>1$).
 \end{proof}
+
+Le théorème ne dit pas comment trouver $\varepsilon_d$. Pour $d=2$, le lemme \ref{lem:positif} le donne immédiatement : une unité $>1$ est au moins $1+\sqrt2$, et $1+\sqrt2$ est une unité.
 
 \begin{corollaire}\label{cor:z2}
 \begin{enumerate}[nosep]
 \item $\Z[\sqrt2]^\times=\{\pm(1+\sqrt2)^k : k\in\Z\}$.
-\item Pour $q\in\N$, écrivons $(1+\sqrt2)^q=a_q+b_q\sqrt2$. Les solutions dans $\N^2$ de $x^2-2y^2=1$ sont les $(a_q,b_q)$ avec $q$ pair, et celles de $x^2-2y^2=-1$ sont les $(a_q,b_q)$ avec $q$ impair.
+\item Pour $q\in\N$, écrivons $(1+\sqrt2)^q=a_q+b_q\sqrt2$. Les solutions dans $\N^2$ de $x^2-2y^2=1$ sont les $(a_q,b_q)$ avec $q$ pair. Celles de $x^2-2y^2=-1$ sont les $(a_q,b_q)$ avec $q$ impair.
 \end{enumerate}
 \end{corollaire}
 
 \begin{proof}
-1. $\Nm(1+\sqrt2)=1-2=-1$, donc $1+\sqrt2$ est une unité $>1$ et le théorème s'applique. Par le lemme \ref{lem:positif}, toute unité $>1$ est $\geq1+\sqrt2$, donc $\varepsilon_2=1+\sqrt2$.
+1. On a $\Nm(1+\sqrt2)=-1$, donc $1+\sqrt2$ est une unité $>1$ et le théorème s'applique. Par le lemme \ref{lem:positif}, toute unité $>1$ est $\geq1+\sqrt2$. Donc $\varepsilon_2=1+\sqrt2$.
 
-2. Si $(x,y)\in\N^2$ vérifie $x^2-2y^2=\pm1$, alors $u=x+y\sqrt2$ est une unité, non nulle, donc $(x,y)\neq(0,0)$ et $u\geq1$. Par le point 1, $u=(1+\sqrt2)^q$ avec $q\in\Z$, et $q\geq0$ car $(1+\sqrt2)^q<1$ pour $q<0$. Par unicité de l'écriture, $(x,y)=(a_q,b_q)$. Enfin $a_q^2-2b_q^2=\Nm\big((1+\sqrt2)^q\big)=(-1)^q$. Réciproquement chaque $(a_q,b_q)$ est dans $\N^2$, par la récurrence $a_{q+1}=a_q+2b_q$, $b_{q+1}=a_q+b_q$, $(a_0,b_0)=(1,0)$.
+2. Soit $(x,y)\in\N^2$ avec $x^2-2y^2=\pm1$. Alors $u=x+y\sqrt2$ est une unité. Elle n'est pas nulle, donc $(x,y)\neq(0,0)$ et $u\geq1$. Par le point 1, $u=(1+\sqrt2)^q$ avec $q\in\Z$. On a $q\geq0$, car $(1+\sqrt2)^q<1$ pour $q<0$. Par unicité de l'écriture, $(x,y)=(a_q,b_q)$, et le signe est $\Nm\big((1+\sqrt2)^q\big)=(-1)^q$.
+
+Réciproquement, chaque $(a_q,b_q)$ est dans $\N^2$. En effet, en multipliant par $1+\sqrt2$, on obtient la récurrence $a_{q+1}=a_q+2b_q$, $b_{q+1}=a_q+b_q$, avec $(a_0,b_0)=(1,0)$.
 \end{proof}
 
 \begin{exemple}
-Les premières valeurs sont, pour $q=0,\dots,7$ :
+Voici les premières valeurs :
 \[
 \begin{array}{c|cccccccc}
 q&0&1&2&3&4&5&6&7\\\hline
@@ -150,118 +215,192 @@ a_q&1&1&3&7&17&41&99&239\\
 b_q&0&1&2&5&12&29&70&169
 \end{array}
 \]
-Les deux suites vérifient $x_{q+2}=2x_{q+1}+x_q$, puisque $1+\sqrt2$ est racine de $X^2-2X-1$.
+On vérifie par exemple $99^2-2\cdot70^2=9801-9800=1$ et $239^2-2\cdot169^2=57121-57122=-1$. Les deux suites vérifient aussi $x_{q+2}=2x_{q+1}+x_q$, puisque $1+\sqrt2$ est racine de $X^2-2X-1$. La figure \ref{fig:hyperboles} montre ces points sur les deux hyperboles $x^2-2y^2=\pm1$ : multiplier par $1+\sqrt2$ fait sauter d'une branche à l'autre en s'éloignant de l'origine.
 \end{exemple}
 
-\subsection{L'exercice d'origine}
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=1.15]
+  \draw[gray!30] (0,0) grid (4.3,3.2);
+  \draw[->] (0,0) -- (4.6,0) node[right] {$x$};
+  \draw[->] (0,0) -- (0,3.4) node[above] {$y$};
+  \draw[dashed,gray] (0,0) -- (4.5,3.18) node[right,font=\scriptsize] {$y=x/\sqrt{2}$};
+  \draw[thick,accent] plot[domain=0:2.14,samples=60] ({cosh(\x)},{sinh(\x)/sqrt(2)});
+  \draw[thick,accent2] plot[domain=0:2.17,samples=60] ({sinh(\x)},{cosh(\x)/sqrt(2)});
+  \fill[accent] (1,0) circle (2.5pt) node[below] {$1$};
+  \fill[accent2] (1,1) circle (2.5pt) node[above left] {$1+\sqrt{2}$};
+  \fill[accent] (3,2) circle (2.5pt) node[below right] {$(1+\sqrt{2})^2$};
+  \node[accent,font=\small] at (3.6,0.9) {$x^2-2y^2=1$};
+  \node[accent2,font=\small] at (1.1,2.7) {$x^2-2y^2=-1$};
+\end{tikzpicture}
+\caption{Les deux hyperboles $x^2-2y^2=\pm1$ et leurs premiers points entiers du premier quadrant ; le suivant est $(7,5)$. Ils alternent d'une branche à l'autre : $(a_q,b_q)$ est sur $x^2-2y^2=(-1)^q$.}\label{fig:hyperboles}
+\end{figure}
 
-L'exercice demandait de montrer que, pour tout $q\in\N$, il existe $n\in\N$ tel que $(1+\sqrt2)^q=\sqrt{n+1}+\sqrt n$. La feuille d'origine montrait par deux récurrences parallèles que $(1-\sqrt2)^q=a_q-b_q\sqrt2$. C'est exactement l'énoncé $\sigma\big((1+\sqrt2)^q\big)=\sigma(1+\sqrt2)^q$, qui découle du fait que $\sigma$ est un morphisme d'anneaux. On obtient ainsi un énoncé général.
+\subsection{Retour à l'exercice}
+
+On a maintenant tout ce qu'il faut. Rien dans l'argument n'est propre à $1+\sqrt2$ : il suffit de partir d'une solution de $a^2-db^2=\pm1$ à coefficients positifs. On énonce donc le résultat dans cette généralité.
 
 \begin{proposition}\label{prop:consecutifs}
-Soit $(a,b)\in\N^2$ tel que $a^2-db^2=\eta\in\{-1,1\}$. Pour $q\in\N$, on écrit $(a+b\sqrt d)^q=A_q+B_q\sqrt d$. Alors $A_q,B_q\in\N$ et $A_q^2-dB_q^2=\eta^q$. En particulier les entiers $A_q^2$ et $dB_q^2$ sont consécutifs, et
+Soit $(a,b)\in\N^2$ tel que $a^2-db^2=\eta\in\{-1,1\}$. Pour $q\in\N$, on écrit $(a+b\sqrt d)^q=A_q+B_q\sqrt d$. Alors $A_q,B_q\in\N$ et $A_q^2-dB_q^2=\eta^q$. Les entiers $A_q^2$ et $dB_q^2$ sont donc consécutifs, et
 \[
-  (a+b\sqrt d)^q=\sqrt{n+1}+\sqrt n,\qquad n=\min(A_q^2,\,dB_q^2),
+  (a+b\sqrt d)^q=\sqrt{n+1}+\sqrt n,\qquad n=\min(A_q^2,\,dB_q^2).
 \]
-cet entier $n$ étant unique.
+De plus, cet entier $n$ est unique.
 \end{proposition}
 
 \begin{proof}
-Par récurrence, $A_0=1$, $B_0=0$, et $A_{q+1}=aA_q+dbB_q$, $B_{q+1}=bA_q+aB_q$ sont des entiers positifs. Par multiplicativité de la norme, $A_q^2-dB_q^2=\Nm\big((a+b\sqrt d)^q\big)=\Nm(a+b\sqrt d)^q=\eta^q$. Comme $A_q\geq0$ et $B_q\geq0$, on a $A_q=\sqrt{A_q^2}$ et $B_q\sqrt d=\sqrt{dB_q^2}$, deux racines d'entiers consécutifs. L'unicité vient de ce que $t\mapsto\sqrt{t+1}+\sqrt t$ est strictement croissante sur $\R_+$.
+On a $A_0=1$ et $B_0=0$. En multipliant par $a+b\sqrt d$, on obtient $A_{q+1}=aA_q+dbB_q$ et $B_{q+1}=bA_q+aB_q$. Par récurrence, ce sont des entiers positifs.
+
+Par multiplicativité de la norme, $A_q^2-dB_q^2=\Nm\big((a+b\sqrt d)^q\big)=\Nm(a+b\sqrt d)^q=\eta^q$. Comme $A_q\geq0$ et $B_q\geq0$, on peut écrire $A_q=\sqrt{A_q^2}$ et $B_q\sqrt d=\sqrt{dB_q^2}$. Ce sont les racines de deux entiers consécutifs, d'où la forme annoncée.
+
+Enfin, la fonction $t\mapsto\sqrt{t+1}+\sqrt t$ est strictement croissante sur $\R_+$, donc deux valeurs différentes de $n$ donnent deux réels différents.
 \end{proof}
 
 \begin{exemple}
-Pour $d=2$ et $a=b=1$, on trouve $n=2b_q^2$ si $q$ est pair et $n=a_q^2$ si $q$ est impair. Ainsi $(1+\sqrt2)^5=41+29\sqrt2=\sqrt{1681}+\sqrt{1682}$ et $(1+\sqrt2)^6=99+70\sqrt2=\sqrt{9801}+\sqrt{9800}$.
+Pour $d=2$ et $a=b=1$, on retrouve l'exercice. On a $n=2b_q^2$ si $q$ est pair et $n=a_q^2$ si $q$ est impair. Par exemple
+\[
+  (1+\sqrt2)^5=41+29\sqrt2=\sqrt{1682}+\sqrt{1681},\qquad
+  (1+\sqrt2)^6=99+70\sqrt2=\sqrt{9801}+\sqrt{9800}.
+\]
+Avec $d=3$ et $(a,b)=(2,1)$, on obtient de même $(2+\sqrt3)^2=7+4\sqrt3=\sqrt{49}+\sqrt{48}$.
 \end{exemple}
 
 \begin{remarque}
-La preuve n'utilise pas que $d$ n'est pas un carré si l'on remplace $\sigma$ par le développement du binôme : $(a-b\sqrt d)^q=A_q-B_q\sqrt d$, car seuls les termes d'exposant impair en $\sqrt d$ changent de signe.
+La preuve n'utilise pas vraiment que $d$ n'est pas un carré. Si on remplace $\sigma$ par le développement du binôme, on obtient directement $(a-b\sqrt d)^q=A_q-B_q\sqrt d$ : seuls les termes qui contiennent une puissance impaire de $\sqrt d$ changent de signe.
 \end{remarque}
 
 \subsection{Compléments}
 
+On a utilisé l'anneau $\Z[\sqrt2]$ comme un cadre de calcul. Il a une propriété de plus, qui le rapproche de $\Z$ : on peut y faire des divisions euclidiennes. La norme joue le rôle de la valeur absolue.
+
 \begin{proposition}\label{prop:euclide}
-L'anneau $\Z[\sqrt2]$ est euclidien pour le stathme $x\mapsto|\Nm(x)|$. En particulier il est principal, donc factoriel.
+L'anneau $\Z[\sqrt2]$ est euclidien pour le stathme $x\mapsto|\Nm(x)|$. En particulier, il est principal, donc factoriel.
 \end{proposition}
 
 \begin{proof}
-L'anneau $\Z[\sqrt2]$ est intègre, comme sous-anneau de $\R$. Soit $x,y\in\Z[\sqrt2]$ avec $y\neq0$. Dans $\Q(\sqrt2)$, on écrit $x/y=x\sigma(y)/\Nm(y)=r+s\sqrt2$ avec $r,s\in\Q$. On choisit $m,n\in\Z$ avec $|r-m|\leq\frac12$ et $|s-n|\leq\frac12$, et on pose $q=m+n\sqrt2$ et $\rho=x-qy\in\Z[\sqrt2]$. Avec $\alpha=r-m$ et $\beta=s-n$, on a $\rho=y(\alpha+\beta\sqrt2)$, donc
+L'idée est la même que dans $\Z$ : on calcule le quotient exact dans $\Q(\sqrt2)$, puis on l'arrondit à l'élément de $\Z[\sqrt2]$ le plus proche.
+
+L'anneau $\Z[\sqrt2]$ est intègre, comme sous-anneau de $\R$. Soit $x,y\in\Z[\sqrt2]$ avec $y\neq0$. Dans $\Q(\sqrt2)$, on écrit $x/y=x\sigma(y)/\Nm(y)=r+s\sqrt2$ avec $r,s\in\Q$. On choisit des entiers $m,n$ avec $|r-m|\leq\frac12$ et $|s-n|\leq\frac12$. On pose $q=m+n\sqrt2$ et $\rho=x-qy$, qui sont dans $\Z[\sqrt2]$. Avec $\alpha=r-m$ et $\beta=s-n$, on a $\rho=y(\alpha+\beta\sqrt2)$, donc
 \[
-  |\Nm(\rho)|=|\Nm(y)|\cdot|\alpha^2-2\beta^2|\leq|\Nm(y)|\max(\alpha^2,2\beta^2)\leq\tfrac12|\Nm(y)|<|\Nm(y)|,
+  |\Nm(\rho)|=|\Nm(y)|\cdot|\alpha^2-2\beta^2|\leq|\Nm(y)|\max(\alpha^2,2\beta^2)\leq\tfrac12|\Nm(y)|<|\Nm(y)|.
 \]
-la première inégalité venant de ce que $\alpha^2$ et $2\beta^2$ sont positifs.
+La première inégalité vient de ce que $\alpha^2$ et $2\beta^2$ sont deux réels positifs : leur différence est majorée en valeur absolue par le plus grand des deux.
 \end{proof}
 
 \begin{remarque}
-Le même argument montre que $\Z[\sqrt3]$ est euclidien, avec $|\alpha^2-3\beta^2|\leq\frac34$. Il ne s'étend pas à tout $d$ : $\Z[\sqrt{10}]$ n'est pas principal. On a en effet $2\cdot3=(4+\sqrt{10})(4-\sqrt{10})$, et $2$ est irréductible sans être premier. Il est irréductible car aucun élément n'est de norme $\pm2$, puisque $x^2\equiv\pm2\pmod5$ n'a pas de solution. Il n'est pas premier car il ne divise ni $4+\sqrt{10}$ ni $4-\sqrt{10}$.
+Le même argument montre que $\Z[\sqrt3]$ est euclidien, avec $|\alpha^2-3\beta^2|\leq\frac34$. Il ne marche plus pour $d$ grand, et le résultat devient faux : $\Z[\sqrt{10}]$ n'est pas principal. En effet $2\cdot3=(4+\sqrt{10})(4-\sqrt{10})$, et $2$ est irréductible sans être premier. Il est irréductible car aucun élément n'est de norme $\pm2$, puisque $x^2\equiv\pm2\pmod5$ n'a pas de solution. Il n'est pas premier car il ne divise ni $4+\sqrt{10}$ ni $4-\sqrt{10}$.
 \end{remarque}
 
 \begin{remarque}[Fractions continues]
-On a $\sqrt2=[1;2,2,2,\dots]$, et les réduites $1,\frac32,\frac75,\frac{17}{12},\frac{41}{29},\dots$ sont exactement les $a_q/b_q$. On le retrouve ainsi : si $a^2-2b^2=\pm1$ avec $b\geq1$, alors $a\geq b$ et
+On a $\sqrt2=[1;2,2,2,\dots]$, et les réduites $1,\frac32,\frac75,\frac{17}{12},\frac{41}{29},\dots$ sont exactement les $a_q/b_q$. Voici pourquoi. Si $a^2-2b^2=\pm1$ avec $b\geq1$, alors $|a-b\sqrt2|=1/(a+b\sqrt2)$ et $a\geq b$, donc
 \[
-  \Big|\frac ab-\sqrt2\Big|=\frac{1}{b\,(a+b\sqrt2)}<\frac{1}{2b^2},
+  \Big|\frac ab-\sqrt2\Big|=\frac{1}{b\,(a+b\sqrt2)}<\frac{1}{2b^2}.
 \]
-donc $a/b$ est une réduite de $\sqrt2$ par le critère de Legendre. En général, l'unité fondamentale de $\Z[\sqrt d]$ se lit sur la période du développement en fraction continue de $\sqrt d$.
+Le critère de Legendre dit alors que $a/b$ est une réduite de $\sqrt2$. En général, l'unité fondamentale de $\Z[\sqrt d]$ se lit sur la période du développement en fraction continue de $\sqrt d$.
 \end{remarque}
 
 \begin{remarque}[Dirichlet]
-Le théorème \ref{thm:unites} ne dit pas que $\Z[\sqrt d]^\times\neq\{\pm1\}$. C'est vrai pour tout $d$ (Lagrange) : l'équation $x^2-dy^2=1$ a toujours une solution non triviale, ce qui se démontre par le théorème d'approximation de Dirichlet. C'est le cas particulier des corps quadratiques réels du théorème des unités de Dirichlet : pour un corps de nombres $K$ ayant $r_1$ plongements réels et $r_2$ paires de plongements complexes, $\mathcal O_K^\times\simeq\mu(K)\times\Z^{r_1+r_2-1}$. Notons que $\Z[\sqrt d]$ n'est pas toujours l'anneau des entiers de $\Q(\sqrt d)$ : pour $d=5$, celui-ci est $\Z\big[\frac{1+\sqrt5}2\big]$, d'unité fondamentale le nombre d'or.
+Le théorème \ref{thm:unites} suppose qu'il existe une unité autre que $\pm1$. C'est toujours vrai (Lagrange) : l'équation $x^2-dy^2=1$ a une solution non triviale, ce qui se démontre avec le théorème d'approximation de Dirichlet. C'est un cas particulier du théorème des unités de Dirichlet : pour un corps de nombres $K$ ayant $r_1$ plongements réels et $r_2$ paires de plongements complexes, $\mathcal O_K^\times\simeq\mu(K)\times\Z^{r_1+r_2-1}$. Attention, $\Z[\sqrt d]$ n'est pas toujours l'anneau des entiers de $\Q(\sqrt d)$ : pour $d=5$, celui-ci est $\Z\big[\frac{1+\sqrt5}2\big]$, d'unité fondamentale le nombre d'or.
 \end{remarque}
 
 % ==========================================================
-\section{Polygones réguliers à sommets entiers}
+\section{Polygones réguliers à sommets entiers}\label{sec:polygones}
 % ==========================================================
 
 \subsection{Le triangle équilatéral}
+
+On revient à la première question. On en donne deux preuves. La première est celle de la feuille d'origine : elle traduit « équilatéral » par une rotation et sépare parties réelle et imaginaire. La seconde compare deux calculs de l'aire, et elle est plus courte.
 
 \begin{proposition}\label{prop:triangle}
 Il n'existe pas de triangle équilatéral, non réduit à un point, dont les sommets sont dans $\Z^2$.
 \end{proposition}
 
 \begin{proof}[Preuve de la feuille d'origine]
-On identifie $\R^2$ à $\C$. Soit $A,B,C$ trois points de $\Z^2=\Z[i]$ formant un triangle équilatéral. Quitte à échanger $B$ et $C$, il est direct, ce qui s'écrit $c-a=\omega(b-a)$ avec $\omega=e^{i\pi/3}=\frac12+i\frac{\sqrt3}2$. Posons $b-a=u+iv$ et $c-a=s+it$ avec $u,v,s,t\in\Z$. En séparant parties réelle et imaginaire,
+On identifie $\R^2$ à $\C$, de sorte que $\Z^2$ devient $\Z[i]$. Soit $A,B,C$ trois points de $\Z[i]$ formant un triangle équilatéral, d'affixes $a,b,c$. Quitte à échanger $B$ et $C$, le triangle est direct. Cela veut dire qu'on passe de $\overrightarrow{AB}$ à $\overrightarrow{AC}$ par la rotation d'angle $\pi/3$ :
+\[
+  c-a=\omega(b-a),\qquad\omega=e^{i\pi/3}=\tfrac12+i\tfrac{\sqrt3}2 .
+\]
+Posons $b-a=u+iv$ et $c-a=s+it$, avec $u,v,s,t\in\Z$. En développant et en séparant parties réelle et imaginaire, on obtient
 \[
   2s-u=-v\sqrt3,\qquad 2t-v=u\sqrt3 .
 \]
-Par le lemme \ref{lem:irr} appliqué à $d=3$, on obtient $u=v=0$, donc $B=A$, puis $C=A$.
+Par le lemme \ref{lem:irr} appliqué à $d=3$, la première égalité donne $v=0$ et la seconde $u=0$. Donc $B=A$, puis $C=A$.
 \end{proof}
 
 \begin{proof}[Preuve par l'aire]
-Soit $A,B,C\in\Z^2$ formant un triangle équilatéral de côté $\ell>0$. D'une part, son aire vaut $\frac12|\det(B-A,C-A)|\in\frac12\Z$. D'autre part, elle vaut $\frac{\sqrt3}{4}\ell^2$ avec $\ell^2=\|B-A\|^2\in\Z$ non nul. Donc $\sqrt3=2|\det(B-A,C-A)|/\ell^2\in\Q$, ce qui est absurde.
+Soit $A,B,C\in\Z^2$ formant un triangle équilatéral de côté $\ell>0$. On calcule son aire de deux façons.
+\begin{itemize}[nosep]
+\item Par le déterminant : l'aire vaut $\frac12|\det(B-A,C-A)|$, qui est dans $\frac12\Z$.
+\item Par la géométrie : l'aire vaut $\frac{\sqrt3}{4}\ell^2$, où $\ell^2=\|B-A\|^2$ est un entier non nul.
+\end{itemize}
+En égalant, $\sqrt3=2|\det(B-A,C-A)|/\ell^2$ serait rationnel, ce qui est absurde.
 \end{proof}
 
-\subsection{Le cas général}
+\subsection{Tous les polygones réguliers}
+
+Le carré, lui, se dessine sans difficulté sur un quadrillage. Que se passe-t-il pour l'hexagone, l'octogone, le pentagone ? On va voir que le carré est le seul. Commençons par dire précisément ce qu'est un polygone régulier : on part d'un sommet et on tourne autour du centre, toujours du même angle.
 
 \begin{definition}
-Soit $n\geq3$ et $P$ un plan affine euclidien. Un \emph{polygone régulier à $n$ sommets} de $P$ est une famille $(P_k)_{k\in\Z/n\Z}$ de la forme $P_k=O+R^k(v)$, où $O\in P$, $v$ est un vecteur non nul de la direction $V$ de $P$ et $R$ est la rotation vectorielle de $V$ d'angle $2\pi/n$ pour l'une des deux orientations.
+Soit $n\geq3$ et $P$ un plan affine euclidien, de direction $V$. Un \emph{polygone régulier à $n$ sommets} de $P$ est une famille $(P_k)_{k\in\Z/n\Z}$ de la forme $P_k=O+R^k(v)$, où $O\in P$, $v\in V$ est non nul, et $R$ est la rotation vectorielle de $V$ d'angle $2\pi/n$ pour l'une des deux orientations.
 \end{definition}
 
 \begin{theoreme}\label{thm:polygones}
 Soit $n\geq3$. Il existe un polygone régulier à $n$ sommets dont les sommets sont dans $\Z^2$ si et seulement si $n=4$.
 \end{theoreme}
 
+Voici l'idée. Les côtés du polygone sont des vecteurs à coordonnées entières, et la rotation $R$ les envoie les uns sur les autres. Elle préserve donc un réseau, et sa matrice dans une base de ce réseau est à coefficients entiers. Or la trace d'une matrice ne dépend pas de la base, et la trace d'une rotation d'angle $\theta$ vaut $2\cos\theta$. Donc $2\cos(2\pi/n)$ est entier, ce qui laisse très peu de possibilités. La figure \ref{fig:carre} montre la situation pour le carré.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=1.2,>={Stealth[length=2.4mm]}]
+  \foreach \x in {0,...,4} \foreach \y in {0,...,3} \fill[gray!60] (\x,\y) circle (1.3pt);
+  \coordinate (P0) at (1,0); \coordinate (P1) at (3,1);
+  \coordinate (P2) at (2,3); \coordinate (P3) at (0,2);
+  \coordinate (O) at (1.5,1.5);
+  \draw[thick,->,accent] (P0) -- (P1) node[midway,below right] {$w_0$};
+  \draw[thick,->,accent] (P1) -- (P2) node[midway,right] {$w_1$};
+  \draw[thick,->,accent] (P2) -- (P3) node[midway,above left] {$w_2$};
+  \draw[thick,->,accent] (P3) -- (P0) node[midway,left] {$w_3$};
+  \fill (O) circle (1.5pt) node[below] {$O$};
+  \draw[->,accent2] (O) ++(0:0.45) arc (0:90:0.45);
+  \node[accent2] at (2.2,1.95) {$R$};
+\end{tikzpicture}
+\caption{Un carré de $\mathbb{Z}^2$ et ses vecteurs côtés. La rotation $R$ d'un quart de tour envoie $w_k$ sur $w_{k+1}$ ; ils engendrent le réseau $L$ de la preuve.}\label{fig:carre}
+\end{figure}
+
 \begin{proof}
-Le carré $(0,0),(1,0),(1,1),(0,1)$ convient pour $n=4$. Réciproquement, soit $(P_k)$ un tel polygone, $P_k=O+R^k(v)$, et soit $\theta=2\pi/n\in\,]0,2\pi/3]$.
+Le carré $(0,0),(1,0),(1,1),(0,1)$ convient pour $n=4$. Réciproquement, soit $(P_k)$ un polygone régulier à sommets dans $\Z^2$, $P_k=O+R^k(v)$, et soit $\theta=2\pi/n\in\,]0,2\pi/3]$.
 
-\emph{Les vecteurs côtés.} Posons $w_k=P_{k+1}-P_k=R^k(Rv-v)$. Ce sont des vecteurs de $\Z^2$ comme différences de points de $\Z^2$, et $R(w_k)=w_{k+1}$ pour tout $k\in\Z/n\Z$. Le vecteur $w_0=Rv-v$ est non nul, car $R$ n'a pas d'autre point fixe que $0$ puisque $\theta\notin2\pi\Z$. Les vecteurs $w_0$ et $w_1=Rw_0$ sont linéairement indépendants, car $\theta\notin\pi\Z$.
+\emph{Étape 1 : les vecteurs côtés.} Posons $w_k=P_{k+1}-P_k=R^k(Rv-v)$. Ce sont des vecteurs de $\Z^2$, comme différences de points de $\Z^2$, et $R(w_k)=w_{k+1}$ pour tout $k\in\Z/n\Z$. Le vecteur $w_0=Rv-v$ est non nul, car $R$ ne fixe que le vecteur nul puisque $\theta\notin2\pi\Z$. Les vecteurs $w_0$ et $w_1=Rw_0$ sont indépendants, car $\theta\notin\pi\Z$.
 
-\emph{Le réseau.} Soit $L=\sum_{k}\Z w_k$, le sous-groupe de $\Z^2$ engendré par les $w_k$. Comme $R$ permute les $w_k$, on a $R(L)=L$. Sous-groupe de $\Z^2$, $L$ est un $\Z$-module libre de rang fini. Des vecteurs de $\Z^2$ linéairement indépendants sur $\Z$ le sont sur $\Q$ (on chasse les dénominateurs), donc sur $\R$ (le rang d'une matrice rationnelle ne dépend pas du corps). Le rang de $L$ est donc au plus $2$, et il vaut $2$ puisque $L$ contient $w_0$ et $w_1$. Une $\Z$-base $(e_1,e_2)$ de $L$ est ainsi une base de $\R^2$.
+\emph{Étape 2 : le réseau.} Soit $L=\sum_{k}\Z w_k$ le sous-groupe de $\Z^2$ engendré par les $w_k$. Comme $R$ permute les $w_k$, on a $R(L)=L$. C'est un sous-groupe de $\Z^2$, donc un $\Z$-module libre de rang fini. Des vecteurs de $\Z^2$ indépendants sur $\Z$ le sont sur $\Q$ (on chasse les dénominateurs), donc sur $\R$ (le rang d'une matrice rationnelle ne dépend pas du corps). Le rang de $L$ est donc au plus $2$. Il vaut $2$ puisque $L$ contient $w_0$ et $w_1$. Une $\Z$-base $(e_1,e_2)$ de $L$ est ainsi une base de $\R^2$.
 
-\emph{La trace.} Comme $R(e_1),R(e_2)\in L$, la matrice de $R$ dans la base $(e_1,e_2)$ est à coefficients entiers, donc $\tr R=2\cos\theta\in\Z$. Or $\theta\in\,]0,2\pi/3]$ donne $2\cos\theta\in[-1,2[$, donc $2\cos\theta\in\{-1,0,1\}$ et $\theta\in\{2\pi/3,\pi/2,\pi/3\}$, c'est-à-dire $n\in\{3,4,6\}$.
+Attention, on ne peut pas se contenter de $L'=\Z w_0+\Z w_1$ : on sait que $R(w_1)=w_2$ est dans $\Z^2$, mais pas qu'il est dans $L'$. C'est pour cela qu'on prend tous les $w_k$.
 
-\emph{Conclusion.} Le cas $n=3$ est exclu par la proposition \ref{prop:triangle}. Si $n=6$, les points $P_0,P_2,P_4$ s'écrivent $O+(R^2)^j(v)$, $j=0,1,2$, avec $R^2$ de rotation d'angle $2\pi/3$ : ils forment un triangle équilatéral à sommets dans $\Z^2$, ce qui est exclu. Il reste $n=4$.
+\emph{Étape 3 : la trace.} Comme $R(e_1)$ et $R(e_2)$ sont dans $L$, la matrice de $R$ dans la base $(e_1,e_2)$ est à coefficients entiers. Donc $\tr R=2\cos\theta\in\Z$. Or $\theta\in\,]0,2\pi/3]$ donne $2\cos\theta\in[-1,2[$. Donc $2\cos\theta\in\{-1,0,1\}$, c'est-à-dire $\theta\in\{2\pi/3,\pi/2,\pi/3\}$, ou encore $n\in\{3,4,6\}$.
+
+\emph{Étape 4 : conclusion.} Le cas $n=3$ est exclu par la proposition \ref{prop:triangle}. Si $n=6$, les sommets $P_0,P_2,P_4$ s'écrivent $O+(R^2)^j(v)$ pour $j=0,1,2$, où $R^2$ est la rotation d'angle $2\pi/3$. Ils forment un triangle équilatéral à sommets dans $\Z^2$, ce qui est exclu. Il reste $n=4$.
 \end{proof}
 
 \begin{remarque}
-La preuve vaut aussi pour les polygones étoilés, où $R$ est la rotation d'angle $2\pi m/n$ avec $m\pgcd n=1$ : la condition $2\cos(2\pi m/n)\in\{-1,0,1\}$ donne encore $n\in\{3,4,6\}$. Elle reste valable mot pour mot dans $\Z^d$ (exercice \ref{exo:zd}) : seule l'exclusion de $n=3$ et $n=6$ utilise la dimension $2$.
+La preuve vaut aussi pour les polygones étoilés, où $R$ est la rotation d'angle $2\pi m/n$ avec $m\pgcd n=1$ : la condition $2\cos(2\pi m/n)\in\{-1,0,1\}$ donne encore $n\in\{3,4,6\}$. Elle vaut aussi mot pour mot dans $\Z^d$ (exercice \ref{exo:zd}). Seule l'étape 4, qui exclut $n=3$ et $n=6$, utilise la dimension $2$.
 \end{remarque}
 
 \begin{remarque}[Racines de l'unité]
-En termes complexes, si $P_k=z_k\in\Z[i]$, alors $e^{2i\pi/n}=(z_2-z_1)/(z_1-z_0)\in\Q(i)$. Le théorème \ref{thm:polygones} équivaut donc à : les racines de l'unité de $\Q(i)$ sont $\pm1,\pm i$. On peut aussi le voir ainsi : une racine primitive $n$-ième de l'unité est de degré $\varphi(n)$ sur $\Q$ (irréductibilité des polynômes cyclotomiques). Si elle est dans $\Q(i)$, on a $\varphi(n)\leq2$, donc $n\in\{1,2,3,4,6\}$, et $e^{2i\pi/3}=\frac{-1+i\sqrt3}2\notin\Q(i)$.
+En termes complexes, si les sommets $z_k$ sont dans $\Z[i]$, alors $e^{2i\pi/n}=(z_2-z_1)/(z_1-z_0)$ est dans $\Q(i)$. Le théorème \ref{thm:polygones} dit donc que les racines de l'unité de $\Q(i)$ sont $\pm1$ et $\pm i$. On peut aussi le voir ainsi. Une racine primitive $n$-ième de l'unité est de degré $\varphi(n)$ sur $\Q$ (irréductibilité des polynômes cyclotomiques). Si elle est dans $\Q(i)$, on a $\varphi(n)\leq2$, donc $n\in\{1,2,3,4,6\}$. Et $e^{2i\pi/3}=\frac{-1+i\sqrt3}2$ n'est pas dans $\Q(i)$.
 \end{remarque}
 
 \begin{remarque}[Entiers d'Eisenstein]
-Dans le réseau hexagonal $\Z[j]$, $j=e^{2i\pi/3}$, il y a des triangles équilatéraux et des hexagones réguliers, mais pas de carré, puisque $i\notin\Q(j)=\Q(i\sqrt3)$. Le plan $x+y+z=0$ coupe $\Z^3$ selon une copie de ce réseau, ce qui explique l'exercice \ref{exo:zd}.
+Sur le réseau hexagonal $\Z[j]$, avec $j=e^{2i\pi/3}$, la situation s'inverse : il y a des triangles équilatéraux et des hexagones réguliers, mais pas de carré, puisque $i\notin\Q(j)=\Q(i\sqrt3)$. Le plan $x+y+z=0$ coupe $\Z^3$ selon une copie de ce réseau, ce qui explique l'exercice \ref{exo:zd}.
 \end{remarque}
+
+% ==========================================================
+\section{Retour aux deux questions}
+% ==========================================================
+
+\paragraph{Le triangle.} Aucun triangle équilatéral n'a ses sommets sur un quadrillage, parce que $\sqrt3$ est irrationnel. Plus généralement, le carré est le seul polygone régulier qu'on puisse y dessiner. La raison profonde est que la rotation d'un quart de tour est la seule rotation non triviale (avec le demi-tour) qui préserve le quadrillage.
+
+\paragraph{Les puissances de $1+\sqrt2$.} On a bien $(1+\sqrt2)^q=\sqrt{n+1}+\sqrt n$ pour un unique $n\in\N$, parce que la norme est multiplicative et que $\Nm(1+\sqrt2)=-1$. Mieux : le corollaire \ref{cor:z2} montre que les coefficients des $(1+\sqrt2)^q$ sont les \emph{seules} solutions positives de $x^2-2y^2=\pm1$. Les nombres de la forme $\sqrt{n+1}+\sqrt n$ qui sont dans $\Z[\sqrt2]$ sont donc exactement les puissances de $1+\sqrt2$, puisqu'un tel nombre s'écrit $x+y\sqrt2$ avec $x,y\geq0$ et $x^2-2y^2=\pm1$.
 
 % ==========================================================
 \section{Exercices}
@@ -291,7 +430,7 @@ Soit $d\geq2$. Montrer qu'un polygone régulier à $n$ sommets dont les sommets 
 \section{Corrigés}
 % ==========================================================
 
-\paragraph{Exercice \ref{exo:puissances}.} Par la récurrence $a_{q+1}=a_q+2b_q$, $b_{q+1}=a_q+b_q$ :
+\paragraph{Exercice \ref{exo:puissances}.} On utilise la récurrence $a_{q+1}=a_q+2b_q$, $b_{q+1}=a_q+b_q$ :
 \[
 \begin{aligned}
 1+\sqrt2&=\sqrt2+\sqrt1, & 3+2\sqrt2&=\sqrt9+\sqrt8, & 7+5\sqrt2&=\sqrt{50}+\sqrt{49},\\
@@ -300,26 +439,66 @@ Soit $d\geq2$. Montrer qu'un polygone régulier à $n$ sommets dont les sommets 
 \]
 Les valeurs de $n$ sont donc $1,8,49,288,1681$, conformément à la proposition \ref{prop:consecutifs}.
 
-\paragraph{Exercice \ref{exo:z3}.} On a $\Nm(2+\sqrt3)=4-3=1$, donc $2+\sqrt3$ est une unité $>1$. Soit $u=a+b\sqrt3$ une unité $>1$ ; par le lemme \ref{lem:positif}, $a,b\geq1$. Si $b=1$, alors $a^2=3\pm1$, donc $a=2$. Si $b\geq2$, alors $u\geq1+2\sqrt3>2+\sqrt3$, puisque $\sqrt3>1$. Donc $\varepsilon_3=2+\sqrt3$, et $\Z[\sqrt3]^\times=\{\pm(2+\sqrt3)^k\}$ par le théorème \ref{thm:unites}. Toutes ces unités sont de norme $\Nm(2+\sqrt3)^k=1$. On le voit aussi directement : $x^2-3y^2=-1$ imposerait $x^2\equiv2\pmod3$, ce qui est impossible. Comme dans le corollaire \ref{cor:z2}, les solutions de $x^2-3y^2=1$ dans $\N^2$ sont les coefficients de $(2+\sqrt3)^k$, $k\geq0$ : $(1,0)$, $(2,1)$, $(7,4)$, $(26,15)$, $(97,56)$, \dots
+\paragraph{Exercice \ref{exo:z3}.} On suit la méthode du corollaire \ref{cor:z2}. On a $\Nm(2+\sqrt3)=4-3=1$, donc $2+\sqrt3$ est une unité $>1$. Montrons que c'est la plus petite. Soit $u=a+b\sqrt3$ une unité $>1$. Par le lemme \ref{lem:positif}, $a,b\geq1$.
+\begin{itemize}[nosep]
+\item Si $b=1$, alors $a^2=3\pm1$, donc $a=2$ et $u=2+\sqrt3$.
+\item Si $b\geq2$, alors $u\geq1+2\sqrt3>2+\sqrt3$, puisque $\sqrt3>1$.
+\end{itemize}
+Donc $\varepsilon_3=2+\sqrt3$, et $\Z[\sqrt3]^\times=\{\pm(2+\sqrt3)^k\}$ par le théorème \ref{thm:unites}. Toutes ces unités sont de norme $\Nm(2+\sqrt3)^k=1$. On le voit aussi directement : $x^2-3y^2=-1$ imposerait $x^2\equiv2\pmod3$, ce qui est impossible. Comme dans le corollaire \ref{cor:z2}, les solutions de $x^2-3y^2=1$ dans $\N^2$ sont les coefficients de $(2+\sqrt3)^k$, $k\geq0$ : $(1,0)$, $(2,1)$, $(7,4)$, $(26,15)$, $(97,56)$, \dots
 
-\paragraph{Exercice \ref{exo:triangulaires}.} On a $\frac{n(n+1)}2=m^2\iff(2n+1)^2-2(2m)^2=1$. Posons $x=2n+1$ et $y=2m$. Réciproquement, si $x^2-2y^2=1$, alors $x$ est impair, donc $x^2\equiv1\pmod8$, donc $8\mid2y^2$ et $y$ est pair. Par le corollaire \ref{cor:z2}, les solutions avec $n\geq1$ correspondent à $x+y\sqrt2=(1+\sqrt2)^{2k}=(3+2\sqrt2)^k$, $k\geq1$ :
+\paragraph{Exercice \ref{exo:triangulaires}.} L'idée est de compléter le carré pour faire apparaître une équation de Pell-Fermat. En multipliant par $8$ et en ajoutant $1$, on obtient
+\[
+  \frac{n(n+1)}2=m^2\iff 4n^2+4n+1=8m^2+1\iff(2n+1)^2-2(2m)^2=1 .
+\]
+On pose $x=2n+1$ et $y=2m$. Réciproquement, si $x^2-2y^2=1$, alors $x$ est impair, donc $x^2\equiv1\pmod8$, donc $8\mid2y^2$ et $y$ est pair. Par le corollaire \ref{cor:z2}, les solutions avec $n\geq1$ correspondent à $x+y\sqrt2=(1+\sqrt2)^{2k}=(3+2\sqrt2)^k$, $k\geq1$ :
 \[
   (x,y)=(3,2),\ (17,12),\ (99,70),\ (577,408),\dots\qquad
   (n,m)=(1,1),\ (8,6),\ (49,35),\ (288,204),\dots
 \]
 Par exemple $\frac{49\cdot50}2=1225=35^2$.
 
-\paragraph{Exercice \ref{exo:premiers}.} Soit $a\in\Z$ avec $p\mid a^2-2=(a-\sqrt2)(a+\sqrt2)$. L'élément $p$ n'est pas inversible dans $\Z[\sqrt2]$, car $\Nm(p)=p^2$. Il ne divise ni $a-\sqrt2$ ni $a+\sqrt2$ dans $\Z[\sqrt2]$ : on aurait $a\pm\sqrt2=p(u+v\sqrt2)$, donc $pv=\pm1$. Ainsi $p$ n'est pas premier dans $\Z[\sqrt2]$. Cet anneau étant principal (proposition \ref{prop:euclide}), $p$ n'est donc pas irréductible : $p=\pi\rho$ avec $\pi,\rho$ non inversibles. Alors $\Nm(\pi)\Nm(\rho)=p^2$ avec $|\Nm(\pi)|,|\Nm(\rho)|\neq1$, donc $\Nm(\pi)=\pm p$. En écrivant $\pi=x+y\sqrt2$, on a $x^2-2y^2=\pm p$. Si le signe est $-$, on remplace $\pi$ par $\pi(1+\sqrt2)$, de norme $-\Nm(\pi)=p$. Pour $p=7$, $3^2\equiv2$ et $7=3^2-2\cdot1^2$. Pour $p=17$, $6^2\equiv2$ et $17=5^2-2\cdot2^2$.
+\paragraph{Exercice \ref{exo:premiers}.} L'idée est de factoriser $a^2-2$ dans $\Z[\sqrt2]$, puis d'utiliser que cet anneau est principal. Soit $a\in\Z$ avec $p\mid a^2-2=(a-\sqrt2)(a+\sqrt2)$.
+\begin{itemize}[nosep]
+\item L'élément $p$ n'est pas inversible dans $\Z[\sqrt2]$, car $\Nm(p)=p^2\neq\pm1$.
+\item Il ne divise ni $a-\sqrt2$ ni $a+\sqrt2$ dans $\Z[\sqrt2]$. Sinon, on aurait $a\pm\sqrt2=p(u+v\sqrt2)$, donc $pv=\pm1$.
+\end{itemize}
+Ainsi $p$ n'est pas premier dans $\Z[\sqrt2]$. Comme cet anneau est principal (proposition \ref{prop:euclide}), irréductible équivaut à premier, et $p$ n'est donc pas irréductible : $p=\pi\rho$ avec $\pi,\rho$ non inversibles. Alors $\Nm(\pi)\Nm(\rho)=p^2$ avec $|\Nm(\pi)|\neq1$ et $|\Nm(\rho)|\neq1$, donc $\Nm(\pi)=\pm p$. En écrivant $\pi=x+y\sqrt2$, on a $x^2-2y^2=\pm p$. Si le signe est $-$, on remplace $\pi$ par $\pi(1+\sqrt2)$, de norme $-\Nm(\pi)=p$.
 
-Inversement, si $p=x^2-2y^2$ est impair, alors $x$ est impair, et $p\equiv1-2y^2\equiv1$ ou $7\pmod 8$. Avec la seconde loi complémentaire de réciprocité quadratique, $p$ impair est de la forme $x^2-2y^2$ si et seulement si $p\equiv\pm1\pmod8$.
+Pour $p=7$, on a $3^2\equiv2$ et $7=3^2-2\cdot1^2$. Pour $p=17$, on a $6^2\equiv2$ et $17=5^2-2\cdot2^2$.
 
-\paragraph{Exercice \ref{exo:zd}.} Soit $(P_k)$ un polygone régulier à $n$ sommets dans $\Z^d$, contenu dans un plan affine de direction $V$, et soit $R$ la rotation de $V$ correspondante. On reprend la preuve du théorème \ref{thm:polygones}. Les vecteurs $w_k=P_{k+1}-P_k$ sont dans $\Z^d\cap V$, et $R$ les permute. Le groupe $L$ qu'ils engendrent est un sous-groupe de $\Z^d$, donc libre de rang fini. Une $\Z$-base de $L$ est formée de vecteurs entiers $\Z$-libres, donc $\R$-libres, contenus dans $V$ : le rang est au plus $2$, et il vaut $2$ puisque $w_0$ et $w_1$ sont indépendants. On conclut comme dans le théorème que $2\cos(2\pi/n)\in\Z$, donc $n\in\{3,4,6\}$.
+Inversement, si $p=x^2-2y^2$ est impair, alors $x$ est impair, et $p\equiv1-2y^2\equiv1$ ou $7\pmod 8$. Avec la seconde loi complémentaire de réciprocité quadratique, un premier impair $p$ est de la forme $x^2-2y^2$ si et seulement si $p\equiv\pm1\pmod8$.
 
-Dans $\Z^3$, le carré $(0,0,0),(1,0,0),(1,1,0),(0,1,0)$ convient pour $n=4$, et le triangle $(1,0,0),(0,1,0),(0,0,1)$, de côté $\sqrt2$, pour $n=3$. Pour $n=6$, on prend les points
+\paragraph{Exercice \ref{exo:zd}.} Soit $(P_k)$ un polygone régulier à $n$ sommets dans $\Z^d$, contenu dans un plan affine de direction $V$, et soit $R$ la rotation de $V$ correspondante. On reprend les étapes 1 à 3 de la preuve du théorème \ref{thm:polygones}. Les vecteurs $w_k=P_{k+1}-P_k$ sont dans $\Z^d\cap V$, et $R$ les permute. Le groupe $L$ qu'ils engendrent est un sous-groupe de $\Z^d$, donc libre de rang fini. Une $\Z$-base de $L$ est formée de vecteurs entiers indépendants sur $\Z$, donc sur $\R$, contenus dans le plan $V$. Le rang est donc au plus $2$, et il vaut $2$ puisque $w_0$ et $w_1$ sont indépendants. On conclut comme dans le théorème que $2\cos(2\pi/n)\in\Z$, donc $n\in\{3,4,6\}$.
+
+Les trois cas sont réalisés dans $\Z^3$ (figure \ref{fig:hexagone3d}).
+\begin{itemize}[nosep]
+\item $n=4$ : le carré $(0,0,0),(1,0,0),(1,1,0),(0,1,0)$.
+\item $n=3$ : le triangle $(1,0,0),(0,1,0),(0,0,1)$, de côté $\sqrt2$.
+\item $n=6$ : les six points
 \[
-  (1,-1,0),\ (1,0,-1),\ (0,1,-1),\ (-1,1,0),\ (-1,0,1),\ (0,-1,1),
+  (1,-1,0),\ (1,0,-1),\ (0,1,-1),\ (-1,1,0),\ (-1,0,1),\ (0,-1,1).
 \]
-c'est-à-dire $\rho^k(1,-1,0)$, $0\leq k\leq5$, avec $\rho(x,y,z)=(-y,-z,-x)$. L'application $\rho$ est une isométrie linéaire de $\R^3$ qui stabilise le plan $V=\{x+y+z=0\}$. On a $\rho^2(x,y,z)=(z,x,y)$ et $\rho^3=-\mathrm{id}$, donc la restriction de $\rho$ à $V$ est d'ordre exactement $6$, puisque ni $\rho^2$ ni $\rho^3$ n'y induisent l'identité. Une isométrie d'ordre $6$ d'un plan euclidien est une rotation d'angle $\pm\pi/3$, puisque les symétries orthogonales sont d'ordre $2$. Les six points forment donc un hexagone régulier de centre $0$ et de rayon $\sqrt2$. Dans ce cas, la preuve par l'aire de la proposition \ref{prop:triangle} ne s'applique plus : l'aire du triangle $(1,0,0),(0,1,0),(0,0,1)$ vaut $\frac{\sqrt3}2\notin\frac12\Z$.
+\end{itemize}
+Vérifions le dernier cas. Ces points sont les $\rho^k(1,-1,0)$, $0\leq k\leq5$, avec $\rho(x,y,z)=(-y,-z,-x)$. L'application $\rho$ est une isométrie linéaire de $\R^3$ qui stabilise le plan $V=\{x+y+z=0\}$. On calcule $\rho^2(x,y,z)=(z,x,y)$ et $\rho^3=-\mathrm{id}$. La restriction de $\rho$ à $V$ est donc d'ordre exactement $6$, puisque ni $\rho^2$ ni $\rho^3$ n'y induisent l'identité. Une isométrie d'ordre $6$ d'un plan euclidien est une rotation d'angle $\pm\pi/3$, car les symétries orthogonales sont d'ordre $2$. Les six points forment donc un hexagone régulier de centre $0$ et de rayon $\sqrt2$.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=1.6,x={(-0.75cm,-0.45cm)},y={(0.95cm,-0.2cm)},z={(0cm,1cm)}]
+  \draw[thick,accent,fill=accent!12] (1,-1,0) -- (1,0,-1) -- (0,1,-1) -- (-1,1,0) -- (-1,0,1) -- (0,-1,1) -- cycle;
+  \draw[->,gray] (0,0,0) -- (1.8,0,0) node[below] {$x$};
+  \draw[->,gray] (0,0,0) -- (0,1.6,0) node[right] {$y$};
+  \draw[->,gray] (0,0,0) -- (0,0,1.7) node[left] {$z$};
+  \foreach \p in {(1,-1,0),(1,0,-1),(0,1,-1),(-1,1,0),(-1,0,1),(0,-1,1)} \fill[accent] \p circle (1.2pt);
+  \draw[thick,accent2] (1,0,0) -- (0,1,0) -- (0,0,1) -- cycle;
+  \foreach \p in {(1,0,0),(0,1,0),(0,0,1)} \fill[accent2] \p circle (1.2pt);
+  \node[accent,font=\scriptsize,left] at (1,-1,0) {$(1,-1,0)$};
+  \node[accent,font=\scriptsize,above] at (-1,0,1) {$(-1,0,1)$};
+  \node[accent2,font=\scriptsize,right] at (0,0,1) {$(0,0,1)$};
+\end{tikzpicture}
+\caption{Dans $\mathbb{Z}^3$ : l'hexagone régulier formé des permutations de $(1,-1,0)$, dans le plan $x+y+z=0$, et le triangle équilatéral $(1,0,0),(0,1,0),(0,0,1)$, dans le plan $x+y+z=1$.}\label{fig:hexagone3d}
+\end{figure}
+
+On remarque que la preuve par l'aire de la proposition \ref{prop:triangle} ne s'applique plus dans $\Z^3$ : l'aire du triangle $(1,0,0),(0,1,0),(0,0,1)$ vaut $\frac{\sqrt3}2$, qui n'est pas dans $\frac12\Z$.
 
 \begin{thebibliography}{9}
 \bibitem{samuel} P. Samuel, \emph{Théorie algébrique des nombres}, Hermann.
@@ -329,6 +508,6 @@ c'est-à-dire $\rho^k(1,-1,0)$, $0\leq k\leq5$, avec $\rho(x,y,z)=(-y,-z,-x)$. L
 \bibitem{gourdon} X. Gourdon, \emph{Les maths en tête. Algèbre et probabilités}, Ellipses.
 \end{thebibliography}
 
-\paragraph{Source.} Feuille d'exercices de terminale S (2013).
+\paragraph{Source.} Feuille d'exercices de terminale S (2003).
 
 \end{document}

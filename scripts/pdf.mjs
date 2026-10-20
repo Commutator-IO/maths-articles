@@ -35,7 +35,7 @@ if (probe.error) {
 
 const failed = [];
 let n = 0;
-for (const dir of (await readdir(SOURCE, { withFileTypes: true })).filter((d) => d.isDirectory())) {
+for (const dir of (await readdir(SOURCE, { withFileTypes: true })).filter((d) => d.isDirectory() && d.name !== 'figures')) {
   for (const f of (await readdir(resolve(SOURCE, dir.name))).filter((x) => x.endsWith('.tex'))) {
     const out = resolve(OUT, dir.name);
     await mkdir(out, { recursive: true });

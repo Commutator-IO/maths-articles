@@ -1,0 +1,38 @@
+/* Notes et issues : voir notes.js. Mêmes jetons que les vues de lecture. */
+
+::highlight(ma-note) { background-color: rgba(255, 214, 102, .55); }
+
+.ma-ui { font-family: var(--sans); font-size: 14px; line-height: 1.45; color: var(--ink); }
+
+.ma-fab { position: absolute; z-index: 20; padding: .4rem .8rem; border: 0; border-radius: 999px;
+          background: var(--accent); color: #fff; font-weight: 600; cursor: pointer;
+          box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+.ma-fab-bottom { position: fixed; left: 50%; bottom: 1rem; transform: translateX(-50%); }
+
+.ma-panel, .ma-list { position: fixed; z-index: 30; right: 1rem; bottom: 1rem; width: min(26rem, calc(100vw - 2rem));
+          max-height: min(80vh, 40rem); overflow: auto; background: #fff; border: 1px solid var(--rule);
+          border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,.18); padding: 1rem; }
+.ma-quote { margin: 0 0 .5rem; padding: .3rem .7rem; border-left: 3px solid #f0c24b; background: #fffaf0;
+            color: var(--ink2); font-family: var(--serif); font-size: 14.5px; white-space: pre-wrap; }
+.ma-where { margin: 0 0 .6rem; color: var(--ink3); font-size: 12.5px; }
+.ma-text { box-sizing: border-box; width: 100%; min-height: 7rem; padding: .55rem .65rem; resize: vertical;
+           border: 1px solid var(--rule); border-radius: 8px; font: inherit; }
+.ma-text:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.ma-row { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
+.ma-btn { padding: .4rem .7rem; border: 1px solid var(--rule); border-radius: 8px; background: #fff;
+          color: var(--ink); font: inherit; font-size: 13px; cursor: pointer; }
+.ma-btn:hover { border-color: var(--accent); color: var(--accent); }
+.ma-btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.ma-btn-primary:hover { color: #fff; filter: brightness(1.08); }
+.ma-btn-quiet { border-color: transparent; color: var(--ink3); padding: .3rem .5rem; }
+.ma-hint { margin: .7rem 0 0; color: var(--ink3); font-size: 12.5px; }
+.ma-list-btn { position: fixed; z-index: 15; right: 1rem; bottom: 1rem; padding: .45rem .8rem;
+               border: 1px solid var(--rule); border-radius: 999px; background: #fff; cursor: pointer;
+               box-shadow: 0 4px 14px rgba(0,0,0,.08); font-weight: 600; color: var(--ink2); }
+.ma-list-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .6rem; }
+.ma-item { border-top: 1px solid var(--rule2); padding: .7rem 0 .3rem; }
+.ma-comment { margin: .3rem 0 0; white-space: pre-wrap; }
+@media (max-width: 40rem) {
+  .ma-panel, .ma-list { left: .5rem; right: .5rem; bottom: .5rem; width: auto; }
+  .ma-list-btn { bottom: .75rem; right: .75rem; }
+}

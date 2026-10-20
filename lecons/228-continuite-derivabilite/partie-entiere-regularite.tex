@@ -41,7 +41,7 @@
 \DeclareMathOperator{\ord}{ord}
 
 \title{Partie entière et régularité\\[2pt]
-\large Exercices commentés pour l'agrégation}
+\large Pourquoi $E(x)\sin(\pi x)$ est continue, et comment la rendre plus lisse}
 \author{Michel Hua}
 \date{Octobre 2026}
 
@@ -49,22 +49,73 @@
 \maketitle
 
 \begin{abstract}
-On reprend un exercice de terminale --- continuité et dérivabilité de $x\mapsto E(x)\sin(\pi x)$ sur $[-1,2]$ --- en dégageant le mécanisme qui le gouverne : multiplier une fonction en escalier par une fonction qui s'annule aux sauts rend le produit continu, et l'ordre d'annulation mesure exactement la régularité obtenue. On en déduit que $x\mapsto E(x)\sin^m(\pi x)$ est de classe $\Cc^{m-1}$ sur $\R$ sans être $m$ fois dérivable aux entiers, puis on relie ce phénomène au théorème de la limite de la dérivée et au théorème de Darboux.
+En terminale, on étudie $f(x)=E(x)\sin(\pi x)$ sur $[-1,2]$. On trouve qu'elle est continue, alors que la partie entière $E$ saute à chaque entier, et qu'elle n'est pas dérivable en $0$ ni en $1$. Le calcul est facile, mais il laisse une question : \emph{pourquoi} le facteur $\sin(\pi x)$ efface-t-il les sauts, et pourquoi n'efface-t-il pas les points anguleux ? On répond avec une seule idée : un saut multiplié par une fonction qui s'annule à l'ordre $m$ donne une fonction de classe $\Cc^{m-1}$, et pas mieux. On en déduit que $E(x)\sin^m(\pi x)$ est exactement de classe $\Cc^{m-1}$. On termine par le théorème de Darboux, qui explique pourquoi une dérivée ne peut jamais sauter.
 \end{abstract}
 
 \paragraph{Leçons concernées.} 228 (Continuité, dérivabilité des fonctions réelles d'une variable réelle), 229 (Fonctions monotones, fonctions convexes), 218 (Formules de Taylor).
 
-\paragraph{Développements possibles.} Lemme \ref{lem:troncature} et théorème de recollement \ref{thm:recollement}, avec le corollaire \ref{cor:fm} ; théorème de Darboux \ref{thm:darboux} avec la proposition \ref{prop:limite-derivee} et l'exemple \ref{ex:x2sin}.
+\paragraph{Développements possibles.} Lemme de troncature \ref{lem:troncature} et théorème de recollement \ref{thm:recollement}, avec le corollaire \ref{cor:fm} ; théorème de Darboux \ref{thm:darboux} avec la proposition \ref{prop:limite-derivee} et l'exemple \ref{ex:x2sin}. Une formalisation Lean de la fiche (\texttt{PartieEntiereRegularite.lean}) est en cours.
 
-\paragraph{Notations.} $E(x)$ désigne la partie entière de $x\in\R$, l'unique entier tel que $E(x)\leq x<E(x)+1$. Pour une fonction $g$ et un point $a$, on note $g(a^-)$ et $g(a^+)$ les limites de $g(x)$ quand $x\to a$ avec $x<a$, respectivement $x>a$, et $\varphi'_g(a)$, $\varphi'_d(a)$ les dérivées à gauche et à droite de $\varphi$ en $a$. Pour $a\in\R$, $\1_{]-\infty,a[}$ est l'indicatrice de $]-\infty,a[$. Par convention, $\Cc^{-1}$ ne demande rien.
+\paragraph{Prérequis.} Limites à gauche et à droite, dérivée, théorème des accroissements finis, formule de Leibniz pour la dérivée $n$-ième d'un produit.
+
+\paragraph{Notations.} $E(x)$ désigne la partie entière de $x\in\R$, l'unique entier tel que $E(x)\leq x<E(x)+1$. Pour une fonction $g$ et un point $a$, on note $g(a^-)$ et $g(a^+)$ les limites de $g(x)$ quand $x\to a$ avec $x<a$, respectivement $x>a$. On note $\varphi'_g(a)$ et $\varphi'_d(a)$ les dérivées à gauche et à droite de $\varphi$ en $a$. Pour $a\in\R$, $\1_{]-\infty,a[}$ est l'indicatrice de $]-\infty,a[$. Par convention, « de classe $\Cc^{-1}$ » ne demande rien.
 
 \tableofcontents
 
 % ==========================================================
-\section{Produit d'une fonction à sauts par une fonction qui s'annule}
+\section{La question de départ}
 % ==========================================================
 
-La fonction $E$ est constante sur chaque $[k,k+1[$, $k\in\Z$, et saute de $1$ en chaque entier : $E(k^-)=k-1$ et $E(k^+)=E(k)=k$. Le facteur $\sin(\pi x)$ s'annule précisément en ces points. L'énoncé suivant isole ce qui se passe en un saut.
+On commence par faire l'exercice de terminale, à la main. Cela fixe les valeurs qu'il faudra expliquer ensuite.
+
+La partie entière est constante sur chaque intervalle $[k,k+1[$, $k\in\Z$, et elle saute de $1$ en chaque entier :
+\[
+  E(k^-)=k-1, \qquad E(k^+)=E(k)=k .
+\]
+Le facteur $\sin(\pi x)$, lui, s'annule exactement aux entiers. On s'attend donc à ce que les deux phénomènes se compensent.
+
+\begin{exemple}\label{ex:origine}
+Soit $f(x)=E(x)\sin(\pi x)$ pour $x\in[-1,2]$. On écrit $f$ morceau par morceau :
+\[
+  f(x)=\begin{cases}
+    -\sin(\pi x) & \text{si } -1\leq x<0,\\
+    0 & \text{si } 0\leq x<1,\\
+    \sin(\pi x) & \text{si } 1\leq x<2,\\
+    2\sin(2\pi)=0 & \text{si } x=2.
+  \end{cases}
+\]
+\begin{itemize}[nosep]
+\item \emph{Continuité.} Sur chacun des intervalles $[-1,0[$, $[0,1[$, $[1,2[$, $f$ est la restriction d'une fonction continue. Donc $f$ est continue en tout point de $]-1,0[\cup]0,1[\cup]1,2[$, et continue à droite en $-1$. Il reste les points de raccord. En $0$ : $f(0^-)=-\sin0=0=f(0)$. En $1$ : $f(1^-)=0=\sin\pi=f(1)$. En $2$ : $f(2^-)=\sin(2\pi)=0=f(2)$. Donc $f$ est continue sur $[-1,2]$.
+\item \emph{Dérivabilité en $0$.} À gauche, $f=-\sin(\pi\,\cdot)$, donc $f'_g(0)=-\pi\cos0=-\pi$. À droite, $f$ est nulle, donc $f'_d(0)=0$. Comme $-\pi\neq0$, $f$ n'est pas dérivable en $0$. La courbe a un point anguleux : une demi-tangente de pente $-\pi$ à gauche, horizontale à droite.
+\item \emph{Dérivabilité en $1$.} À gauche, $f$ est nulle, donc $f'_g(1)=0$. À droite, $f=\sin(\pi\,\cdot)$, donc $f'_d(1)=\pi\cos\pi=-\pi$. Là encore, $f$ n'est pas dérivable en $1$.
+\end{itemize}
+\emph{Variations sur $[1,2]$.} Comme $f(2)=0=\sin(2\pi)$, on a $f(x)=\sin(\pi x)$ sur tout le segment $[1,2]$. Donc $f$ y est dérivable (à droite en $1$, à gauche en $2$), avec $f'(x)=\pi\cos(\pi x)$.
+\begin{itemize}[nosep]
+\item Pour $x\in[1,\tfrac32]$, $\pi x\in[\pi,\tfrac{3\pi}2]$, donc $\cos(\pi x)\leq0$, avec égalité seulement en $x=\tfrac32$.
+\item Pour $x\in[\tfrac32,2]$, $\pi x\in[\tfrac{3\pi}2,2\pi]$, donc $\cos(\pi x)\geq0$, avec égalité seulement en $x=\tfrac32$.
+\end{itemize}
+Ainsi $f$ est strictement décroissante sur $[1,\tfrac32]$, de $f(1)=0$ à $f(\tfrac32)=\sin\tfrac{3\pi}2=-1$, puis strictement croissante sur $[\tfrac32,2]$, de $-1$ à $f(2)=0$. Son minimum sur $[1,2]$ est $-1$, atteint seulement en $\tfrac32$.
+\end{exemple}
+
+\begin{remarque}
+Sur $[-1,0]$, $f(x)=-\sin(\pi x)\geq0$, avec un maximum $f(-\tfrac12)=1$. Sur $[0,1]$, $f$ est nulle. Le graphe de $f$ sur $[-1,2]$ est donc formé de deux arches de sinusoïde, l'une au-dessus de l'axe, l'autre au-dessous, séparées par un palier nul. Le facteur $E(x)$ règle la hauteur des arches : sur $[k,k+1]$, l'arche a pour hauteur $|k|$.
+\end{remarque}
+
+Le calcul est terminé, mais il ne dit pas \emph{pourquoi} les choses se passent ainsi. On se pose trois questions.
+\begin{enumerate}[nosep]
+\item Pourquoi le produit est-il continu, alors que $E$ ne l'est pas ?
+\item D'où viennent les pentes $-\pi$ et $0$ ? Peut-on les prévoir sans calcul ?
+\item Peut-on, en changeant le facteur $\sin(\pi x)$, obtenir une fonction dérivable, ou même de classe $\Cc^1$, $\Cc^2$, etc. ?
+\end{enumerate}
+Les sections 2 et 3 répondent à ces questions. La section 4 explique pourquoi, dans la question 3, la régularité s'arrête toujours d'un cran trop tôt.
+
+% ==========================================================
+\section{Un saut multiplié par une fonction qui s'annule}
+% ==========================================================
+
+On isole ce qui se passe en \emph{un} point de saut $a$. La fonction à sauts $g$ joue le rôle de $E$, et la fonction $h$ celui de $\sin(\pi x)$. On ne demande presque rien à $g$ : seulement d'avoir une limite à gauche et une limite à droite.
+
+L'idée est simple. Près de $a$, $g$ reste bornée et $h$ tend vers $0$, donc le produit tend vers $0$. Pour la dérivée, on écrit le taux d'accroissement du produit comme $g(x)$ multiplié par le taux d'accroissement de $h$ : le premier facteur tend vers $g(a^-)$ ou $g(a^+)$ selon le côté, le second vers $h'(a)$.
 
 \begin{proposition}\label{prop:produit}
 Soit $I$ un intervalle ouvert, $a\in I$, et $g,h\colon I\to\R$. On suppose que $g$ admet des limites finies $g(a^-)$ et $g(a^+)$, et que $h(a)=0$. On pose $\varphi=gh$.
@@ -81,66 +132,52 @@ Soit $I$ un intervalle ouvert, $a\in I$, et $g,h\colon I\to\R$. On suppose que $
 \begin{proof}
 On a $\varphi(a)=g(a)h(a)=0$, quelle que soit la valeur $g(a)$. Comme $g$ a des limites finies à gauche et à droite en $a$, elle est bornée sur $]a-\eta,a+\eta[\setminus\{a\}$ pour un $\eta>0$, disons par $M$.
 
-1. Pour $0<|x-a|<\eta$, $|\varphi(x)-\varphi(a)|=|g(x)|\,|h(x)|\leq M|h(x)|$, qui tend vers $0$.
+1. Pour $0<|x-a|<\eta$, on a $|\varphi(x)-\varphi(a)|=|g(x)|\,|h(x)|\leq M|h(x)|$, qui tend vers $0$.
 
 2. Pour $x\neq a$, comme $h(a)=0$,
 \[
-  \frac{\varphi(x)-\varphi(a)}{x-a}=g(x)\,\frac{h(x)-h(a)}{x-a},
+  \frac{\varphi(x)-\varphi(a)}{x-a}=g(x)\,\frac{h(x)-h(a)}{x-a}.
 \]
-qui tend vers $g(a^-)h'(a)$ quand $x\to a^-$ et vers $g(a^+)h'(a)$ quand $x\to a^+$.
+Ce produit tend vers $g(a^-)h'(a)$ quand $x\to a^-$, et vers $g(a^+)h'(a)$ quand $x\to a^+$.
 
-3. Une fonction est dérivable en $a$ si et seulement si ses dérivées à gauche et à droite existent et coïncident, c'est-à-dire ici si et seulement si $\big(g(a^+)-g(a^-)\big)h'(a)=0$.
+3. Une fonction est dérivable en $a$ si et seulement si ses dérivées à gauche et à droite existent et sont égales. Ici, cela s'écrit $\big(g(a^+)-g(a^-)\big)h'(a)=0$.
 \end{proof}
 
 \begin{remarque}
-Le défaut de dérivabilité $\varphi'_d(a)-\varphi'_g(a)=\big(g(a^+)-g(a^-)\big)h'(a)$ est le produit du saut de $g$ par la pente de $h$. L'hypothèse $h(a)=0$ est indispensable dès que $g$ saute : si $h$ est continue en $a$ avec $h(a)\neq0$, alors $\varphi(a^\pm)=g(a^\pm)h(a)$ diffèrent et $\varphi$ n'est pas continue en $a$.
+La formule se lit facilement : le défaut de dérivabilité
+\[
+  \varphi'_d(a)-\varphi'_g(a)=\big(g(a^+)-g(a^-)\big)\,h'(a)
+\]
+est le \emph{saut de $g$} multiplié par la \emph{pente de $h$}. Pour que le point anguleux disparaisse, il faut que l'un des deux soit nul. L'hypothèse $h(a)=0$, elle, est indispensable dès que $g$ saute : si $h$ est continue en $a$ avec $h(a)\neq0$, alors $\varphi(a^-)=g(a^-)h(a)$ et $\varphi(a^+)=g(a^+)h(a)$ diffèrent, et $\varphi$ n'est pas continue en $a$.
 \end{remarque}
 
+On applique maintenant la proposition à $E$ et à $\sin(\pi x)$, en tous les entiers à la fois.
+
 \begin{corollaire}\label{cor:Esin}
-La fonction $F\colon x\mapsto E(x)\sin(\pi x)$ est continue sur $\R$, de classe $\Cc^\infty$ sur $\R\setminus\Z$, et en tout $k\in\Z$
+La fonction $F\colon x\mapsto E(x)\sin(\pi x)$ est continue sur $\R$ et de classe $\Cc^\infty$ sur $\R\setminus\Z$. En tout $k\in\Z$,
 \[
   F'_g(k)=(-1)^k(k-1)\pi, \qquad F'_d(k)=(-1)^k k\pi .
 \]
-En particulier $F$ n'est dérivable en aucun entier.
+En particulier, $F$ n'est dérivable en aucun entier.
 \end{corollaire}
 
 \begin{proof}
-Sur $]k,k+1[$, $F$ coïncide avec $x\mapsto k\sin(\pi x)$, d'où la régularité hors de $\Z$. En $k\in\Z$, on applique la proposition \ref{prop:produit} avec $g=E$, $h=\sin(\pi\,\cdot)$ : $h(k)=0$, $h'(k)=\pi\cos(\pi k)=(-1)^k\pi$, $E(k^-)=k-1$, $E(k^+)=k$. Les deux dérivées diffèrent de $(-1)^k\pi\neq0$.
+Sur $]k,k+1[$, $F$ coïncide avec $x\mapsto k\sin(\pi x)$, d'où la régularité hors de $\Z$. En $k\in\Z$, on applique la proposition \ref{prop:produit} avec $g=E$ et $h=\sin(\pi\,\cdot)$. On a $h(k)=0$, $h'(k)=\pi\cos(\pi k)=(-1)^k\pi$, $E(k^-)=k-1$ et $E(k^+)=k$. Les deux dérivées diffèrent de $(-1)^k\pi\neq0$.
 \end{proof}
 
-% ==========================================================
-\section{L'exercice d'origine}
-% ==========================================================
-
-\begin{exemple}\label{ex:origine}
-Soit $f(x)=E(x)\sin(\pi x)$ pour $x\in[-1,2]$. Explicitement,
-\[
-  f(x)=\begin{cases}
-    -\sin(\pi x) & \text{si } -1\leq x<0,\\
-    0 & \text{si } 0\leq x<1,\\
-    \sin(\pi x) & \text{si } 1\leq x<2,\\
-    2\sin(2\pi)=0 & \text{si } x=2.
-  \end{cases}
-\]
+Pour $k=0$, on retrouve $F'_g(0)=-\pi$ et $F'_d(0)=0$ ; pour $k=1$, $F'_g(1)=0$ et $F'_d(1)=-\pi$. Ce sont les valeurs de l'exemple \ref{ex:origine}. Les deux premières questions ont leur réponse :
 \begin{itemize}[nosep]
-\item \emph{Continuité.} Sur chacun des intervalles $[-1,0[$, $[0,1[$, $[1,2[$, $f$ est la restriction d'une fonction continue, donc $f$ est continue en tout point de $]-1,0[\cup]0,1[\cup]1,2[$ et continue à droite en $-1$. Aux points $0$ et $1$, la continuité résulte du corollaire \ref{cor:Esin} ; directement, $f(0^-)=-\sin0=0=f(0)$ et $f(1^-)=0=\sin\pi=f(1)$. En $2$, $f(2^-)=\sin(2\pi)=0=f(2)$. Donc $f$ est continue sur $[-1,2]$.
-\item \emph{Dérivabilité en $0$.} À gauche, $f=-\sin(\pi\,\cdot)$, donc $f'_g(0)=-\pi\cos0=-\pi$ ; à droite, $f$ est nulle, donc $f'_d(0)=0$. Comme $-\pi\neq0$, $f$ n'est pas dérivable en $0$ : la courbe présente un point anguleux, avec une demi-tangente de pente $-\pi$ à gauche et horizontale à droite.
-\item \emph{Dérivabilité en $1$.} À gauche, $f$ est nulle, donc $f'_g(1)=0$ ; à droite, $f=\sin(\pi\,\cdot)$, donc $f'_d(1)=\pi\cos\pi=-\pi$. Là encore $f$ n'est pas dérivable en $1$.
+\item le produit est continu parce que $\sin(\pi x)$ s'annule là où $E$ saute ;
+\item il y a un point anguleux parce que $\sin(\pi x)$ s'annule avec une pente non nulle, $\pm\pi$, et l'écart entre les deux pentes est le saut de $E$, qui vaut $1$, multiplié par cette pente.
 \end{itemize}
-Ces valeurs sont celles du corollaire \ref{cor:Esin} pour $k=0$ et $k=1$.
-
-\emph{Variations sur $[1,2]$.} Comme $f(2)=0=\sin(2\pi)$, on a $f(x)=\sin(\pi x)$ sur tout le segment $[1,2]$, donc $f$ y est dérivable (à droite en $1$, à gauche en $2$) avec $f'(x)=\pi\cos(\pi x)$. Pour $x\in[1,\tfrac32]$, $\pi x\in[\pi,\tfrac{3\pi}2]$ et $\cos(\pi x)\leq0$, nul seulement en $x=\tfrac32$ ; pour $x\in[\tfrac32,2]$, $\pi x\in[\tfrac{3\pi}2,2\pi]$ et $\cos(\pi x)\geq0$, nul seulement en $\tfrac32$. Donc $f$ est strictement décroissante sur $[1,\tfrac32]$, de $f(1)=0$ à $f(\tfrac32)=\sin\tfrac{3\pi}2=-1$, puis strictement croissante sur $[\tfrac32,2]$, de $-1$ à $f(2)=0$. Son minimum sur $[1,2]$ est $-1$, atteint en $\tfrac32$ seulement.
-\end{exemple}
-
-\begin{remarque}
-Sur $[-1,0]$, $f(x)=-\sin(\pi x)\geq0$, avec un maximum $f(-\tfrac12)=1$ ; sur $[0,1]$, $f$ est nulle. Le graphe de $f$ sur $[-1,2]$ est donc formé de deux arches de sinusoïde, l'une au-dessus, l'autre au-dessous de l'axe, séparées par un palier nul. Le facteur $E(x)$ fait croître l'amplitude des arches : sur $[k,k+1]$, l'arche a pour hauteur $|k|$.
-\end{remarque}
 
 % ==========================================================
 \section{Régularité exacte d'un recollement}
 % ==========================================================
 
-Le saut de $E$ en $k$ est atténué par le facteur $\sin(\pi x)$, qui s'annule à l'ordre $1$. Remplacer ce facteur par $\sin^m(\pi x)$, qui s'annule à l'ordre $m$, améliore la régularité exactement de $m-1$ crans. On formalise ce principe.
+On passe à la troisième question. Pour supprimer le point anguleux, la remarque de la section 2 dit qu'il faut un facteur qui s'annule \emph{avec une pente nulle}. Le plus simple est d'élever au carré : $\sin^2(\pi x)$ s'annule aux entiers avec une dérivée nulle. Plus généralement, $\sin^m(\pi x)$ s'annule « à l'ordre $m$ ». On va montrer que chaque ordre d'annulation supplémentaire fait gagner exactement un cran de régularité.
+
+Pour mesurer « à quel ordre » une fonction s'annule, on compte combien de ses dérivées sont nulles.
 
 \begin{definition}
 Soit $s$ de classe $\Cc^\infty$ au voisinage de $a$. L'\emph{ordre d'annulation} de $s$ en $a$ est
@@ -150,6 +187,8 @@ Soit $s$ de classe $\Cc^\infty$ au voisinage de $a$. L'\emph{ordre d'annulation}
 avec $\ord_a(s)=+\infty$ si toutes les dérivées de $s$ sont nulles en $a$.
 \end{definition}
 
+Le cas modèle est celui d'une fonction qu'on « coupe » en $a$ : on garde $s$ à gauche et on met $0$ à droite. C'est un saut de hauteur $1$ (l'indicatrice) multiplié par $s$. La proposition \ref{prop:produit} traite une dérivée ; on l'applique autant de fois qu'il y a de dérivées nulles.
+
 \begin{lemme}[Troncature]\label{lem:troncature}
 Soit $I$ un intervalle ouvert, $a\in I$, $m\geq1$, et $s\in\Cc^m(I)$ telle que $s(a)=s'(a)=\cdots=s^{(m-1)}(a)=0$. On pose $u=s\,\1_{]-\infty,a[}$. Alors $u$ est de classe $\Cc^{m-1}$ sur $I$, avec $u^{(j)}=s^{(j)}\1_{]-\infty,a[}$ pour $0\leq j\leq m-1$, et
 \[
@@ -157,45 +196,57 @@ Soit $I$ un intervalle ouvert, $a\in I$, $m\geq1$, et $s\in\Cc^m(I)$ telle que $
 \]
 \end{lemme}
 
+\begin{proof}[Idée de la preuve]
+À chaque étape, $u^{(j)}$ est encore de la forme « indicatrice fois une fonction nulle en $a$ », et la proposition \ref{prop:produit} s'applique. Tant que la dérivée suivante de $s$ est nulle en $a$, les deux pentes sont égales et l'on peut continuer. À la dernière étape, la pente $s^{(m)}(a)$ n'est plus nulle et l'on s'arrête.
+\end{proof}
+
 \begin{proof}
 Notons $\chi=\1_{]-\infty,a[}$, qui vérifie $\chi(a^-)=1$ et $\chi(a^+)=0$. Hors de $a$, $u$ coïncide localement avec $s$ ou avec $0$, donc tout se joue en $a$. On montre par récurrence sur $j\in\{0,\dots,m-1\}$ que $u$ est $j$ fois dérivable sur $I$, avec $u^{(j)}=s^{(j)}\chi$ continue.
 
-Pour $j=0$ : $u=s\chi$ est continue en $a$ par la proposition \ref{prop:produit}(1) appliquée à $g=\chi$ et $h=s$, puisque $s(a)=0$.
+Pour $j=0$ : $u=s\chi$ est continue en $a$ par la proposition \ref{prop:produit}(1), appliquée à $g=\chi$ et $h=s$, puisque $s(a)=0$.
 
-Supposons le résultat acquis au rang $j\leq m-2$. La proposition \ref{prop:produit}(2), avec $g=\chi$ et $h=s^{(j)}$ (dérivable, nulle en $a$), montre que $u^{(j)}=s^{(j)}\chi$ admet en $a$ les dérivées à gauche $s^{(j+1)}(a)$ et à droite $0$. Comme $j+1\leq m-1$, $s^{(j+1)}(a)=0$ : $u^{(j)}$ est dérivable en $a$ de dérivée $0=s^{(j+1)}(a)\chi(a)$. Hors de $a$, la dérivée de $s^{(j)}\chi$ est $s^{(j+1)}\chi$. Ainsi $u^{(j+1)}=s^{(j+1)}\chi$, qui est continue en $a$ par la proposition \ref{prop:produit}(1), puisque $s^{(j+1)}(a)=0$.
+Supposons le résultat vrai au rang $j\leq m-2$. La proposition \ref{prop:produit}(2), avec $g=\chi$ et $h=s^{(j)}$ (dérivable, nulle en $a$), montre que $u^{(j)}=s^{(j)}\chi$ admet en $a$ la dérivée à gauche $s^{(j+1)}(a)$ et la dérivée à droite $0$. Comme $j+1\leq m-1$, on a $s^{(j+1)}(a)=0$. Donc $u^{(j)}$ est dérivable en $a$, de dérivée $0=s^{(j+1)}(a)\chi(a)$. Hors de $a$, la dérivée de $s^{(j)}\chi$ est $s^{(j+1)}\chi$. Ainsi $u^{(j+1)}=s^{(j+1)}\chi$, qui est continue en $a$ par la proposition \ref{prop:produit}(1), puisque $s^{(j+1)}(a)=0$.
 
-Enfin, au rang $m-1$, $h=s^{(m-1)}$ est dérivable en $a$ car $s\in\Cc^m(I)$, et nulle en $a$ ; la proposition \ref{prop:produit}(2) donne les dérivées à gauche $s^{(m)}(a)\cdot1$ et à droite $s^{(m)}(a)\cdot0=0$ de $u^{(m-1)}=s^{(m-1)}\chi$.
+Enfin, au rang $m-1$, la fonction $h=s^{(m-1)}$ est dérivable en $a$ car $s\in\Cc^m(I)$, et nulle en $a$. La proposition \ref{prop:produit}(2) donne pour $u^{(m-1)}=s^{(m-1)}\chi$ la dérivée à gauche $s^{(m)}(a)\cdot1$ et la dérivée à droite $s^{(m)}(a)\cdot0=0$.
 \end{proof}
+
+Un recollement quelconque de deux fonctions lisses se ramène à ce cas modèle : on écrit la fonction recollée comme la fonction de droite, plus la différence des deux fonctions coupée en $a$.
 
 \begin{theoreme}[Recollement]\label{thm:recollement}
 Soit $I$ un intervalle ouvert, $a\in I$, $p,q\in\Cc^\infty(I)$, et
 \[
   \varphi(x)=\begin{cases} p(x) & \text{si } x<a,\\ q(x) & \text{si } x\geq a.\end{cases}
 \]
-Soit $r=\ord_a(p-q)$. Alors $\varphi$ est de classe $\Cc^{r-1}$ sur $I$. Si $r$ est fini, $\varphi^{(r-1)}$ admet en $a$ les dérivées à gauche $p^{(r)}(a)$ et à droite $q^{(r)}(a)$, qui sont distinctes ; en particulier $\varphi$ n'est pas $r$ fois dérivable en $a$. Ainsi, pour $n\in\N$,
+Soit $r=\ord_a(p-q)$. Alors $\varphi$ est de classe $\Cc^{r-1}$ sur $I$. Si $r$ est fini, $\varphi^{(r-1)}$ admet en $a$ la dérivée à gauche $p^{(r)}(a)$ et la dérivée à droite $q^{(r)}(a)$, qui sont distinctes ; en particulier, $\varphi$ n'est pas $r$ fois dérivable en $a$. Autrement dit, pour $n\in\N$,
 \[
   \varphi\in\Cc^n(I)\iff (p-q)^{(j)}(a)=0 \text{ pour } 0\leq j\leq n .
 \]
 \end{theoreme}
 
 \begin{proof}
-Posons $s=p-q$ et $\chi=\1_{]-\infty,a[}$. Alors $\varphi=q+s\chi$.
+Posons $s=p-q$ et $\chi=\1_{]-\infty,a[}$. Alors $\varphi=q+s\chi$, et $q$ est de classe $\Cc^\infty$ : toute la difficulté est dans $s\chi$.
 
 Si $r=0$, il n'y a rien à montrer pour la classe $\Cc^{-1}$, et $\varphi$ n'est pas continue en $a$ puisque $\varphi(a^-)=p(a)\neq q(a)=\varphi(a)$.
 
-Si $1\leq r<\infty$, le lemme \ref{lem:troncature} avec $m=r$ montre que $s\chi$ est de classe $\Cc^{r-1}$, donc aussi $\varphi$, et que $\varphi^{(r-1)}=q^{(r-1)}+(s\chi)^{(r-1)}$ admet en $a$ les dérivées à gauche $q^{(r)}(a)+s^{(r)}(a)=p^{(r)}(a)$ et à droite $q^{(r)}(a)$. Elles diffèrent de $s^{(r)}(a)\neq0$.
+Si $1\leq r<\infty$, le lemme \ref{lem:troncature} avec $m=r$ montre que $s\chi$ est de classe $\Cc^{r-1}$, donc aussi $\varphi$. Il montre aussi que $\varphi^{(r-1)}=q^{(r-1)}+(s\chi)^{(r-1)}$ admet en $a$ la dérivée à gauche $q^{(r)}(a)+s^{(r)}(a)=p^{(r)}(a)$ et la dérivée à droite $q^{(r)}(a)$. Elles diffèrent de $s^{(r)}(a)\neq0$.
 
 Si $r=+\infty$, le lemme s'applique pour tout $m\geq1$, donc $\varphi$ est de classe $\Cc^\infty$.
 
-Pour l'équivalence : la condition de droite signifie $r\geq n+1$. Si elle est vérifiée, $\varphi$ est $\Cc^{r-1}$, donc $\Cc^n$. Sinon $r\leq n$ et $\varphi$ n'est pas $r$ fois dérivable en $a$, donc pas de classe $\Cc^n$.
+Pour l'équivalence : la condition de droite signifie $r\geq n+1$. Si elle est vérifiée, $\varphi$ est de classe $\Cc^{r-1}$, donc $\Cc^n$. Sinon, $r\leq n$ et $\varphi$ n'est pas $r$ fois dérivable en $a$, donc pas de classe $\Cc^n$.
 \end{proof}
 
+\begin{remarque}
+Le théorème dit que la régularité d'un recollement se lit sur \emph{une seule} fonction, la différence $p-q$, et en \emph{un seul} point. Il n'y a pas d'intermédiaire : si les $n+1$ premières dérivées se raccordent, la fonction est $\Cc^n$ ; dès qu'une dérivée ne se raccorde pas, tout s'arrête à ce cran.
+\end{remarque}
+
+Pour l'appliquer à $E(x)\sin^m(\pi x)$, il reste à vérifier que $\sin^m(\pi x)$ s'annule à l'ordre exactement $m$ en chaque entier. L'idée : près de $k$, $\sin(\pi x)$ ressemble à $\pm\pi(x-k)$, donc $\sin^m(\pi x)$ ressemble à $\pm\pi^m(x-k)^m$, qui s'annule à l'ordre $m$.
+
 \begin{lemme}\label{lem:ordre-sin}
-Soit $m\geq1$, $s_m(x)=\sin^m(\pi x)$ et $k\in\Z$. Alors $s_m^{(j)}(k)=0$ pour $0\leq j\leq m-1$, et $s_m^{(m)}(k)=(-1)^{km}\,m!\,\pi^m$. Autrement dit $\ord_k(s_m)=m$.
+Soit $m\geq1$, $s_m(x)=\sin^m(\pi x)$ et $k\in\Z$. Alors $s_m^{(j)}(k)=0$ pour $0\leq j\leq m-1$, et $s_m^{(m)}(k)=(-1)^{km}\,m!\,\pi^m$. Autrement dit, $\ord_k(s_m)=m$.
 \end{lemme}
 
 \begin{proof}
-Posons $t=x-k$. Comme $\sin(\pi x)=\sin(\pi t+\pi k)=(-1)^k\sin(\pi t)$, on a $s_m(x)=(-1)^{km}\sin^m(\pi t)$. La fonction $\sigma(t)=\frac{\sin(\pi t)}{\pi t}$, prolongée par $\sigma(0)=1$, est de classe $\Cc^\infty$ sur $\R$ (c'est la somme de la série entière $\sum_{n\geq0}\frac{(-1)^n(\pi t)^{2n}}{(2n+1)!}$, de rayon infini). Donc
+Posons $t=x-k$. Comme $\sin(\pi x)=\sin(\pi t+\pi k)=(-1)^k\sin(\pi t)$, on a $s_m(x)=(-1)^{km}\sin^m(\pi t)$. La fonction $\sigma(t)=\frac{\sin(\pi t)}{\pi t}$, prolongée par $\sigma(0)=1$, est de classe $\Cc^\infty$ sur $\R$ : c'est la somme de la série entière $\sum_{n\geq0}\frac{(-1)^n(\pi t)^{2n}}{(2n+1)!}$, de rayon infini. Donc
 \[
   s_m(x)=(-1)^{km}\pi^m\,t^m\psi(t), \qquad \psi=\sigma^m\in\Cc^\infty(\R),\quad \psi(0)=1 .
 \]
@@ -206,33 +257,37 @@ Par la formule de Leibniz, pour $j\in\N$,
 Or $\big(t^m\big)^{(i)}(0)$ vaut $m!$ si $i=m$ et $0$ sinon. La somme est donc nulle pour $j<m$, et vaut $m!\,\psi(0)=m!$ pour $j=m$. Comme $\frac{d}{dx}=\frac{d}{dt}$, on obtient le résultat.
 \end{proof}
 
+On peut maintenant répondre à la troisième question.
+
 \begin{corollaire}\label{cor:fm}
-Pour $m\geq1$, la fonction $f_m\colon x\mapsto E(x)\sin^m(\pi x)$ est de classe $\Cc^{m-1}$ sur $\R$ et $\Cc^\infty$ sur $\R\setminus\Z$, mais n'est $m$ fois dérivable en aucun entier : en $k\in\Z$, $f_m^{(m-1)}$ admet les dérivées
+Pour $m\geq1$, la fonction $f_m\colon x\mapsto E(x)\sin^m(\pi x)$ est de classe $\Cc^{m-1}$ sur $\R$ et de classe $\Cc^\infty$ sur $\R\setminus\Z$. Elle n'est $m$ fois dérivable en aucun entier : en $k\in\Z$, $f_m^{(m-1)}$ admet les dérivées
 \[
   \big(f_m^{(m-1)}\big)'_g(k)=(-1)^{km}(k-1)\,m!\,\pi^m, \qquad \big(f_m^{(m-1)}\big)'_d(k)=(-1)^{km}k\,m!\,\pi^m .
 \]
 \end{corollaire}
 
 \begin{proof}
-Soit $k\in\Z$ et $I_k=]k-1,k+1[$. Sur $I_k$, $f_m$ vaut $(k-1)s_m$ à gauche de $k$ et $ks_m$ à partir de $k$. Le théorème \ref{thm:recollement} s'applique avec $p=(k-1)s_m$ et $q=ks_m$ ; on a $p-q=-s_m$, d'ordre $m$ en $k$ par le lemme \ref{lem:ordre-sin}. Donc $f_m$ est $\Cc^{m-1}$ sur $I_k$, et $f_m^{(m-1)}$ a pour dérivées à gauche et à droite en $k$ les nombres $p^{(m)}(k)=(k-1)s_m^{(m)}(k)$ et $q^{(m)}(k)=ks_m^{(m)}(k)$. Les intervalles $I_k$ recouvrent $\R$ et la classe $\Cc^{m-1}$ est une propriété locale, donc $f_m\in\Cc^{m-1}(\R)$. Hors de $\Z$, $f_m$ coïncide localement avec un multiple de $s_m$.
+Soit $k\in\Z$ et $I_k=]k-1,k+1[$. Sur $I_k$, $f_m$ vaut $(k-1)s_m$ à gauche de $k$ et $ks_m$ à partir de $k$. On applique le théorème \ref{thm:recollement} avec $p=(k-1)s_m$ et $q=ks_m$. La différence $p-q=-s_m$ est d'ordre $m$ en $k$ par le lemme \ref{lem:ordre-sin}. Donc $f_m$ est de classe $\Cc^{m-1}$ sur $I_k$, et $f_m^{(m-1)}$ a pour dérivées à gauche et à droite en $k$ les nombres $p^{(m)}(k)=(k-1)s_m^{(m)}(k)$ et $q^{(m)}(k)=ks_m^{(m)}(k)$. Les intervalles $I_k$ recouvrent $\R$, et être de classe $\Cc^{m-1}$ est une propriété locale, donc $f_m\in\Cc^{m-1}(\R)$. Hors de $\Z$, $f_m$ coïncide localement avec un multiple de $s_m$.
 \end{proof}
 
 \begin{remarque}
-Pour $m=1$, on retrouve le corollaire \ref{cor:Esin}. La famille $(f_m)$ fournit donc, pour tout $n\in\N$, une fonction explicite de classe $\Cc^n$ et non de classe $\Cc^{n+1}$ : prendre $f_{n+1}$. Plus simplement, $x\mapsto x^{n}|x|$ est de classe $\Cc^n$ sans être $n+1$ fois dérivable en $0$ ; c'est le recollement de $p=-x^{n+1}$ et $q=x^{n+1}$, dont la différence $-2x^{n+1}$ est d'ordre $n+1$ en $0$.
+Pour $m=1$, on retrouve le corollaire \ref{cor:Esin}. Pour $m=2$, la fonction $E(x)\sin^2(\pi x)$ est de classe $\Cc^1$ mais pas deux fois dérivable aux entiers ; l'exercice 2 le vérifie à la main. La famille $(f_m)$ fournit donc, pour tout $n\in\N$, une fonction explicite de classe $\Cc^n$ et pas de classe $\Cc^{n+1}$ : il suffit de prendre $f_{n+1}$. Un exemple plus simple est $x\mapsto x^{n}|x|$, de classe $\Cc^n$ sans être $n+1$ fois dérivable en $0$. C'est le recollement de $p=-x^{n+1}$ et $q=x^{n+1}$, dont la différence $-2x^{n+1}$ est d'ordre $n+1$ en $0$.
 \end{remarque}
 
 % ==========================================================
-\section{Sauts de la dérivée : théorème de Darboux}
+\section{Pourquoi une dérivée ne saute jamais : le théorème de Darboux}
 % ==========================================================
 
-Dans le corollaire \ref{cor:fm}, pour $m\geq2$, la fonction $f_m$ est dérivable sur $\R$ et sa dérivée $f'_m$ est continue : le saut de $E$ ne se transmet pas à $f'_m$. Ce n'est pas un hasard : une dérivée ne peut pas avoir de saut.
+Regardons $f_2$ de plus près. Elle est dérivable partout, et sa dérivée $f_2'$ est continue : le saut de $E$ ne passe pas à $f_2'$. Il réapparaît un cran plus haut, dans $f_2''$, et c'est la dérivabilité de $f_2'$ qui disparaît. On pourrait espérer une situation intermédiaire : une fonction dérivable dont la dérivée saute. Cette section montre que c'est impossible.
+
+L'outil est le théorème des accroissements finis. Il remplace un taux d'accroissement par une valeur de la dérivée en un point intermédiaire. Si la dérivée a une limite, le taux d'accroissement a la même.
 
 \begin{proposition}[Limite de la dérivée]\label{prop:limite-derivee}
-Soit $\varphi$ continue sur $[a,b[$, dérivable sur $]a,b[$, telle que $\varphi'(x)\to\ell\in\R$ quand $x\to a^+$. Alors $\varphi$ est dérivable à droite en $a$ et $\varphi'_d(a)=\ell$. De même à gauche.
+Soit $\varphi$ continue sur $[a,b[$, dérivable sur $]a,b[$, telle que $\varphi'(x)\to\ell\in\R$ quand $x\to a^+$. Alors $\varphi$ est dérivable à droite en $a$ et $\varphi'_d(a)=\ell$. On a le même énoncé à gauche.
 \end{proposition}
 
 \begin{proof}
-Pour $x\in]a,b[$, le théorème des accroissements finis sur $[a,x]$ fournit $c_x\in]a,x[$ tel que $\frac{\varphi(x)-\varphi(a)}{x-a}=\varphi'(c_x)$. Quand $x\to a^+$, $c_x\to a^+$, donc ce taux tend vers $\ell$.
+Pour $x\in]a,b[$, le théorème des accroissements finis sur $[a,x]$ fournit $c_x\in]a,x[$ tel que $\frac{\varphi(x)-\varphi(a)}{x-a}=\varphi'(c_x)$. Quand $x\to a^+$, on a $c_x\to a^+$, donc ce taux tend vers $\ell$.
 \end{proof}
 
 \begin{corollaire}\label{cor:pas-de-saut}
@@ -240,26 +295,45 @@ Soit $\varphi$ dérivable sur un intervalle ouvert $I$ et $a\in I$. Si $\varphi'
 \end{corollaire}
 
 \begin{proof}
-Par la proposition \ref{prop:limite-derivee}, $\varphi'_g(a)=\varphi'(a^-)$ et $\varphi'_d(a)=\varphi'(a^+)$ ; ces deux nombres valent $\varphi'(a)$ puisque $\varphi$ est dérivable en $a$.
+Par la proposition \ref{prop:limite-derivee}, $\varphi'_g(a)=\varphi'(a^-)$ et $\varphi'_d(a)=\varphi'(a^+)$. Ces deux nombres valent $\varphi'(a)$, puisque $\varphi$ est dérivable en $a$.
 \end{proof}
 
 \begin{remarque}
-Le corollaire \ref{cor:pas-de-saut} redonne la non-dérivabilité du corollaire \ref{cor:fm} sans calculer de taux d'accroissement : sur $]k-1,k[$ et $]k,k+1[$, $f_m^{(m)}$ vaut $(k-1)s_m^{(m)}$ et $ks_m^{(m)}$, qui ont en $k$ les limites distinctes $(k-1)s_m^{(m)}(k)$ et $ks_m^{(m)}(k)$. Si $f_m^{(m-1)}$ était dérivable en $k$, sa dérivée aurait un saut en $k$.
+Ce corollaire redonne la non-dérivabilité du corollaire \ref{cor:fm}, sans calculer de taux d'accroissement. Sur $]k-1,k[$ et sur $]k,k+1[$, $f_m^{(m)}$ vaut $(k-1)s_m^{(m)}$ et $ks_m^{(m)}$. Ces deux fonctions ont en $k$ les limites $(k-1)s_m^{(m)}(k)$ et $ks_m^{(m)}(k)$, qui sont distinctes. Si $f_m^{(m-1)}$ était dérivable en $k$, sa dérivée aurait un saut en $k$, ce qui est impossible.
 \end{remarque}
 
-Le corollaire \ref{cor:pas-de-saut} est un cas particulier d'un énoncé plus fort, qui ne suppose pas l'existence des limites.
+Le corollaire \ref{cor:pas-de-saut} suppose que les limites de $\varphi'$ existent. Darboux montre qu'on peut s'en passer : une dérivée vérifie toujours le théorème des valeurs intermédiaires, comme une fonction continue, même quand elle ne l'est pas. L'idée de la preuve : pour atteindre la valeur $\lambda$, on cherche un point où la fonction $\varphi(x)-\lambda x$ a une tangente horizontale, c'est-à-dire un minimum intérieur.
 
 \begin{theoreme}[Darboux]\label{thm:darboux}
 Soit $\varphi$ dérivable sur un intervalle $I$. Alors $\varphi'(I)$ est un intervalle : $\varphi'$ vérifie la propriété des valeurs intermédiaires.
 \end{theoreme}
 
 \begin{proof}
-Soit $a<b$ dans $I$ et $\lambda$ strictement compris entre $\varphi'(a)$ et $\varphi'(b)$ ; quitte à remplacer $\varphi$ par $-\varphi$ et $\lambda$ par $-\lambda$, on suppose $\varphi'(a)<\lambda<\varphi'(b)$. La fonction $\psi(x)=\varphi(x)-\lambda x$ est continue sur $[a,b]$, donc y atteint son minimum en un point $c$. Comme $\psi'(a)=\varphi'(a)-\lambda<0$, on a $\psi(x)<\psi(a)$ pour $x>a$ assez proche de $a$, donc $c\neq a$. Comme $\psi'(b)>0$, on a $\psi(x)<\psi(b)$ pour $x<b$ assez proche de $b$, donc $c\neq b$. Ainsi $c\in]a,b[$ est un minimum intérieur, et $\psi'(c)=0$, c'est-à-dire $\varphi'(c)=\lambda$.
+Soit $a<b$ dans $I$ et $\lambda$ strictement compris entre $\varphi'(a)$ et $\varphi'(b)$. Quitte à remplacer $\varphi$ par $-\varphi$ et $\lambda$ par $-\lambda$, on suppose $\varphi'(a)<\lambda<\varphi'(b)$. La fonction $\psi(x)=\varphi(x)-\lambda x$ est continue sur $[a,b]$, donc elle y atteint son minimum en un point $c$.
+\begin{itemize}[nosep]
+\item Comme $\psi'(a)=\varphi'(a)-\lambda<0$, on a $\psi(x)<\psi(a)$ pour $x>a$ assez proche de $a$ ; donc $c\neq a$.
+\item Comme $\psi'(b)>0$, on a $\psi(x)<\psi(b)$ pour $x<b$ assez proche de $b$ ; donc $c\neq b$.
+\end{itemize}
+Ainsi $c\in]a,b[$ est un minimum intérieur, donc $\psi'(c)=0$, c'est-à-dire $\varphi'(c)=\lambda$.
 \end{proof}
 
+Une dérivée peut quand même être discontinue, mais pas en sautant : il faut qu'elle oscille. Voici l'exemple classique.
+
 \begin{exemple}\label{ex:x2sin}
-La réciproque est fausse : une fonction dérivable n'est pas forcément de classe $\Cc^1$. Soit $\varphi(x)=x^2\sin(1/x)$ pour $x\neq0$ et $\varphi(0)=0$. Comme $\big|\frac{\varphi(x)}{x}\big|\leq|x|$, $\varphi$ est dérivable en $0$ avec $\varphi'(0)=0$. Pour $x\neq0$, $\varphi'(x)=2x\sin(1/x)-\cos(1/x)$ ; le premier terme tend vers $0$ et le second n'a pas de limite en $0$ (il vaut $-1$ en $x=\frac1{2n\pi}$ et $1$ en $x=\frac1{(2n+1)\pi}$). Donc $\varphi'$ est discontinue en $0$, mais d'une discontinuité de seconde espèce, comme l'imposent le corollaire \ref{cor:pas-de-saut} et le théorème de Darboux. Les fonctions $f_m$ illustrent l'autre mécanisme : la dérivée d'ordre $m$ a un vrai saut, et c'est la dérivabilité d'ordre $m$ qui disparaît.
+Soit $\varphi(x)=x^2\sin(1/x)$ pour $x\neq0$ et $\varphi(0)=0$. Comme $\big|\frac{\varphi(x)}{x}\big|\leq|x|$, $\varphi$ est dérivable en $0$, avec $\varphi'(0)=0$. Pour $x\neq0$, $\varphi'(x)=2x\sin(1/x)-\cos(1/x)$. Le premier terme tend vers $0$. Le second n'a pas de limite en $0$ : il vaut $-1$ en $x=\frac1{2n\pi}$ et $1$ en $x=\frac1{(2n+1)\pi}$. Donc $\varphi'$ est discontinue en $0$, mais d'une discontinuité de seconde espèce, comme l'imposent le corollaire \ref{cor:pas-de-saut} et le théorème de Darboux. Les fonctions $f_m$ illustrent l'autre mécanisme : la dérivée d'ordre $m$ a un vrai saut, et c'est la dérivabilité d'ordre $m$ qui disparaît.
 \end{exemple}
+
+% ==========================================================
+\section{Retour à la question de départ}
+% ==========================================================
+
+On peut maintenant relire l'exercice de terminale.
+\begin{itemize}[nosep]
+\item \emph{Continuité.} $E$ saute aux entiers, mais $\sin(\pi x)$ s'y annule. Une fonction bornée multipliée par une fonction qui tend vers $0$ tend vers $0$ (proposition \ref{prop:produit}).
+\item \emph{Points anguleux.} $\sin(\pi x)$ s'annule avec la pente $\pm\pi$. L'écart entre les pentes à droite et à gauche est le saut de $E$ multiplié par cette pente : en $0$, $1\times\pi$ ; en $1$, $1\times(-\pi)$.
+\item \emph{Plus de régularité.} Chaque ordre d'annulation du facteur fait gagner un cran : $E(x)\sin^m(\pi x)$ est de classe $\Cc^{m-1}$ (corollaire \ref{cor:fm}).
+\item \emph{Pas de cran intermédiaire.} On ne peut pas obtenir « dérivable avec une dérivée qui saute », car une dérivée ne saute jamais (corollaire \ref{cor:pas-de-saut} et théorème de Darboux).
+\end{itemize}
 
 % ==========================================================
 \section{Exercices}
@@ -270,11 +344,11 @@ Déterminer les points de continuité et de dérivabilité sur $\R$ de $g\colon 
 \end{exercice}
 
 \begin{exercice}
-Soit $f_2(x)=E(x)\sin^2(\pi x)$. Montrer sans utiliser le théorème \ref{thm:recollement} que $f_2$ est dérivable sur $\R$ et que $f_2'(x)=\pi E(x)\sin(2\pi x)$ pour tout réel $x$. En déduire que $f_2$ est de classe $\Cc^1$ et calculer les dérivées à gauche et à droite de $f_2'$ en $k\in\Z$.
+Soit $f_2(x)=E(x)\sin^2(\pi x)$. Montrer, sans utiliser le théorème \ref{thm:recollement}, que $f_2$ est dérivable sur $\R$ et que $f_2'(x)=\pi E(x)\sin(2\pi x)$ pour tout réel $x$. En déduire que $f_2$ est de classe $\Cc^1$, et calculer les dérivées à gauche et à droite de $f_2'$ en $k\in\Z$.
 \end{exercice}
 
 \begin{exercice}
-Déterminer les réels $\alpha,\beta,\gamma$ pour lesquels la fonction $\varphi$ égale à $e^x$ sur $]-\infty,0[$ et à $\alpha+\beta x+\gamma x^2$ sur $[0,+\infty[$ est de classe $\Cc^2$ sur $\R$. Est-elle alors trois fois dérivable ?
+Déterminer les réels $\alpha,\beta,\gamma$ pour lesquels la fonction $\varphi$, égale à $e^x$ sur $]-\infty,0[$ et à $\alpha+\beta x+\gamma x^2$ sur $[0,+\infty[$, est de classe $\Cc^2$ sur $\R$. Est-elle alors trois fois dérivable ?
 \end{exercice}
 
 \begin{exercice}
@@ -285,7 +359,7 @@ Montrer qu'il n'existe aucune fonction $F$ dérivable sur $\R$ telle que $F'=E$.
 Soit $G(x)=\int_0^xE(t)\,dt$ pour $x\in\R$.
 \begin{enumerate}[nosep]
 \item Montrer que $G(x)=nx-\frac{n(n+1)}2$, où $n=E(x)$.
-\item Montrer que $G(x)=\max_{n\in\Z}\big(nx-\frac{n(n+1)}2\big)$ et en déduire que $G$ est convexe.
+\item Montrer que $G(x)=\max_{n\in\Z}\big(nx-\frac{n(n+1)}2\big)$, et en déduire que $G$ est convexe.
 \item Déterminer les points où $G$ est dérivable, et ses dérivées à gauche et à droite aux autres points.
 \end{enumerate}
 \end{exercice}
@@ -294,26 +368,40 @@ Soit $G(x)=\int_0^xE(t)\,dt$ pour $x\in\R$.
 \section{Corrigés}
 % ==========================================================
 
-\paragraph{Exercice 1.} Sur $[k,k+1[$, $g(x)=k(x-k)$, donc $g$ est de classe $\Cc^\infty$ sur $\R\setminus\Z$. En $k\in\Z$, $g(k)=0$ et $g(k^-)=(k-1)\big(k-(k-1)\big)=k-1$, donc $g$ est continue en $k$ si et seulement si $k=1$. En $1$, $g$ est nulle sur $[0,1[$ et vaut $x-1$ sur $[1,2[$, donc $g'_g(1)=0\neq1=g'_d(1)$. Ainsi $g$ est continue exactement sur $\R\setminus(\Z\setminus\{1\})$ et dérivable exactement sur $\R\setminus\Z$. Ici le facteur $x-E(x)$ ne s'annule pas à gauche des sauts ($x-E(x)\to1$), ce qui explique l'échec de la continuité.
+\paragraph{Exercice 1.} \emph{Idée : ici le facteur $x-E(x)$ ne s'annule pas à gauche des sauts, donc la proposition \ref{prop:produit} ne s'applique pas, et l'on s'attend à des discontinuités.}
 
-\paragraph{Exercice 2.} Hors de $\Z$, $f_2$ coïncide localement avec $k\sin^2(\pi x)$, de dérivée $2k\pi\sin(\pi x)\cos(\pi x)=k\pi\sin(2\pi x)$. En $k\in\Z$, la proposition \ref{prop:produit} avec $g=E$ et $h=\sin^2(\pi\,\cdot)$, qui vérifie $h(k)=0$ et $h'(k)=\pi\sin(2\pi k)=0$, montre que $f_2$ est dérivable en $k$ de dérivée nulle, égale à $\pi E(k)\sin(2\pi k)$. Donc $f_2'=\pi E\cdot\sin(2\pi\,\cdot)$ sur $\R$, qui est continue par la proposition \ref{prop:produit}(1), puisque $\sin(2\pi k)=0$. Avec $h=\sin(2\pi\,\cdot)$, $h'(k)=2\pi$, la proposition \ref{prop:produit}(2) donne
+Sur $[k,k+1[$, $g(x)=k(x-k)$, donc $g$ est de classe $\Cc^\infty$ sur $\R\setminus\Z$. En $k\in\Z$, on a $g(k)=0$ et $g(k^-)=(k-1)\big(k-(k-1)\big)=k-1$. Donc $g$ est continue en $k$ si et seulement si $k=1$. En $1$, $g$ est nulle sur $[0,1[$ et vaut $x-1$ sur $[1,2[$, donc $g'_g(1)=0\neq1=g'_d(1)$. Ainsi $g$ est continue exactement sur $\R\setminus(\Z\setminus\{1\})$, et dérivable exactement sur $\R\setminus\Z$. L'échec de la continuité vient de ce que $x-E(x)\to1$ à gauche des entiers : seul le saut en $1$ est compensé, parce que là c'est le facteur $E(x)$ lui-même qui vaut $0$ à gauche.
+
+\paragraph{Exercice 2.} \emph{Idée : appliquer deux fois la proposition \ref{prop:produit}, une fois à $f_2$ avec $h=\sin^2(\pi\,\cdot)$, de pente nulle aux entiers, puis à $f_2'$ avec $h=\sin(2\pi\,\cdot)$, de pente non nulle.}
+
+Hors de $\Z$, $f_2$ coïncide localement avec $k\sin^2(\pi x)$, de dérivée $2k\pi\sin(\pi x)\cos(\pi x)=k\pi\sin(2\pi x)$. En $k\in\Z$, on applique la proposition \ref{prop:produit} avec $g=E$ et $h=\sin^2(\pi\,\cdot)$. On a $h(k)=0$ et $h'(k)=\pi\sin(2\pi k)=0$, donc $f_2$ est dérivable en $k$, de dérivée nulle, égale à $\pi E(k)\sin(2\pi k)$. Ainsi $f_2'=\pi E\cdot\sin(2\pi\,\cdot)$ sur $\R$. Cette fonction est continue par la proposition \ref{prop:produit}(1), puisque $\sin(2\pi k)=0$. Avec $h=\sin(2\pi\,\cdot)$ et $h'(k)=2\pi$, la proposition \ref{prop:produit}(2) donne
 \[
-  (f_2')'_g(k)=2\pi^2(k-1), \qquad (f_2')'_d(k)=2\pi^2k,
+  (f_2')'_g(k)=2\pi^2(k-1), \qquad (f_2')'_d(k)=2\pi^2k .
 \]
-en accord avec le corollaire \ref{cor:fm} pour $m=2$ : $(-1)^{2k}\,2!\,\pi^2=2\pi^2$. Ainsi $f_2$ est $\Cc^1$ mais pas deux fois dérivable aux entiers.
+C'est le corollaire \ref{cor:fm} pour $m=2$ : $(-1)^{2k}\,2!\,\pi^2=2\pi^2$. Ainsi $f_2$ est de classe $\Cc^1$, mais pas deux fois dérivable aux entiers.
 
-\paragraph{Exercice 3.} On applique le théorème \ref{thm:recollement} avec $p=\exp$, $q(x)=\alpha+\beta x+\gamma x^2$ et $a=0$. On a $(p-q)(0)=1-\alpha$, $(p-q)'(0)=1-\beta$, $(p-q)''(0)=1-2\gamma$, donc $\varphi\in\Cc^2(\R)$ si et seulement si $\alpha=\beta=1$ et $\gamma=\frac12$ : $q$ est alors le polynôme de Taylor d'ordre $2$ de l'exponentielle en $0$. Dans ce cas $(p-q)'''(0)=1\neq0$, donc $\ord_0(p-q)=3$ et $\varphi$ n'est pas trois fois dérivable en $0$ : $\varphi''$ a pour dérivée à gauche $p'''(0)=1$ et à droite $q'''(0)=0$.
+\paragraph{Exercice 3.} \emph{Idée : d'après le théorème \ref{thm:recollement}, il suffit de raccorder les valeurs et les deux premières dérivées en $0$, c'est-à-dire de prendre le développement de Taylor de $e^x$ à l'ordre $2$.}
 
-\paragraph{Exercice 4.} Si $F'=E$ sur $\R$, le théorème de Darboux \ref{thm:darboux} impose que $E([0,1])$ soit un intervalle. Or $E([0,1])=\{0,1\}$, qui ne contient pas $\frac12$. Plus directement, $E$ a un saut en $0$, ce qu'exclut le corollaire \ref{cor:pas-de-saut}. En revanche $E$ admet des primitives au sens faible, comme la fonction $G$ de l'exercice suivant, continue et dérivable hors de $\Z$ de dérivée $E$.
+On applique le théorème \ref{thm:recollement} avec $p=\exp$, $q(x)=\alpha+\beta x+\gamma x^2$ et $a=0$. On a $(p-q)(0)=1-\alpha$, $(p-q)'(0)=1-\beta$ et $(p-q)''(0)=1-2\gamma$. Donc $\varphi\in\Cc^2(\R)$ si et seulement si $\alpha=\beta=1$ et $\gamma=\frac12$ : $q$ est alors le polynôme de Taylor d'ordre $2$ de l'exponentielle en $0$. Dans ce cas, $(p-q)'''(0)=1\neq0$, donc $\ord_0(p-q)=3$, et $\varphi$ n'est pas trois fois dérivable en $0$ : $\varphi''$ a pour dérivée à gauche $p'''(0)=1$ et pour dérivée à droite $q'''(0)=0$.
 
-\paragraph{Exercice 5.} 1. Pour $n\in\Z$ et $x\in[n,n+1]$, $E=n$ sur $[n,x[$, donc $G(x)-G(n)=n(x-n)$. En particulier $G(n+1)-G(n)=n$. La suite $u_n=\frac{n(n-1)}2$ vérifie $u_0=0=G(0)$ et $u_{n+1}-u_n=n$, donc, par récurrence vers le haut et vers le bas, $G(n)=\frac{n(n-1)}2$ pour tout $n\in\Z$. Pour $x\in[n,n+1[$, on obtient
+\paragraph{Exercice 4.} \emph{Idée : $E$ saute, et une dérivée ne saute pas.}
+
+Si $F'=E$ sur $\R$, le théorème de Darboux \ref{thm:darboux} impose que $E([0,1])$ soit un intervalle. Or $E([0,1])=\{0,1\}$, qui ne contient pas $\frac12$. Plus directement, $E$ a un saut en $0$, ce que le corollaire \ref{cor:pas-de-saut} interdit. En revanche, $E$ admet des primitives en un sens plus faible, comme la fonction $G$ de l'exercice suivant, qui est continue et dérivable hors de $\Z$, de dérivée $E$.
+
+\paragraph{Exercice 5.} \emph{Idée : $G$ est affine sur chaque $[n,n+1]$, de pente $n$ ; ses morceaux sont des droites dont la pente augmente, ce qui est exactement la convexité.}
+
+1. Pour $n\in\Z$ et $x\in[n,n+1]$, on a $E=n$ sur $[n,x[$, donc $G(x)-G(n)=n(x-n)$. En particulier, $G(n+1)-G(n)=n$. La suite $u_n=\frac{n(n-1)}2$ vérifie $u_0=0=G(0)$ et $u_{n+1}-u_n=n$. Par récurrence vers le haut et vers le bas, $G(n)=\frac{n(n-1)}2$ pour tout $n\in\Z$. Pour $x\in[n,n+1[$, on obtient
 \[
   G(x)=\frac{n(n-1)}2+n(x-n)=nx-\frac{n(n+1)}2 .
 \]
 
-2. Notons $\ell_n(x)=nx-\frac{n(n+1)}2$. On a $\ell_n(x)-\ell_{n-1}(x)=x-\frac{n(n+1)-(n-1)n}2=x-n$. Soit $x\in\R$ et $N=E(x)$. Pour $n\leq N$, $\ell_n(x)-\ell_{n-1}(x)=x-n\geq0$ ; pour $n\geq N+1$, $\ell_n(x)-\ell_{n-1}(x)=x-n<0$. La suite $(\ell_n(x))_{n\in\Z}$ croît donc jusqu'au rang $N$ puis décroît, et son maximum est $\ell_N(x)=G(x)$. Comme borne supérieure de fonctions affines, $G$ est convexe.
+2. Notons $\ell_n(x)=nx-\frac{n(n+1)}2$. On a
+\[
+  \ell_n(x)-\ell_{n-1}(x)=x-\frac{n(n+1)-(n-1)n}2=x-n .
+\]
+Soit $x\in\R$ et $N=E(x)$. Pour $n\leq N$, $\ell_n(x)-\ell_{n-1}(x)=x-n\geq0$. Pour $n\geq N+1$, $\ell_n(x)-\ell_{n-1}(x)=x-n<0$. La suite $(\ell_n(x))_{n\in\Z}$ croît donc jusqu'au rang $N$, puis décroît, et son maximum est $\ell_N(x)=G(x)$. Comme borne supérieure de fonctions affines, $G$ est convexe.
 
-3. Sur $]n,n+1[$, $G$ est affine de pente $n$. En $n\in\Z$, $G$ coïncide avec $\ell_{n-1}$ sur $[n-1,n]$ et avec $\ell_n$ sur $[n,n+1]$, donc $G'_g(n)=n-1$ et $G'_d(n)=n$. Ainsi $G$ est dérivable exactement sur $\R\setminus\Z$. On retrouve que les dérivées à droite d'une fonction convexe forment une fonction croissante, ici $G'_d=E$, et qu'une fonction convexe est dérivable hors d'un ensemble au plus dénombrable.
+3. Sur $]n,n+1[$, $G$ est affine de pente $n$. En $n\in\Z$, $G$ coïncide avec $\ell_{n-1}$ sur $[n-1,n]$ et avec $\ell_n$ sur $[n,n+1]$, donc $G'_g(n)=n-1$ et $G'_d(n)=n$. Ainsi $G$ est dérivable exactement sur $\R\setminus\Z$. On retrouve deux propriétés générales des fonctions convexes : leur dérivée à droite est croissante (ici $G'_d=E$), et elles sont dérivables hors d'un ensemble au plus dénombrable.
 
 \begin{thebibliography}{9}
 \bibitem{gourdon} X. Gourdon, \emph{Les maths en tête. Analyse}, Ellipses.
@@ -321,6 +409,6 @@ en accord avec le corollaire \ref{cor:fm} pour $m=2$ : $(-1)^{2k}\,2!\,\pi^2=2\p
 \bibitem{rombaldi} J.-E. Rombaldi, \emph{Éléments d'analyse réelle}, EDP Sciences.
 \end{thebibliography}
 
-\paragraph{Source.} Partie « Continuité » de la feuille de révision de terminale S (2013), d'après les manuels \emph{Hyperbole} et \emph{Bréal} ; le reste de la feuille est traité dans la leçon 142.
+\paragraph{Source.} Partie « Continuité » de la feuille de révision de terminale S (2003), d'après les manuels \emph{Hyperbole} et \emph{Bréal} ; le reste de la feuille est traité dans la leçon 142.
 
 \end{document}

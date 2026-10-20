@@ -15,9 +15,12 @@
 \fi
 \usepackage[margin=2.6cm]{geometry}
 \usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs}
 \usepackage{enumitem}
 \usepackage{microtype}
 \usepackage[hidelinks]{hyperref}
+\usepackage{tikz}
+\input{../figures/tikz-setup.tex}
 
 % ---------- Environnements ----------
 \theoremstyle{plain}
@@ -35,11 +38,12 @@
 % ---------- Notations ----------
 \newcommand{\N}{\mathbb{N}}
 \newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\dd}{\,\mathrm{d}}
 
 \title{Méthodes de calcul d'intégrales\\[2pt]
-\large Exercices commentés pour l'agrégation}
+\large Que faire quand on ne connaît pas de primitive ?}
 \author{Michel Hua}
 \date{Octobre 2026}
 
@@ -47,39 +51,91 @@
 \maketitle
 
 \begin{abstract}
-On reprend une feuille d'exercices de terminale sur le calcul intégral en dégageant, derrière chaque calcul, la méthode générale qu'il illustre : linéarisation et intégrales de Wallis (avec la constante de Stirling), intégration par parties et dérivation sous le signe intégrale (jusqu'au « rêve du bachelier » $\int_0^1x^{-x}\dd x=\sum n^{-n}$), relations de récurrence et leur stabilité numérique (avec l'irrationalité de $e$), noyau de Dirichlet et calcul de $\zeta(2)$, encadrements par convexité et erreur des méthodes des trapèzes et du point milieu, reste intégral de la formule de Taylor.
+Pour calculer $\int_a^bf$, le réflexe est de chercher une primitive. Mais la plupart des intégrales intéressantes n'ont pas de primitive simple, ou alors on ne veut pas la valeur exacte, seulement un encadrement. Que faire alors ? Cette fiche part d'une feuille d'exercices de terminale et montre, sur chaque exercice, une méthode qui va bien plus loin que le calcul demandé. On rencontre : la linéarisation et les intégrales de Wallis, qui donnent la constante de la formule de Stirling ; l'intégration par parties et la dérivation par rapport à un paramètre, qui mènent au « rêve du bachelier » $\int_0^1x^{-x}\dd x=\sum n^{-n}$ ; les relations de récurrence, leur instabilité numérique et l'irrationalité de $e$ ; le noyau de Dirichlet, qui donne $\zeta(2)=\frac{\pi^2}6$ ; la convexité, qui encadre une intégrale et explique les méthodes des trapèzes et du point milieu ; enfin le reste intégral de la formule de Taylor.
 \end{abstract}
 
 \paragraph{Leçons concernées.} 236 (Illustrer par des exemples quelques méthodes de calcul d'intégrales de fonctions d'une ou plusieurs variables), 239 (Fonctions définies par une intégrale dépendant d'un paramètre), 246 (Séries de Fourier), 235 (Problèmes d'interversion de symboles en analyse), 218 (Formules de Taylor), 230 (Séries de nombres réels ou complexes).
 
 \paragraph{Développements possibles.} Intégrales de Wallis et constante de Stirling (théorème \ref{thm:wallis} et proposition \ref{prop:stirling}) ; calcul de $\zeta(2)$ par le noyau de Dirichlet (théorème \ref{thm:basel}) ; proposition \ref{prop:moments-log} et théorème \ref{thm:sophomore} ; erreur des méthodes des trapèzes et du point milieu (proposition \ref{prop:quadrature}).
 
+\paragraph{Prérequis.} Intégrale d'une fonction continue sur un segment, intégration par parties, changement de variable, séries numériques. Pour les sections 2 et 4 : convergence uniforme, dérivation sous l'intégrale.
+
 \paragraph{Notations.} Pour $s>1$, $\zeta(s)=\sum_{n\geq1}n^{-s}$. Les intégrales sont des intégrales de Riemann de fonctions continues par morceaux sur un segment, ou des intégrales généralisées absolument convergentes.
 
 \tableofcontents
 
 % ==========================================================
-\section{Calculs directs et intégrales de Wallis}
+\section{Calculer directement, puis par récurrence : Wallis}
 % ==========================================================
 
+On commence par les cas où une primitive existe et se trouve sans peine. Même là, il y a une méthode à retenir. Une valeur absolue se traite en coupant l'intervalle aux endroits où son contenu change de signe. Une puissance de sinus se traite en la transformant en somme de cosinus.
+
 \begin{exemple}[Exercice 1 de la feuille]\label{ex:abs}
-Par la relation de Chasles, en découpant aux points où les valeurs absolues changent de signe,
+On veut $\int_0^4\big(|x-1|+|x-2|\big)\dd x$. Par linéarité, on calcule chaque morceau séparément. On coupe en $1$ pour le premier et en $2$ pour le second (relation de Chasles). Chaque morceau est l'aire de deux triangles :
 \[
-  \int_0^4|x-1|\dd x=\frac12+\frac92=5,\qquad \int_0^4|x-2|\dd x=2+2=4,
-  \qquad\text{donc}\qquad \int_0^4\big(|x-1|+|x-2|\big)\dd x=9 .
+  \int_0^4|x-1|\dd x=\frac12+\frac92=5,\qquad \int_0^4|x-2|\dd x=2+2=4 .
 \]
-On peut aussi intégrer la fonction affine par morceaux $3-2x$, $1$, $2x-3$ sur $[0,1]$, $[1,2]$, $[2,4]$, ce qui donne $2+1+6=9$.
+Donc $\int_0^4\big(|x-1|+|x-2|\big)\dd x=9$.
+On peut aussi écrire la fonction sans valeur absolue. Elle vaut $3-2x$ sur $[0,1]$, $1$ sur $[1,2]$ et $2x-3$ sur $[2,4]$. Les trois intégrales valent $2$, $1$ et $6$, et l'on retrouve $9$ (figure \ref{fig:abs}).
 \end{exemple}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[x=1.4cm,y=0.6cm]
+  \fill[accent!15] (0,0) -- (0,3) -- (1,1) -- (2,1) -- (4,5) -- (4,0) -- cycle;
+  \draw[dashed,gray] (1,0) -- (1,1) (2,0) -- (2,1);
+  \draw[-{Stealth}] (-0.2,0) -- (4.4,0) node[right] {$x$};
+  \draw[-{Stealth}] (0,-0.3) -- (0,5.6) node[above] {$y$};
+  \draw[very thick,accent] (0,3) -- (1,1) -- (2,1) -- (4,5);
+  \foreach \x in {1,2,3,4} \draw (\x,0.1) -- (\x,-0.1) node[below] {$\x$};
+  \foreach \y in {1,3,5} \draw (0.05,\y) -- (-0.05,\y) node[left] {$\y$};
+  \node at (0.5,0.7) {$2$};
+  \node at (1.5,0.5) {$1$};
+  \node at (3,1.3) {$6$};
+  \node[accent,right] at (4,5) {$|x-1|+|x-2|$};
+\end{tikzpicture}
+\caption{La fonction $|x-1|+|x-2|$ est affine par morceaux : l'aire sous la courbe, $9$, est la somme des aires $2$, $1$ et $6$ de trois trapèzes.}\label{fig:abs}
+\end{figure}
+
+Pour $\sin^4$, aucune primitive ne saute aux yeux. L'idée est de remplacer la puissance par une somme de cosinus, qu'on sait intégrer : c'est la \emph{linéarisation}.
 
 \begin{exemple}[Linéarisation]\label{ex:sin4}
-Par les formules d'Euler, $\sin^4x=\big(\frac{e^{ix}-e^{-ix}}{2i}\big)^4=\frac{1}{16}\big(2\cos4x-8\cos2x+6\big)=\frac{3-4\cos2x+\cos4x}{8}$, donc
+Par les formules d'Euler,
 \[
-  \int_0^\pi\sin^4x\dd x=\frac{3\pi}{8},
+  \sin^4x=\Big(\frac{e^{ix}-e^{-ix}}{2i}\Big)^4=\frac{1}{16}\big(2\cos4x-8\cos2x+6\big)=\frac{3-4\cos2x+\cos4x}{8}.
 \]
-puisque $\cos2x$ et $\cos4x$ sont d'intégrale nulle sur $[0,\pi]$. Plus généralement, tout polynôme trigonométrique s'intègre en le linéarisant : seul le terme constant contribue sur une période.
+Les termes $\cos2x$ et $\cos4x$ sont d'intégrale nulle sur $[0,\pi]$. Il reste le terme constant :
+\[
+  \int_0^\pi\sin^4x\dd x=\frac{3\pi}{8}.
+\]
+Ce qu'il faut retenir : tout polynôme trigonométrique s'intègre en le linéarisant, et sur une période seul le terme constant contribue.
 \end{exemple}
 
-Pour $n\in\N$, on pose $W_n=\displaystyle\int_0^{\pi/2}\sin^nx\dd x$. Le changement de variable $x\mapsto\frac\pi2-x$ montre que $W_n=\int_0^{\pi/2}\cos^nx\dd x$, et $x\mapsto\pi-x$ que $\int_0^\pi\sin^nx\dd x=2W_n$.
+La linéarisation devient lourde pour $\sin^{20}$. On change donc de point de vue. Au lieu de calculer une intégrale, on les calcule \emph{toutes à la fois}, en cherchant une relation entre deux d'entre elles. Pour $n\in\N$, on pose
+\[
+  W_n=\int_0^{\pi/2}\sin^nx\dd x .
+\]
+Deux changements de variable seront utiles. Avec $x\mapsto\frac\pi2-x$, on voit que $W_n=\int_0^{\pi/2}\cos^nx\dd x$. Avec $x\mapsto\pi-x$, on voit que $\int_0^\pi\sin^nx\dd x=2W_n$. La figure \ref{fig:wallis} montre comment les graphes de $\sin^n$ se resserrent vers $x=\frac\pi2$ quand $n$ grandit : les aires $W_n$ diminuent, mais lentement.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[x=4cm,y=3.5cm]
+  \draw[-{Stealth}] (-0.05,0) -- (1.7,0) node[right] {$x$};
+  \draw[-{Stealth}] (0,-0.05) -- (0,1.2) node[above] {$y$};
+  \fill[accent!12] (0,0) -- plot[domain=0:1.5708,samples=60] (\x,{sin(deg(\x))^8}) -- (1.5708,0) -- cycle;
+  \draw[thick,accent2] plot[domain=0:1.5708,samples=60] (\x,{sin(deg(\x))});
+  \draw[thick,accent2!70] plot[domain=0:1.5708,samples=60] (\x,{sin(deg(\x))^2});
+  \draw[thick,accent!70] plot[domain=0:1.5708,samples=60] (\x,{sin(deg(\x))^4});
+  \draw[thick,accent] plot[domain=0:1.5708,samples=60] (\x,{sin(deg(\x))^8});
+  \draw (1.5708,0.03) -- (1.5708,-0.03) node[below] {$\frac{\pi}{2}$};
+  \draw (0.02,1) -- (-0.02,1) node[left] {$1$};
+  \node[accent2,left] at (0.75,0.72) {$n=1$};
+  \node[accent,right] at (1.25,0.35) {$n=8$};
+\end{tikzpicture}
+\caption{Les graphes de $\sin^n$ sur $[0,\frac\pi2]$ pour $n=1,2,4,8$. L'aire $W_n$ (colorée pour $n=8$) décroît comme $\sqrt{\pi/(2n)}$.}\label{fig:wallis}
+\end{figure}
+
+Le théorème suivant dit trois choses. On sait calculer $W_n$ par récurrence. Le produit $nW_nW_{n-1}$ ne dépend pas de $n$. Et de là, on tire la taille de $W_n$ quand $n$ est grand.
 
 \begin{theoreme}[Wallis]\label{thm:wallis}
 \begin{enumerate}[nosep]
@@ -93,29 +149,35 @@ Pour $n\in\N$, on pose $W_n=\displaystyle\int_0^{\pi/2}\sin^nx\dd x$. Le changem
 \end{enumerate}
 \end{theoreme}
 
+\emph{Idée de la preuve.} On intègre par parties en écrivant $\sin^n=\sin^{n-1}\cdot\sin$. La dérivée de $\sin^{n-1}$ fait apparaître $\cos^2=1-\sin^2$, donc à la fois $W_{n-2}$ et $W_n$. Pour l'équivalent, on encadre $W_n$ entre deux termes voisins de la suite.
+
 \begin{proof}
 1. Pour $n\geq2$, on intègre par parties $\sin^{n-1}x\cdot\sin x$ :
 \[
-  W_n=\big[-\cos x\sin^{n-1}x\big]_0^{\pi/2}+(n-1)\int_0^{\pi/2}\cos^2x\sin^{n-2}x\dd x=(n-1)(W_{n-2}-W_n),
+  W_n=\big[-\cos x\sin^{n-1}x\big]_0^{\pi/2}+(n-1)\int_0^{\pi/2}\cos^2x\sin^{n-2}x\dd x=(n-1)(W_{n-2}-W_n).
 \]
-d'où $nW_n=(n-1)W_{n-2}$. Les formules closes s'en déduisent par récurrence sur $p$, en écrivant $\frac{2p-1}{2p}=\frac{(2p-1)(2p)}{(2p)^2}$.
+Le crochet est nul aux deux bornes. On obtient $nW_n=(n-1)W_{n-2}$. Les formules closes s'en déduisent par récurrence sur $p$, en écrivant $\frac{2p-1}{2p}=\frac{(2p-1)(2p)}{(2p)^2}$.
 
-2. La suite $(nW_nW_{n-1})_{n\geq1}$ est constante, car $nW_nW_{n-1}=(n-1)W_{n-2}W_{n-1}$ pour $n\geq2$. Elle vaut donc $1\cdot W_1W_0=\frac\pi2$.
+2. La suite $(nW_nW_{n-1})_{n\geq1}$ est constante. En effet, pour $n\geq2$, la relation de 1 donne $nW_nW_{n-1}=(n-1)W_{n-2}W_{n-1}$. Elle vaut donc son premier terme, $1\cdot W_1W_0=\frac\pi2$.
 
-3. Pour $x\in\,]0,\frac\pi2[$, on a $0<\sin x<1$, donc $\sin^{n+1}x<\sin^nx$ et, les fonctions étant continues, $0<W_{n+1}<W_n$. Ainsi, pour $n\geq2$,
+3. Pour $x\in\,]0,\frac\pi2[$, on a $0<\sin x<1$, donc $\sin^{n+1}x<\sin^nx$. Les fonctions étant continues, on en déduit $0<W_{n+1}<W_n$. Ainsi, pour $n\geq2$,
 \[
   \frac{n-1}{n}=\frac{W_n}{W_{n-2}}\leq\frac{W_n}{W_{n-1}}\leq1,
 \]
-donc $W_n\sim W_{n-1}$. Avec 2, on obtient $nW_n^2\sim nW_nW_{n-1}=\frac\pi2$, d'où $W_n\sim\sqrt{\pi/(2n)}$ puisque $W_n>0$.
+donc $W_n\sim W_{n-1}$. Avec 2, on obtient $nW_n^2\sim nW_nW_{n-1}=\frac\pi2$. Comme $W_n>0$, cela donne $W_n\sim\sqrt{\pi/(2n)}$.
 
-4. Par 1, $\dfrac{W_{2p}}{W_{2p+1}}=\dfrac{\pi}{2}\cdot\dfrac{(2p)!\,(2p+1)!}{2^{4p}(p!)^4}=\dfrac\pi2\prod_{k=1}^p\dfrac{(2k-1)(2k+1)}{(2k)^2}$, en regroupant $(2p)!(2p+1)!=\prod_{k=1}^p(2k)^2\cdot\prod_{k=1}^p(2k-1)(2k+1)$ et $2^{2p}(p!)^2=\prod_{k=1}^p(2k)^2$. Or ce quotient tend vers $1$ par 3.
+4. Par 1, on a
+\[
+  \frac{W_{2p}}{W_{2p+1}}=\frac{\pi}{2}\cdot\frac{(2p)!\,(2p+1)!}{2^{4p}(p!)^4}=\frac\pi2\prod_{k=1}^p\frac{(2k-1)(2k+1)}{(2k)^2}.
+\]
+Pour la dernière égalité, on regroupe $(2p)!(2p+1)!=\prod_{k=1}^p(2k)^2\cdot\prod_{k=1}^p(2k-1)(2k+1)$ et $2^{2p}(p!)^2=\prod_{k=1}^p(2k)^2$. Or ce quotient tend vers $1$ par 3.
 \end{proof}
 
 \begin{exemple}
-On retrouve $\int_0^\pi\sin^4x\dd x=2W_4=2\cdot\frac34\cdot\frac12\cdot\frac\pi2=\frac{3\pi}8$, en accord avec l'exemple \ref{ex:sin4}.
+On retrouve $\int_0^\pi\sin^4x\dd x=2W_4=2\cdot\frac34\cdot\frac12\cdot\frac\pi2=\frac{3\pi}8$, comme dans l'exemple \ref{ex:sin4}, sans avoir rien linéarisé.
 \end{exemple}
 
-La proposition suivante est l'étape qui identifie la constante dans la formule de Stirling ; elle est utilisée telle quelle dans la fiche de la leçon 224 (\emph{Autour du nombre $e$}), où l'on établit qu'il existe $C>0$ tel que $n!\sim C\sqrt n\,(n/e)^n$.
+Voici une application inattendue. La formule de Stirling dit que $n!$ se comporte comme $C\sqrt n\,(n/e)^n$. Établir la forme $\sqrt n\,(n/e)^n$ se fait par une comparaison série-intégrale ; c'est l'objet de la fiche de la leçon 224 (\emph{Autour du nombre $e$}). Mais cette méthode ne donne pas la valeur de $C$. Les intégrales de Wallis la donnent : il suffit de réinjecter l'équivalent dans la formule close de $W_{2p}$.
 
 \begin{proposition}[Constante de Stirling]\label{prop:stirling}
 S'il existe $C>0$ tel que $n!\sim C\sqrt{n}\,\big(\frac ne\big)^n$, alors $C=\sqrt{2\pi}$. Autrement dit,
@@ -125,22 +187,24 @@ S'il existe $C>0$ tel que $n!\sim C\sqrt{n}\,\big(\frac ne\big)^n$, alors $C=\sq
 \end{proposition}
 
 \begin{proof}
-On injecte l'équivalent supposé dans la formule close de $W_{2p}$ :
+On remplace $(2p)!$ et $p!$ par leurs équivalents dans la formule close de $W_{2p}$. Les puissances de $e$ et de $p$ se simplifient :
 \[
   W_{2p}=\frac\pi2\cdot\frac{(2p)!}{2^{2p}(p!)^2}
   \sim\frac\pi2\cdot\frac{C\sqrt{2p}\,(2p)^{2p}e^{-2p}}{2^{2p}\,C^2\,p\,p^{2p}e^{-2p}}
   =\frac{\pi}{C\sqrt{2p}} .
 \]
-Par le théorème \ref{thm:wallis}, $W_{2p}\sim\sqrt{\pi/(4p)}=\frac{\sqrt\pi}{2\sqrt p}$. En identifiant, $\frac{\pi}{C\sqrt2}=\frac{\sqrt\pi}2$, soit $C=\sqrt{2\pi}$.
+D'autre part, le théorème \ref{thm:wallis} donne $W_{2p}\sim\sqrt{\pi/(4p)}=\frac{\sqrt\pi}{2\sqrt p}$. Deux équivalents d'une même suite ont le même coefficient : $\frac{\pi}{C\sqrt2}=\frac{\sqrt\pi}2$, soit $C=\sqrt{2\pi}$.
 \end{proof}
 
 \begin{remarque}
-De façon équivalente, $\binom{2p}{p}\sim\dfrac{4^p}{\sqrt{\pi p}}$, ce qu'on peut lire directement sur $W_{2p}=\frac\pi2\,4^{-p}\binom{2p}p$ sans connaître Stirling. C'est l'équivalent de la probabilité $\binom{2p}{p}4^{-p}$ de retour en $0$ de la marche aléatoire simple sur $\Z$ au temps $2p$.
+On peut lire le même résultat sans parler de Stirling. Comme $W_{2p}=\frac\pi2\,4^{-p}\binom{2p}p$, l'équivalent de $W_{2p}$ s'écrit $\binom{2p}{p}\sim\dfrac{4^p}{\sqrt{\pi p}}$. En probabilités, $\binom{2p}{p}4^{-p}$ est la probabilité qu'une marche aléatoire simple sur $\Z$ soit revenue en $0$ au temps $2p$. Elle décroît donc comme $1/\sqrt{\pi p}$.
 \end{remarque}
 
 % ==========================================================
-\section{Intégration par parties et intégrales à paramètre}
+\section{Intégrer par parties, dériver par rapport à un paramètre}
 % ==========================================================
+
+Les intégrales de la forme $\int t^n\ln^kt\dd t$ ont toujours une primitive. Le travail consiste à faire disparaître le logarithme. L'intégration par parties s'en charge : on dérive le logarithme, qui devient $\frac1t$, et on primitive la puissance.
 
 \begin{proposition}[Exercice 2 de la feuille]\label{prop:ipp-log}
 Soit $n\in\Z\setminus\{-1\}$ et $x>0$. On pose $I_n(x)=\int_1^xt^n\ln t\dd t$ et $J_n(x)=\int_1^xt^n\ln^2t\dd t$. Alors
@@ -152,17 +216,21 @@ Pour $n=-1$, on a $I_{-1}(x)=\frac12\ln^2x$ et $J_{-1}(x)=\frac13\ln^3x$.
 \end{proposition}
 
 \begin{proof}
-On intègre par parties sur le segment d'extrémités $1$ et $x$, inclus dans $]0,+\infty[$, en dérivant la puissance du logarithme et en primitivant $t^n$ en $\frac{t^{n+1}}{n+1}$ :
+On intègre par parties sur le segment d'extrémités $1$ et $x$, qui est inclus dans $]0,+\infty[$. On dérive la puissance du logarithme et on primitive $t^n$ en $\frac{t^{n+1}}{n+1}$ :
 \[
   I_n(x)=\Big[\frac{t^{n+1}}{n+1}\ln t\Big]_1^x-\frac1{n+1}\int_1^xt^n\dd t,\qquad
   J_n(x)=\Big[\frac{t^{n+1}}{n+1}\ln^2t\Big]_1^x-\frac2{n+1}\int_1^xt^n\ln t\dd t .
 \]
-Pour $n=-1$, $\frac{\ln^kt}{t}$ est la dérivée de $\frac{\ln^{k+1}t}{k+1}$.
+Pour $n=-1$, il n'y a rien à faire : $\frac{\ln^kt}{t}$ est la dérivée de $\frac{\ln^{k+1}t}{k+1}$.
 \end{proof}
 
 \begin{remarque}
-En développant, $J_n(x)=\frac{x^{n+1}\ln^2x}{n+1}-\frac{2x^{n+1}\ln x}{(n+1)^2}+\frac{2(x^{n+1}-1)}{(n+1)^3}$. Par récurrence, $\int t^n\ln^kt\dd t$ est de la forme $t^{n+1}P_k(\ln t)$ avec $P_k$ polynomial de degré $k$ : c'est la méthode générale pour les produits d'un polynôme (ou d'une puissance) par une puissance du logarithme. Pour $n\geq0$ et $x\to0^+$, on a $x^{n+1}\ln^jx\to0$, d'où $\int_0^1t^n\ln t\dd t=-\frac1{(n+1)^2}$ et $\int_0^1t^n\ln^2t\dd t=\frac{2}{(n+1)^3}$. La proposition suivante généralise ces deux valeurs sans calcul.
+En développant, $J_n(x)=\frac{x^{n+1}\ln^2x}{n+1}-\frac{2x^{n+1}\ln x}{(n+1)^2}+\frac{2(x^{n+1}-1)}{(n+1)^3}$. Chaque intégration par parties abaisse d'une unité la puissance du logarithme. Par récurrence, $\int t^n\ln^kt\dd t$ est donc de la forme $t^{n+1}P_k(\ln t)$, avec $P_k$ un polynôme de degré $k$.
+
+Faisons tendre $x$ vers $0^+$, pour $n\geq0$. Comme $x^{n+1}\ln^jx\to0$, il reste $\int_0^1t^n\ln t\dd t=-\frac1{(n+1)^2}$ et $\int_0^1t^n\ln^2t\dd t=\frac{2}{(n+1)^3}$. On devine un motif. La proposition suivante le confirme, sans aucune intégration par parties.
 \end{remarque}
+
+L'idée est la suivante. On connaît une intégrale très simple, $\int_0^1t^s\dd t=\frac1{s+1}$, qui dépend d'un paramètre $s$. Si l'on dérive $t^s$ par rapport à $s$, on obtient $t^s\ln t$. Dériver $k$ fois sous l'intégrale fait donc apparaître $\ln^kt$. Il reste à justifier qu'on a le droit de dériver sous le signe intégrale.
 
 \begin{proposition}\label{prop:moments-log}
 Pour tout réel $s>-1$ et tout $k\in\N$,
@@ -172,16 +240,22 @@ Pour tout réel $s>-1$ et tout $k\in\N$,
 \end{proposition}
 
 \begin{proof}
-Soit $F(s)=\int_0^1t^s\dd t=\frac1{s+1}$ pour $s>-1$, et $g(s,t)=t^s=e^{s\ln t}$ sur $]-1,+\infty[\times\,]0,1]$. On a $\partial_s^kg(s,t)=t^s\ln^kt$, continue en $(s,t)$. Fixons $a>-1$. Pour $s\geq a$ et $t\in\,]0,1]$,
+Soit $F(s)=\int_0^1t^s\dd t=\frac1{s+1}$ pour $s>-1$, et $g(s,t)=t^s=e^{s\ln t}$ sur $]-1,+\infty[\times\,]0,1]$. On a $\partial_s^kg(s,t)=t^s\ln^kt$, qui est continue en $(s,t)$.
+
+Il faut une domination indépendante de $s$. Fixons $a>-1$. Pour $s\geq a$ et $t\in\,]0,1]$,
 \[
   \big|t^s\ln^kt\big|\leq t^a|\ln t|^k=t^{\frac{a+1}2-1}\cdot t^{\frac{a+1}2}|\ln t|^k\leq M_{a,k}\,t^{\frac{a+1}2-1},
 \]
-où $M_{a,k}=\sup_{]0,1]}t^{(a+1)/2}|\ln t|^k<\infty$ par croissances comparées. Le majorant est intégrable sur $]0,1]$ car $\frac{a+1}2-1>-1$, et il ne dépend pas de $s$. Le théorème de dérivation sous l'intégrale (domination sur $[a,+\infty[$, donc sur tout voisinage de chaque point de $]-1,+\infty[$) montre, par récurrence sur $k$, que $F$ est de classe $\mathcal C^\infty$ et que $F^{(k)}(s)=\int_0^1t^s\ln^kt\dd t$. Or $F^{(k)}(s)=\frac{(-1)^kk!}{(s+1)^{k+1}}$.
+où $M_{a,k}=\sup_{]0,1]}t^{(a+1)/2}|\ln t|^k$ est fini par croissances comparées. Le majorant est intégrable sur $]0,1]$ car $\frac{a+1}2-1>-1$.
+
+Comme tout point de $]-1,+\infty[$ a un voisinage contenu dans un $[a,+\infty[$ avec $a>-1$, le théorème de dérivation sous l'intégrale s'applique. Par récurrence sur $k$, $F$ est de classe $\mathcal C^\infty$ et $F^{(k)}(s)=\int_0^1t^s\ln^kt\dd t$. Or on dérive directement $F(s)=\frac1{s+1}$ : $F^{(k)}(s)=\frac{(-1)^kk!}{(s+1)^{k+1}}$.
 \end{proof}
 
 \begin{remarque}
-Le changement de variable $t=e^{-u}$ ramène l'énoncé à $\int_0^{+\infty}u^ke^{-(s+1)u}\dd u=\frac{k!}{(s+1)^{k+1}}$, c'est-à-dire à $\Gamma(k+1)=k!$ et à un changement d'échelle. Les deux preuves sont deux visages de la même méthode : dériver par rapport à un paramètre une intégrale connue.
+Le changement de variable $t=e^{-u}$ donne une autre lecture. L'énoncé devient $\int_0^{+\infty}u^ke^{-(s+1)u}\dd u=\frac{k!}{(s+1)^{k+1}}$, c'est-à-dire $\Gamma(k+1)=k!$ après un changement d'échelle. Les deux preuves reposent sur la même méthode : dériver par rapport à un paramètre une intégrale qu'on connaît déjà.
 \end{remarque}
+
+On peut maintenant calculer une intégrale qui semble hors de portée : celle de $x^{-x}$, qui n'a pas de primitive élémentaire. L'idée est de développer $x^{-x}=e^{-x\ln x}$ en série entière de l'exponentielle. Chaque terme est un $x^k\ln^kx$, que la proposition \ref{prop:moments-log} sait intégrer. Il faut seulement justifier qu'on peut intégrer la série terme à terme.
 
 \begin{theoreme}[« Rêve du bachelier », Jean Bernoulli 1697]\label{thm:sophomore}
 \[
@@ -191,22 +265,28 @@ Le changement de variable $t=e^{-u}$ ramène l'énoncé à $\int_0^{+\infty}u^ke
 \end{theoreme}
 
 \begin{proof}
-Pour $x\in\,]0,1]$, $x^{-x}=e^{-x\ln x}=\sum_{k\geq0}u_k(x)$ avec $u_k(x)=\frac{(-x\ln x)^k}{k!}$, prolongée par $u_k(0)=\delta_{k,0}$, ce qui la rend continue sur $[0,1]$ puisque $x\ln x\to0$. L'étude de $x\mapsto x\ln x$ (dérivée $\ln x+1$) donne $0\leq-x\ln x\leq\frac1e$ sur $]0,1]$, donc $\|u_k\|_\infty\leq\frac{e^{-k}}{k!}$, terme général d'une série convergente. La série $\sum u_k$ converge normalement, donc uniformément sur le segment $[0,1]$, et on peut intégrer terme à terme. Par la proposition \ref{prop:moments-log} avec $s=k$,
+Pour $x\in\,]0,1]$, on écrit $x^{-x}=e^{-x\ln x}=\sum_{k\geq0}u_k(x)$ avec $u_k(x)=\frac{(-x\ln x)^k}{k!}$. On pose $u_k(0)=1$ si $k=0$ et $u_k(0)=0$ sinon. Comme $x\ln x\to0$ en $0$, chaque $u_k$ est continue sur $[0,1]$.
+
+Pour intervertir, on cherche une convergence normale. L'étude de $x\mapsto x\ln x$, de dérivée $\ln x+1$, donne $0\leq-x\ln x\leq\frac1e$ sur $]0,1]$. Donc $\|u_k\|_\infty\leq\frac{e^{-k}}{k!}$, terme général d'une série convergente. La série $\sum u_k$ converge normalement, donc uniformément sur le segment $[0,1]$, et on peut l'intégrer terme à terme. Par la proposition \ref{prop:moments-log} avec $s=k$,
 \[
   \int_0^1u_k(x)\dd x=\frac{(-1)^k}{k!}\int_0^1x^k\ln^kx\dd x=\frac{(-1)^k}{k!}\cdot\frac{(-1)^kk!}{(k+1)^{k+1}}=\frac{1}{(k+1)^{k+1}} .
 \]
-On somme sur $k\geq0$ et on pose $n=k+1$. Pour $x^x=e^{x\ln x}$, le même calcul donne le facteur $(-1)^k$ supplémentaire.
+On somme sur $k\geq0$ et on pose $n=k+1$. Pour $x^x=e^{x\ln x}$, le même calcul fait apparaître un facteur $(-1)^k$ supplémentaire.
 \end{proof}
 
 \begin{remarque}
-La convergence est très rapide : $\int_0^1x^{-x}\dd x=1{,}29128\ldots$ et $\int_0^1x^x\dd x=0{,}78343\ldots$ C'est un exemple typique d'interversion série-intégrale justifiée par convergence normale sur un segment (leçon 235) ; sur un intervalle non borné il faudrait invoquer le théorème de convergence dominée ou d'intégration terme à terme de Lebesgue.
+La série converge très vite : $\int_0^1x^{-x}\dd x=1{,}29128\ldots$ et $\int_0^1x^x\dd x=0{,}78343\ldots$ Pourquoi l'interversion marche-t-elle si bien ? Parce que $|x\ln x|$ reste inférieur à $\frac1e$ : la série est dominée par celle de $e^{1/e}$. C'est l'exemple type d'une interversion série-intégrale justifiée par convergence normale sur un segment (leçon 235). Sur un intervalle non borné, il faudrait le théorème de convergence dominée.
 \end{remarque}
 
 % ==========================================================
 \section{Relations de récurrence}
 % ==========================================================
 
-Pour $n\in\N$, on pose $I_n=\displaystyle\int_0^1x^ne^{-x}\dd x$.
+L'exercice 3 de la feuille demande $\int_0^1(-x^3+2x^2-x)e^{-x}\dd x$. On pourrait intégrer trois fois par parties. Il est plus économique, et plus instructif, de traiter toutes les puissances à la fois, comme pour Wallis. Pour $n\in\N$, on pose
+\[
+  I_n=\int_0^1x^ne^{-x}\dd x .
+\]
+Une intégration par parties relie $I_{n+1}$ à $I_n$. On en déduit une formule close, puis un encadrement.
 
 \begin{proposition}[Exercice 3 de la feuille]\label{prop:rec}
 \begin{enumerate}[nosep]
@@ -217,48 +297,86 @@ Pour $n\in\N$, on pose $I_n=\displaystyle\int_0^1x^ne^{-x}\dd x$.
 \end{proposition}
 
 \begin{proof}
-1. On intègre par parties : $I_{n+1}=\big[-x^{n+1}e^{-x}\big]_0^1+(n+1)\int_0^1x^ne^{-x}\dd x=-\frac1e+(n+1)I_n$.
+1. On dérive $x^{n+1}$ et on primitive $e^{-x}$ :
+\[
+  I_{n+1}=\big[-x^{n+1}e^{-x}\big]_0^1+(n+1)\int_0^1x^ne^{-x}\dd x=-\frac1e+(n+1)I_n .
+\]
 
-2. En divisant par $(n+1)!$, on obtient $\frac{I_{n+1}}{(n+1)!}=\frac{I_n}{n!}-\frac1{e\,(n+1)!}$, et la formule résulte d'une sommation télescopique à partir de $I_0=1-\frac1e$.
+2. Le facteur $(n+1)$ gêne. On s'en débarrasse en divisant par $(n+1)!$ :
+\[
+  \frac{I_{n+1}}{(n+1)!}=\frac{I_n}{n!}-\frac1{e\,(n+1)!}.
+\]
+La suite $\frac{I_n}{n!}$ perd $\frac{1}{e\,n!}$ à chaque pas. Une sommation télescopique à partir de $I_0=1-\frac1e$ donne la formule.
 
-3. L'intégrande est continue, positive et non identiquement nulle, et majorée par $x^n$.
+3. L'intégrande est continue, positive et non identiquement nulle, donc $I_n>0$. Elle est majorée par $x^n$, d'intégrale $\frac1{n+1}$.
 \end{proof}
 
 \begin{exemple}
-On trouve $I_1=1-\frac2e$, $I_2=2-\frac5e$, $I_3=6-\frac{16}e$, d'où
+La relation donne de proche en proche $I_1=1-\frac2e$, $I_2=2-\frac5e$, $I_3=6-\frac{16}e$. Par linéarité,
 \[
   \int_0^1(-x^3+2x^2-x)e^{-x}\dd x=-I_3+2I_2-I_1=-3+\frac8e\approx-0{,}0570 .
 \]
-Le signe est cohérent : l'intégrande vaut $-x(1-x)^2e^{-x}\leq0$.
+On vérifie le signe : l'intégrande vaut $-x(1-x)^2e^{-x}$, qui est négatif.
 \end{exemple}
+
+L'encadrement 3 a l'air anodin. Il démontre pourtant un résultat célèbre. L'idée : par la formule 2, $e\,I_n$ est la différence entre $n!\,e$ et un entier. Or $e\,I_n$ est strictement compris entre $0$ et $1$. Donc $n!\,e$ n'est jamais entier, ce qui est impossible si $e$ est rationnel.
 
 \begin{corollaire}[Irrationalité de $e$]\label{cor:e-irr}
 Le nombre $e$ est irrationnel.
 \end{corollaire}
 
 \begin{proof}
-Par la proposition \ref{prop:rec}, $e\,I_n=n!\,e-a_n$ avec $a_n=\sum_{k=0}^n\frac{n!}{k!}\in\N$, et $0<e\,I_n\leq\frac{e}{n+1}<1$ pour $n\geq2$. Donc $n!\,e\notin\Z$ pour tout $n\geq2$. Si l'on avait $e=\frac pq$ avec $p,q\in\N^*$, l'entier $n=\max(q,2)$ donnerait $n!\,e\in\Z$, ce qui est absurde.
+Par la proposition \ref{prop:rec}, $e\,I_n=n!\,e-a_n$ avec $a_n=\sum_{k=0}^n\frac{n!}{k!}\in\N$, et $0<e\,I_n\leq\frac{e}{n+1}<1$ pour $n\geq2$. Donc $n!\,e\notin\Z$ pour tout $n\geq2$. Supposons $e=\frac pq$ avec $p,q\in\N^*$. Pour $n=\max(q,2)$, l'entier $n!$ est multiple de $q$, donc $n!\,e\in\Z$. C'est absurde.
 \end{proof}
 
 \begin{remarque}[Stabilité numérique]
-La formule 1 est un mauvais algorithme de calcul. Si l'on part d'une valeur approchée $\tilde I_0=I_0+\varepsilon$ (par exemple l'arrondi flottant de $1-1/e$, avec $|\varepsilon|\approx10^{-16}$), la récurrence progressive donne $\tilde I_n=I_n+n!\,\varepsilon$ : l'erreur est multipliée par $n!$, alors que $I_n$ tend vers $0$. Dès $n\approx18$, on a $n!\cdot10^{-16}>1/(n+1)$ et le résultat calculé n'a plus aucun chiffre exact. La formule close 2 souffre du même défaut : elle multiplie par $n!$ la différence de deux nombres très proches, $1$ et $\frac1e\sum_{k\leq n}\frac1{k!}$.
+On pourrait croire que la relation 1 est un bon moyen de calculer $I_n$ sur ordinateur. C'est faux, et il est utile de comprendre pourquoi.
 
-La récurrence rétrograde $I_n=\frac{I_{n+1}+1/e}{n+1}$ est au contraire stable. L'erreur $\delta_n=\tilde I_n-I_n$ vérifie $\delta_n=\frac{\delta_{n+1}}{n+1}$, donc $\delta_n=\frac{n!}{N!}\,\delta_N$. Si l'on part de $\tilde I_N=0$, on a $|\delta_N|=I_N\leq\frac1{N+1}$, d'où $|\delta_n|\leq\frac{n!}{(N+1)!}$. Avec $N=n+20$, on obtient $I_n$ avec une précision bien meilleure que $10^{-16}$ relativement à $I_n\geq\frac{1}{e(n+1)}$ (exercice \ref{exo:equiv}).
+Partons d'une valeur approchée $\tilde I_0=I_0+\varepsilon$, par exemple l'arrondi flottant de $1-1/e$, avec $|\varepsilon|\approx10^{-16}$. La récurrence progressive donne $\tilde I_n=I_n+n!\,\varepsilon$ : l'erreur est multipliée par $n!$, alors que $I_n$ tend vers $0$. Dès $n\approx18$, on a $n!\cdot10^{-16}>1/(n+1)$ et le résultat calculé n'a plus aucun chiffre exact. La formule close 2 souffre du même défaut : elle multiplie par $n!$ la différence de deux nombres très proches, $1$ et $\frac1e\sum_{k\leq n}\frac1{k!}$.
+
+Le remède est de parcourir la récurrence à l'envers : $I_n=\frac{I_{n+1}+1/e}{n+1}$. Cette fois, l'erreur est \emph{divisée} à chaque pas. Précisément, l'erreur $\delta_n=\tilde I_n-I_n$ vérifie $\delta_n=\frac{\delta_{n+1}}{n+1}$, donc $\delta_n=\frac{n!}{N!}\,\delta_N$. Si l'on part de $\tilde I_N=0$, on a $|\delta_N|=I_N\leq\frac1{N+1}$, d'où $|\delta_n|\leq\frac{n!}{(N+1)!}$. Avec $N=n+20$, on obtient $I_n$ avec une précision relative bien meilleure que $10^{-16}$, puisque $I_n\geq\frac{1}{e(n+1)}$ (exercice \ref{exo:equiv}).
 \end{remarque}
 
 % ==========================================================
 \section{Le problème de Bâle par le noyau de Dirichlet}
 % ==========================================================
 
-On note $u_n=\sum_{k=1}^n\frac1{k^2}$ et, pour $x\in[0,\pi]$, $f_n(x)=\frac12+\sum_{k=1}^n\cos kx$.
+L'exercice 4 de la feuille est un petit chef-d'œuvre. Il calcule
+\[
+  \zeta(2)=\sum_{n=1}^\infty\frac1{n^2}=\frac{\pi^2}6
+\]
+avec uniquement des intégrations par parties. Voici le plan. On cherche une fonction $\varphi$ dont les « coefficients » $\int_0^\pi\varphi(x)\cos nx\dd x$ valent exactement $\frac1{n^2}$. Alors, en intégrant $\varphi$ contre la somme $f_n=\frac12+\cos x+\dots+\cos nx$, on fait apparaître la somme partielle $u_n=\sum_{k=1}^n\frac1{k^2}$. Il restera à montrer que cette intégrale tend vers une limite qu'on sait calculer.
+
+On note $u_n=\sum_{k=1}^n\frac1{k^2}$ et, pour $x\in[0,\pi]$, $f_n(x)=\frac12+\sum_{k=1}^n\cos kx$. La première étape est d'écrire $f_n$ sans le signe somme.
 
 \begin{lemme}[Noyau de Dirichlet]\label{lem:dirichlet}
 Pour $x\in\,]0,\pi]$, $f_n(x)=\dfrac{\sin\big((n+\frac12)x\big)}{2\sin(x/2)}$.
 \end{lemme}
 
+\emph{Idée.} On multiplie par $2\sin\frac x2$ pour que chaque terme devienne une différence de deux sinus, et la somme se télescope.
+
 \begin{proof}
-On a $2\sin\frac x2\cos kx=\sin\big((k+\frac12)x\big)-\sin\big((k-\frac12)x\big)$. En sommant pour $1\leq k\leq n$, la somme télescope : $2\sin\frac x2\,f_n(x)=\sin\frac x2+\sin\big((n+\frac12)x\big)-\sin\frac x2$. On divise par $2\sin\frac x2\neq0$.
+On a $2\sin\frac x2\cos kx=\sin\big((k+\frac12)x\big)-\sin\big((k-\frac12)x\big)$. En sommant pour $1\leq k\leq n$, tous les termes intermédiaires se simplifient : $2\sin\frac x2\,f_n(x)=\sin\frac x2+\sin\big((n+\frac12)x\big)-\sin\frac x2$. On divise par $2\sin\frac x2$, qui est non nul.
 \end{proof}
+
+La figure \ref{fig:dirichlet} montre $f_n$ pour $n=6$. Le noyau a un grand pic en $0$, de hauteur $n+\frac12$, puis oscille de plus en plus vite quand $n$ grandit. Ce sont ces oscillations qui feront tendre l'intégrale vers sa limite.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[x=3cm,y=0.5cm]
+  \draw[-{Stealth}] (-0.1,0) -- (3.4,0) node[right] {$x$};
+  \draw[-{Stealth}] (0,-2.3) -- (0,7.2) node[above] {$y$};
+  \draw[thick,accent] plot[domain=0.005:3.1416,samples=200] (\x,{sin(deg(6.5*\x))/(2*sin(deg(\x/2)))});
+  \draw[very thick,accent2] plot[domain=0:3.1416,samples=60] (\x,{\x*\x/(2*pi)-\x});
+  \draw (3.1416,0.15) -- (3.1416,-0.15) node[below right] {$\pi$};
+  \foreach \y in {-2,2,4,6} \draw (0.03,\y) -- (-0.03,\y) node[left] {$\y$};
+  \node[accent,right] at (0.12,6.5) {$f_6(x)=\frac{\sin(13x/2)}{2\sin(x/2)}$};
+  \node[accent2,below] at (2.3,-1.6) {$\varphi(x)=\frac{x^2}{2\pi}-x$};
+\end{tikzpicture}
+\caption{Le noyau de Dirichlet $f_6$ et la fonction $\varphi$ du lemme \ref{lem:coef}. L'intégrale de leur produit vaut $u_6-\frac{\pi^2}6$.}\label{fig:dirichlet}
+\end{figure}
+
+On cherche ensuite $\varphi$ sous la forme d'un polynôme $ax^2+bx$. Il suffit de connaître $\int_0^\pi x\cos nx$ et $\int_0^\pi x^2\cos nx$.
 
 \begin{lemme}\label{lem:coef}
 Pour $n\geq1$, $\displaystyle\int_0^\pi x\cos nx\dd x=\frac{(-1)^n-1}{n^2}$ et $\displaystyle\int_0^\pi x^2\cos nx\dd x=\frac{2\pi(-1)^n}{n^2}$. Par conséquent, avec $\varphi(x)=\dfrac{x^2}{2\pi}-x$,
@@ -268,28 +386,39 @@ Pour $n\geq1$, $\displaystyle\int_0^\pi x\cos nx\dd x=\frac{(-1)^n-1}{n^2}$ et $
 \end{lemme}
 
 \begin{proof}
-Par parties, $\int_0^\pi x\cos nx\dd x=\big[\frac{x\sin nx}n\big]_0^\pi-\frac1n\int_0^\pi\sin nx\dd x=\frac{\cos n\pi-1}{n^2}$. De même
+On intègre par parties en dérivant la puissance de $x$ :
+\[
+  \int_0^\pi x\cos nx\dd x=\Big[\frac{x\sin nx}n\Big]_0^\pi-\frac1n\int_0^\pi\sin nx\dd x=\frac{\cos n\pi-1}{n^2}.
+\]
+Pour $x^2$, il faut deux intégrations par parties :
 \[
   \int_0^\pi x^2\cos nx\dd x=-\frac2n\int_0^\pi x\sin nx\dd x=-\frac2n\Big(\Big[-\frac{x\cos nx}{n}\Big]_0^\pi+\frac1n\int_0^\pi\cos nx\dd x\Big)=\frac{2\pi(-1)^n}{n^2}.
 \]
-Alors $\int_0^\pi\varphi(x)\cos nx\dd x=\frac{(-1)^n}{n^2}-\frac{(-1)^n-1}{n^2}=\frac1{n^2}$, et $\int_0^\pi\varphi=\frac{\pi^3}{6\pi}-\frac{\pi^2}2=-\frac{\pi^2}3$.
+Alors $\int_0^\pi\varphi(x)\cos nx\dd x=\frac{(-1)^n}{n^2}-\frac{(-1)^n-1}{n^2}=\frac1{n^2}$ : les termes $(-1)^n$ se compensent, c'est tout l'intérêt du choix de $\varphi$. Enfin $\int_0^\pi\varphi=\frac{\pi^3}{6\pi}-\frac{\pi^2}2=-\frac{\pi^2}3$.
 \end{proof}
 
 \begin{remarque}
-Les réels $a=\frac1{2\pi}$, $b=-1$ de la feuille sont les seuls tels que $\int_0^\pi(ax^2+bx)\cos nx\dd x=\frac1{n^2}$ pour tout $n\geq1$ : cette intégrale vaut $\frac{2\pi a(-1)^n+b((-1)^n-1)}{n^2}$, et les cas $n$ pair et $n$ impair donnent $2\pi a=1$ et $-2\pi a-2b=1$.
+D'où sortent $a=\frac1{2\pi}$ et $b=-1$ ? Pour $\varphi=ax^2+bx$, le lemme donne $\int_0^\pi\varphi(x)\cos nx\dd x=\frac{2\pi a(-1)^n+b((-1)^n-1)}{n^2}$. On veut $\frac1{n^2}$ pour tout $n$. Le cas $n$ pair impose $2\pi a=1$ et le cas $n$ impair impose $-2\pi a-2b=1$. Ce sont donc les seuls choix possibles.
 \end{remarque}
 
+La dernière étape est un résultat d'oscillation. Quand $\lambda$ est grand, $\sin(\lambda x)$ oscille très vite. Les aires positives et négatives se compensent, et l'intégrale de $h(x)\sin(\lambda x)$ tend vers $0$. Pour une fonction $h$ de classe $\mathcal C^1$, une intégration par parties suffit à le voir : elle fait sortir un facteur $\frac1\lambda$.
+
 \begin{lemme}[Riemann--Lebesgue, cas $\mathcal C^1$]\label{lem:rl}
-Si $h\colon[\alpha,\beta]\to\R$ est de classe $\mathcal C^1$, alors $\int_\alpha^\beta h(x)\sin(\lambda x)\dd x\to0$ quand $\lambda\to+\infty$.
+Si $h\colon[\alpha,\beta]\to\R$ est de classe $\mathcal C^1$, alors
+\[
+  \int_\alpha^\beta h(x)\sin(\lambda x)\dd x\xrightarrow[\lambda\to+\infty]{}0 .
+\]
 \end{lemme}
 
 \begin{proof}
 Par parties, pour $\lambda>0$,
 \[
-  \int_\alpha^\beta h(x)\sin(\lambda x)\dd x=\Big[-\frac{h(x)\cos(\lambda x)}{\lambda}\Big]_\alpha^\beta+\frac1\lambda\int_\alpha^\beta h'(x)\cos(\lambda x)\dd x,
+  \int_\alpha^\beta h(x)\sin(\lambda x)\dd x=\Big[-\frac{h(x)\cos(\lambda x)}{\lambda}\Big]_\alpha^\beta+\frac1\lambda\int_\alpha^\beta h'(x)\cos(\lambda x)\dd x .
 \]
-dont la valeur absolue est majorée par $\frac{1}{\lambda}\big(|h(\alpha)|+|h(\beta)|+(\beta-\alpha)\|h'\|_\infty\big)$.
+La valeur absolue est majorée par $\frac{1}{\lambda}\big(|h(\alpha)|+|h(\beta)|+(\beta-\alpha)\|h'\|_\infty\big)$, qui tend vers $0$.
 \end{proof}
+
+Tout est prêt. On assemble les trois lemmes.
 
 \begin{theoreme}[Euler, 1735]\label{thm:basel}
 Pour tout $n\geq1$, $\displaystyle\int_0^\pi\varphi(x)f_n(x)\dd x=u_n-\frac{\pi^2}6$. Par conséquent
@@ -299,29 +428,64 @@ Pour tout $n\geq1$, $\displaystyle\int_0^\pi\varphi(x)f_n(x)\dd x=u_n-\frac{\pi^
 \end{theoreme}
 
 \begin{proof}
-Par linéarité et le lemme \ref{lem:coef}, $\int_0^\pi\varphi f_n=\frac12\big(-\frac{\pi^2}3\big)+\sum_{k=1}^n\frac1{k^2}=u_n-\frac{\pi^2}6$.
+\emph{L'égalité.} Par linéarité et le lemme \ref{lem:coef}, $\int_0^\pi\varphi f_n=\frac12\big(-\frac{\pi^2}3\big)+\sum_{k=1}^n\frac1{k^2}=u_n-\frac{\pi^2}6$.
 
-Par le lemme \ref{lem:dirichlet}, $\int_0^\pi\varphi f_n=\int_0^\pi h(x)\sin\big((n+\frac12)x\big)\dd x$, où $h(x)=\dfrac{\varphi(x)}{2\sin(x/2)}$ sur $]0,\pi]$ (la valeur en $0$ ne change pas l'intégrale). Écrivons
+\emph{La limite.} Par le lemme \ref{lem:dirichlet}, $\int_0^\pi\varphi f_n=\int_0^\pi h(x)\sin\big((n+\frac12)x\big)\dd x$, où $h(x)=\dfrac{\varphi(x)}{2\sin(x/2)}$ sur $]0,\pi]$. La valeur en $0$ ne change pas l'intégrale. Pour appliquer le lemme \ref{lem:rl}, il faut vérifier que $h$ se prolonge en une fonction $\mathcal C^1$ sur $[0,\pi]$. Le dénominateur s'annule en $0$, mais $\varphi$ aussi. Écrivons
 \[
   h(x)=\frac{x-2\pi}{2\pi}\cdot\frac{x/2}{\sin(x/2)} .
 \]
-La fonction $y\mapsto\frac{\sin y}{y}$, prolongée par $1$ en $0$, est développable en série entière sur $\R$, donc $\mathcal C^\infty$, et elle ne s'annule pas sur $[0,\frac\pi2]$. Son inverse est donc $\mathcal C^\infty$ sur $[0,\frac\pi2]$, et $h$ se prolonge en une fonction de classe $\mathcal C^\infty$ (en particulier $\mathcal C^1$) sur $[0,\pi]$, avec $h(0)=-1$. Le lemme \ref{lem:rl} donne $\int_0^\pi\varphi f_n\to0$, c'est-à-dire $u_n\to\frac{\pi^2}6$.
+La fonction $y\mapsto\frac{\sin y}{y}$, prolongée par $1$ en $0$, est développable en série entière sur $\R$, donc $\mathcal C^\infty$. Elle ne s'annule pas sur $[0,\frac\pi2]$. Son inverse est donc $\mathcal C^\infty$ sur $[0,\frac\pi2]$, et $h$ se prolonge en une fonction de classe $\mathcal C^\infty$ sur $[0,\pi]$, avec $h(0)=-1$. Le lemme \ref{lem:rl}, avec $\lambda=n+\frac12$, donne $\int_0^\pi\varphi f_n\to0$, c'est-à-dire $u_n\to\frac{\pi^2}6$.
 \end{proof}
 
 \begin{remarque}
-C'est une version déguisée de la théorie de Fourier (leçon 246). Les coefficients en cosinus du prolongement pair et $2\pi$-périodique de $\varphi$ sont $a_k=\frac2\pi\int_0^\pi\varphi(x)\cos kx\dd x$, et $\frac2\pi\int_0^\pi\varphi f_n=\frac{a_0}2+\sum_{k=1}^na_k$ est la somme partielle de Fourier $S_n\varphi(0)$ ; le théorème dit que $S_n\varphi(0)\to\varphi(0)=0$. On en déduit d'ailleurs $\varphi(x)=\frac2\pi\big(\sum_{n\geq1}\frac{\cos nx}{n^2}-\frac{\pi^2}6\big)$ sur $[0,\pi]$. L'intérêt de la méthode est de n'utiliser que des intégrations par parties. Le même argument avec un polynôme de degré $4$ donne $\zeta(4)=\frac{\pi^4}{90}$.
+Pourquoi cela marche-t-il ? C'est de la théorie de Fourier déguisée (leçon 246). Les coefficients en cosinus du prolongement pair et $2\pi$-périodique de $\varphi$ sont les nombres $a_k=\frac2\pi\int_0^\pi\varphi(x)\cos kx\dd x$, et
+\[
+  \frac2\pi\int_0^\pi\varphi f_n=\frac{a_0}2+\sum_{k=1}^na_k=S_n\varphi(0)
+\]
+est la somme partielle de Fourier de $\varphi$ en $0$. Le théorème dit simplement que $S_n\varphi(0)\to\varphi(0)=0$. On en déduit d'ailleurs, sur $[0,\pi]$,
+\[
+  \varphi(x)=\frac2\pi\Big(\sum_{n\geq1}\frac{\cos nx}{n^2}-\frac{\pi^2}6\Big).
+\] L'intérêt de la méthode est de n'utiliser que des intégrations par parties. Le même argument, avec un polynôme de degré $4$, donne $\zeta(4)=\frac{\pi^4}{90}$.
 \end{remarque}
 
 % ==========================================================
-\section{Encadrements par convexité et méthodes de quadrature}
+\section{Encadrer sans calculer : convexité et quadrature}
 % ==========================================================
 
-Soit $f(x)=\dfrac1{1+x+x^2}$ sur $[0,1]$, $A=(0,1)$ et $B=(1,\frac13)$ les points de sa courbe $\mathcal C$ d'abscisses $0$ et $1$.
+Parfois, on ne cherche pas la valeur exacte, seulement un encadrement. La convexité le donne presque gratuitement. Une fonction convexe est au-dessous de ses cordes et au-dessus de ses tangentes. En intégrant, on obtient des aires de trapèzes et de triangles, faciles à calculer.
+
+Soit $f(x)=\dfrac1{1+x+x^2}$ sur $[0,1]$, et $A=(0,1)$, $B=(1,\frac13)$ les points de sa courbe $\mathcal C$ d'abscisses $0$ et $1$. La figure \ref{fig:convexe} montre la situation : la courbe est coincée entre la corde $(AB)$, au-dessus, et la ligne brisée formée par les deux tangentes, au-dessous.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[x=7cm,y=5cm]
+  \fill[accent!15] (0,0) -- (0,1) -- (0.5,0.5) -- (1,1/3) -- (1,0) -- cycle;
+  \fill[accent2!25] (0,1) -- (1,1/3) -- plot[domain=1:0,samples=60] (\x,{1/(1+\x+\x*\x)}) -- cycle;
+  \draw[-{Stealth}] (-0.05,0) -- (1.15,0) node[right] {$x$};
+  \draw[-{Stealth}] (0,-0.05) -- (0,1.15) node[above] {$y$};
+  \draw[accent2,thick] (0,1) -- (1,1/3);
+  \draw[accent,thick] (-0.05,1.05) -- (0.6,0.4);
+  \draw[accent,thick] (0.4,0.5333) -- (1.1,0.3);
+  \draw[very thick] plot[domain=0:1,samples=80] (\x,{1/(1+\x+\x*\x)});
+  \draw[dashed,gray] (0.5,0) -- (0.5,0.5) (1,0) -- (1,1/3);
+  \fill (0,1) circle[radius=0.012] node[left] {$A$};
+  \fill (1,1/3) circle[radius=0.012] node[above right] {$B$};
+  \draw (0.5,0.02) -- (0.5,-0.02) node[below] {$\frac12$};
+  \draw (1,0.02) -- (1,-0.02) node[below] {$1$};
+  \node[accent2,above right] at (0.55,0.65) {corde $(AB)$};
+  \node[accent,below left] at (0.28,0.7) {$T_A$};
+  \node[accent,below] at (0.75,0.40) {$T_B$};
+  \node at (0.25,0.2) {aire $\frac{7}{12}$};
+  \draw (0.015,1/3) -- (-0.015,1/3) node[left] {$\frac13$};
+  \draw[dashed,gray] (0,1/3) -- (1,1/3);
+\end{tikzpicture}
+\caption{La courbe de $f(x)=\frac{1}{1+x+x^2}$ entre sa corde et ses deux tangentes extrêmes. L'aire bleue, sous les tangentes, vaut $\frac7{12}$ ; l'aire sous la corde vaut $\frac8{12}$. L'intégrale de $f$ est comprise entre les deux : il lui manque la bande rose.}\label{fig:convexe}
+\end{figure}
 
 \begin{proposition}[Exercice 5 de la feuille]\label{prop:convexe}
 \begin{enumerate}[nosep]
 \item $f$ est strictement décroissante et convexe sur $[0,1]$, avec $f''(x)=\dfrac{6x(1+x)}{(1+x+x^2)^3}$.
-\item La corde $(AB)$ a pour équation $y=1-\frac23x$ ; les tangentes en $A$ et en $B$ sont $T_A\colon y=1-x$ et $T_B\colon y=\frac{2-x}3$, et se coupent en $(\frac12,\frac12)$.
+\item La corde $(AB)$ a pour équation $y=1-\frac23x$. Les tangentes en $A$ et en $B$ sont $T_A\colon y=1-x$ et $T_B\colon y=\frac{2-x}3$, et se coupent en $(\frac12,\frac12)$.
 \item On a $\dfrac7{12}<\displaystyle\int_0^1f(x)\dd x<\dfrac8{12}$, et en fait $\displaystyle\int_0^1f(x)\dd x=\frac{\pi}{3\sqrt3}\approx0{,}6046$.
 \end{enumerate}
 \end{proposition}
@@ -332,23 +496,25 @@ Soit $f(x)=\dfrac1{1+x+x^2}$ sur $[0,1]$, $A=(0,1)$ et $B=(1,\frac13)$ les point
   f''=-2q^{-2}+2(2x+1)^2q^{-3}=\frac{2(4x^2+4x+1)-2(1+x+x^2)}{q^3}=\frac{6x^2+6x}{q^3}\geq0 .
 \]
 
-2. On a $f(0)=1$, $f(1)=\frac13$, $f'(0)=-1$ et $f'(1)=-\frac39=-\frac13$. Les tangentes se coupent là où $3-3x=2-x$, soit $x=\frac12$.
+2. On a $f(0)=1$, $f(1)=\frac13$, $f'(0)=-1$ et $f'(1)=-\frac39=-\frac13$. Les tangentes se coupent là où $1-x=\frac{2-x}{3}$, c'est-à-dire $3-3x=2-x$, soit $x=\frac12$.
 
-3. Une fonction convexe est au-dessous de ses cordes et au-dessus de ses tangentes. Donc, sur $[0,1]$,
+3. Par convexité, sur $[0,1]$,
 \[
   m(x):=\max\Big(1-x,\frac{2-x}3\Big)\leq f(x)\leq1-\frac23x .
 \]
-L'intégrale de la corde est l'aire d'un trapèze, $\frac12\big(1+\frac13\big)=\frac23=\frac8{12}$. Celle de $m$ vaut
+L'intégrale de la corde est l'aire d'un trapèze : $\frac12\big(1+\frac13\big)=\frac23=\frac8{12}$. Celle de $m$ se calcule en coupant en $\frac12$ :
 \[
   \int_0^{1/2}(1-x)\dd x+\int_{1/2}^1\frac{2-x}3\dd x=\frac38+\frac5{24}=\frac7{12}.
 \]
-Les inégalités sont strictes car les fonctions continues $f-m\geq 0$ et $1-\frac23x-f\geq 0$ ne sont pas identiquement nulles : en $x=\frac12$, on a $m=\frac12<f=\frac47<\frac23$. Enfin, $1+x+x^2=(x+\frac12)^2+\frac34$ donne
+Les inégalités sont strictes. En effet, les fonctions continues $f-m\geq 0$ et $1-\frac23x-f\geq 0$ ne sont pas identiquement nulles : en $x=\frac12$, on a $m=\frac12<f=\frac47<\frac23$.
+
+Pour la valeur exacte, on met le dénominateur sous forme canonique, $1+x+x^2=(x+\frac12)^2+\frac34$, ce qui fait apparaître une arctangente :
 \[
   \int_0^1f=\frac2{\sqrt3}\Big[\arctan\frac{2x+1}{\sqrt3}\Big]_0^1=\frac2{\sqrt3}\Big(\frac\pi3-\frac\pi6\Big)=\frac\pi{3\sqrt3}. \qedhere
 \]
 \end{proof}
 
-La majoration est la méthode des trapèzes ; la minoration par la tangente au milieu est la méthode du point milieu. Leur erreur se calcule exactement.
+La majoration par la corde porte un nom : c'est la méthode des trapèzes. La minoration par la tangente au milieu de l'intervalle est la méthode du point milieu. On peut aller plus loin que l'encadrement et calculer leur erreur exactement. L'idée est d'écrire l'erreur comme l'intégrale de $f''$ contre un « noyau » positif. Le signe de l'erreur est alors celui de $f''$, et sa taille se lit sur l'intégrale du noyau.
 
 \begin{proposition}[Erreur des trapèzes et du point milieu]\label{prop:quadrature}
 Soit $f\in\mathcal C^2([a,b])$, $m=\frac{a+b}2$ et $h=b-a$. Alors
@@ -364,25 +530,31 @@ En particulier, si $f$ est convexe, $h\,f(m)\leq\int_a^bf\leq h\,\frac{f(a)+f(b)
 \end{proposition}
 
 \begin{proof}
-Soit $w(x)=\frac{(x-a)(b-x)}2$ ; on a $w(a)=w(b)=0$, $w'(x)=\frac{a+b-2x}2$ et $w''=-1$. Deux intégrations par parties donnent
+\emph{Trapèzes.} Soit $w(x)=\frac{(x-a)(b-x)}2$. On a $w(a)=w(b)=0$, $w'(x)=\frac{a+b-2x}2$ et $w''=-1$. Deux intégrations par parties font passer les deux dérivées de $f$ sur $w$ :
 \[
   \int_a^bwf''=-\int_a^bw'f'=-\big[w'f\big]_a^b+\int_a^bw''f=\frac h2\big(f(a)+f(b)\big)-\int_a^bf .
 \]
-Pour le point milieu, la formule de Taylor avec reste intégral en $m$ s'écrit $f(x)=f(m)+f'(m)(x-m)+\int_m^x(x-t)f''(t)\dd t$. On intègre sur $[a,b]$ : le terme linéaire disparaît par symétrie et, par Fubini sur les triangles $\{m\leq t\leq x\leq b\}$ et $\{a\leq x\leq t\leq m\}$,
+
+\emph{Point milieu.} La formule de Taylor avec reste intégral en $m$ s'écrit $f(x)=f(m)+f'(m)(x-m)+\int_m^x(x-t)f''(t)\dd t$. On intègre sur $[a,b]$. Le terme linéaire disparaît par symétrie. On échange les intégrales (Fubini) sur les triangles $\{m\leq t\leq x\leq b\}$ et $\{a\leq x\leq t\leq m\}$ :
 \[
-  \int_m^b\!\!\int_m^x(x-t)f''(t)\dd t\dd x=\int_m^bf''(t)\frac{(b-t)^2}2\dd t,\qquad
+  \int_m^b\!\!\int_m^x(x-t)f''(t)\dd t\dd x=\int_m^bf''(t)\frac{(b-t)^2}2\dd t,
+\]
+\[
   \int_a^m\!\!\int_x^m(t-x)f''(t)\dd t\dd x=\int_a^mf''(t)\frac{(t-a)^2}2\dd t .
 \]
-Les noyaux $w$ et $K$ sont positifs, d'intégrales $\frac{h^3}{12}$ et $2\cdot\frac{(h/2)^3}{6}=\frac{h^3}{24}$, et la formule de la moyenne donne $\xi$ et $\eta$.
+
+\emph{Formule de la moyenne.} Les noyaux $w$ et $K$ sont positifs, d'intégrales $\frac{h^3}{12}$ et $2\cdot\frac{(h/2)^3}{6}=\frac{h^3}{24}$. La formule de la moyenne donne $\xi$ et $\eta$.
 \end{proof}
 
 \begin{remarque}
-Pour $f=\frac1{1+x+x^2}$, le point milieu donne $f(\frac12)=\frac47\approx0{,}571$, moins bon que $\frac7{12}\approx0{,}583$ : la minoration de la feuille par les deux tangentes extrêmes est plus fine ici. On lit sur les termes d'erreur que le point milieu est environ deux fois plus précis que les trapèzes, et de signe opposé, ce qui motive la méthode de Simpson $\frac13T+\frac23M$, exacte pour les polynômes de degré $3$. En composant sur $N$ sous-intervalles, l'erreur est en $O(N^{-2})$ pour les deux méthodes.
+Pour $f=\frac1{1+x+x^2}$, le point milieu donne $f(\frac12)=\frac47\approx0{,}571$. C'est moins bon que $\frac7{12}\approx0{,}583$ : ici, les deux tangentes aux extrémités font mieux que la tangente au milieu. Les termes d'erreur disent autre chose d'utile. Le point milieu est environ deux fois plus précis que les trapèzes, et son erreur est de signe opposé. La combinaison $\frac13T+\frac23M$ annule donc le terme principal : c'est la méthode de Simpson, exacte pour les polynômes de degré $3$. Enfin, en découpant $[a,b]$ en $N$ sous-intervalles, l'erreur des deux méthodes est en $O(N^{-2})$.
 \end{remarque}
 
 % ==========================================================
-\section{Reste intégral de la formule de Taylor}
+\section{Le reste intégral de la formule de Taylor}
 % ==========================================================
+
+Le dernier exercice de la feuille définit une suite d'intégrales sans dire d'où elle vient. Elle vient de la formule de Taylor avec reste intégral, appliquée à l'exponentielle. Ce reste est une intégrale, et la section précédente nous a appris à encadrer une intégrale : on encadre $e^x$ entre $1$ et $e$.
 
 On pose $R_0=\int_0^1e^x\dd x$ et, pour $n\geq1$, $R_n=\dfrac1{n!}\displaystyle\int_0^1(1-x)^ne^x\dd x$.
 
@@ -397,14 +569,43 @@ On pose $R_0=\int_0^1e^x\dd x$ et, pour $n\geq1$, $R_n=\dfrac1{n!}\displaystyle\
 \begin{proof}
 1. Une primitive de $(1-x)^n$ est $-\frac{(1-x)^{n+1}}{n+1}$.
 
-2. C'est la formule de Taylor avec reste intégral pour $\exp$ entre $0$ et $1$ à l'ordre $n$ : $e=\sum_{k=0}^n\frac1{k!}+\int_0^1\frac{(1-x)^n}{n!}e^x\dd x$. On peut aussi l'établir directement : $R_0=e-1$ et, par parties, $R_n=\big[\frac{(1-x)^n}{n!}e^x\big]_0^1+R_{n-1}=R_{n-1}-\frac1{n!}$.
+2. C'est la formule de Taylor avec reste intégral pour $\exp$, entre $0$ et $1$, à l'ordre $n$ :
+\[
+  e=\sum_{k=0}^n\frac1{k!}+\int_0^1\frac{(1-x)^n}{n!}e^x\dd x .
+\]
+On peut aussi l'établir directement. On a $R_0=e-1$ et, par parties, $R_n=\big[\frac{(1-x)^n}{n!}e^x\big]_0^1+R_{n-1}=R_{n-1}-\frac1{n!}$.
 
-3. Pour $x\in\,]0,1[$, $1<e^x<e$, et $(1-x)^n>0$ ; on intègre ces inégalités strictes entre fonctions continues et on utilise 1.
+3. Pour $x\in\,]0,1[$, on a $1<e^x<e$ et $(1-x)^n>0$. On intègre ces inégalités strictes entre fonctions continues, et on utilise 1.
 \end{proof}
 
 \begin{remarque}
-Le changement de variable $u=1-x$ donne $R_n=\frac{e}{n!}\int_0^1u^ne^{-u}\dd u=\frac{e\,I_n}{n!}$ : les propositions \ref{prop:rec} et \ref{prop:taylor} sont la même. L'encadrement 3, multiplié par $n!$, est exactement celui qui sert dans la preuve du corollaire \ref{cor:e-irr}. La vitesse de convergence de $\sum\frac1{k!}$ vers $e$ est étudiée plus finement dans la fiche de la leçon 224.
+Le changement de variable $u=1-x$ donne $R_n=\frac{e}{n!}\int_0^1u^ne^{-u}\dd u=\frac{e\,I_n}{n!}$. Les propositions \ref{prop:rec} et \ref{prop:taylor} disent donc la même chose sous deux formes. L'encadrement 3, multiplié par $n!$, est exactement celui qui sert dans la preuve du corollaire \ref{cor:e-irr}. La vitesse de convergence de $\sum\frac1{k!}$ vers $e$ est étudiée plus finement dans la fiche de la leçon 224.
 \end{remarque}
+
+% ==========================================================
+\section{Synthèse}
+% ==========================================================
+
+Revenons à la question de départ : que faire quand on ne connaît pas de primitive ? Chaque exercice de la feuille illustre une réponse.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{2.6cm}p{6cm}p{6.2cm}@{}}
+\toprule
+\textbf{Méthode} & \textbf{Idée} & \textbf{Exemple de la fiche} \\
+\midrule
+Linéarisation & transformer un produit en somme & $\int_0^\pi\sin^4=\frac{3\pi}8$ \\
+Récurrence & relier les intégrales entre elles, puis les estimer & Wallis, Stirling, $e\notin\Q$ \\
+Paramètre & dériver une intégrale connue & $\int_0^1t^s\ln^kt$, $\int_0^1x^{-x}$ \\
+Série & développer l'intégrande et intervertir & $\int_0^1x^{-x}=\sum n^{-n}$ \\
+Oscillation & coefficients de Fourier, Riemann--Lebesgue & $\zeta(2)=\frac{\pi^2}6$ \\
+Convexité & encadrer par cordes et tangentes & $\frac7{12}<\int_0^1\frac{\dd x}{1+x+x^2}<\frac8{12}$ \\
+Taylor & lire un reste comme une intégrale & $0<e-\sum_{k\leq n}\frac1{k!}<\frac e{(n+1)!}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Le fil commun est le suivant. On ne calcule presque jamais une intégrale isolée. On la plonge dans une famille (indexée par un entier ou par un réel), et c'est la structure de la famille, récurrence ou dérivée, qui donne la valeur. Quand la valeur exacte est hors d'atteinte, la même structure donne au moins un encadrement, et souvent un résultat qui dépasse de loin l'exercice : la constante de Stirling, l'irrationalité de $e$, ou $\zeta(2)$.
 
 % ==========================================================
 \section{Exercices}
@@ -442,23 +643,42 @@ Combien de termes de la série $\sum\frac1{k!}$ suffit-il de sommer pour obtenir
 \section{Corrigés}
 % ==========================================================
 
-\paragraph{Exercice 1.} $\int_0^\pi\sin^6=2W_6=2\cdot\frac56\cdot\frac34\cdot\frac12\cdot\frac\pi2=\frac{5\pi}{16}$. Ensuite, avec $\sin^2=1-\cos^2$ et l'égalité $W_n=\int_0^{\pi/2}\cos^n$, on obtient $\int_0^{\pi/2}\sin^2x\cos^4x\dd x=W_4-W_6=\frac{3\pi}{16}-\frac{5\pi}{32}=\frac\pi{32}$.
+\paragraph{Exercice 1.} On utilise la récurrence de Wallis : $\int_0^\pi\sin^6=2W_6=2\cdot\frac56\cdot\frac34\cdot\frac12\cdot\frac\pi2=\frac{5\pi}{16}$. Pour la seconde, on écrit $\sin^2=1-\cos^2$ et on utilise $W_n=\int_0^{\pi/2}\cos^n$ :
+\[
+  \int_0^{\pi/2}\sin^2x\cos^4x\dd x=W_4-W_6=\frac{3\pi}{16}-\frac{5\pi}{32}=\frac\pi{32}.
+\]
 
-\paragraph{Exercice 2.} Par la proposition \ref{prop:ipp-log} avec $n=2$ et $x=e$ : $I_2(e)=\frac{e^3}3-\frac{e^3-1}9=\frac{2e^3+1}9$, puis $J_2(e)=\frac{e^3}3-\frac23\cdot\frac{2e^3+1}9=\frac{5e^3-2}{27}$. Par la proposition \ref{prop:moments-log} avec $s=k=2$, $\int_0^1t^2\ln^2t\dd t=\frac{2}{27}$.
+\paragraph{Exercice 2.} On applique la proposition \ref{prop:ipp-log} avec $n=2$ et $x=e$, en se souvenant que $\ln e=1$ : $I_2(e)=\frac{e^3}3-\frac{e^3-1}9=\frac{2e^3+1}9$, puis
+\[
+  J_2(e)=\frac{e^3}3-\frac23\cdot\frac{2e^3+1}9=\frac{5e^3-2}{27}.
+\]
+Pour la seconde, la proposition \ref{prop:moments-log} avec $s=k=2$ donne directement $\int_0^1t^2\ln^2t\dd t=\frac{2}{27}$.
 
-\paragraph{Exercice 3.} Par le théorème \ref{thm:sophomore}, $\int_0^1x^x\dd x=\sum_{n\geq1}\frac{(-1)^{n+1}}{n^n}$. La suite $(n^{-n})$ décroît vers $0$, donc, par le critère des séries alternées, le reste après le terme $n=4$ est majoré par $5^{-5}=\frac1{3125}<3{,}3\cdot10^{-4}$. D'où $\int_0^1x^x\dd x\approx1-\frac14+\frac1{27}-\frac1{256}\approx0{,}7831$ à $3{,}3\cdot10^{-4}$ près, soit $0{,}783$ à $10^{-3}$ près (la valeur exacte est $0{,}78343\ldots$).
+\paragraph{Exercice 3.} Par le théorème \ref{thm:sophomore}, $\int_0^1x^x\dd x=\sum_{n\geq1}\frac{(-1)^{n+1}}{n^n}$. C'est une série alternée, et la suite $(n^{-n})$ décroît vers $0$. Par le critère des séries alternées, le reste après le terme $n=4$ est majoré par le terme suivant, $5^{-5}=\frac1{3125}<3{,}3\cdot10^{-4}$. Donc
+\[
+  \int_0^1x^x\dd x\approx1-\frac14+\frac1{27}-\frac1{256}\approx0{,}7831
+\]
+à $3{,}3\cdot10^{-4}$ près, soit $0{,}783$ à $10^{-3}$ près. La valeur exacte est $0{,}78343\ldots$
 
-\paragraph{Exercice 4.} La relation de récurrence s'écrit $(n+1)I_n=I_{n+1}+\frac1e$. Comme $0<I_{n+1}\leq\frac1{n+2}$, on a $(n+1)I_n\to\frac1e$, donc $I_n\sim\frac1{e(n+1)}\sim\frac1{en}$. En particulier $I_n\geq\frac1{e(n+1)}$, ce qui justifie l'estimation d'erreur relative de la remarque sur la stabilité.
+\paragraph{Exercice 4.} La relation de récurrence s'écrit $(n+1)I_n=I_{n+1}+\frac1e$. Comme $0<I_{n+1}\leq\frac1{n+2}$, le terme $I_{n+1}$ tend vers $0$, donc $(n+1)I_n\to\frac1e$. Ainsi $I_n\sim\frac1{e(n+1)}\sim\frac1{en}$. Au passage, $(n+1)I_n>\frac1e$ donne $I_n\geq\frac1{e(n+1)}$, ce qui justifie l'estimation d'erreur relative de la remarque sur la stabilité.
 
-\paragraph{Exercice 5.} Les deux séries convergent absolument, ce qui autorise les regroupements. Les termes pairs donnent $\sum_{k\geq1}\frac1{(2k)^2}=\frac14\zeta(2)$, donc $\sum_{k\geq0}\frac1{(2k+1)^2}=\frac34\zeta(2)=\frac{\pi^2}8$. Ensuite $\sum\frac{(-1)^{n+1}}{n^2}=\frac34\zeta(2)-\frac14\zeta(2)=\frac12\zeta(2)=\frac{\pi^2}{12}$.
+\paragraph{Exercice 5.} Les deux séries convergent absolument, ce qui autorise les regroupements. Les termes pairs donnent $\sum_{k\geq1}\frac1{(2k)^2}=\frac14\zeta(2)$. Il reste pour les termes impairs
+\[
+  \sum_{k\geq0}\frac1{(2k+1)^2}=\frac34\zeta(2)=\frac{\pi^2}8 .
+\]
+Pour la série alternée, on retranche les termes pairs aux termes impairs : $\sum\frac{(-1)^{n+1}}{n^2}=\frac34\zeta(2)-\frac14\zeta(2)=\frac12\zeta(2)=\frac{\pi^2}{12}$.
 
-\paragraph{Exercice 6.} La fonction $f(t)=\frac1t$ est convexe sur $[1,2]$ ($f''(t)=\frac2{t^3}>0$). La corde donne $\ln2<\frac34$. Les tangentes en $1$ et en $2$ sont $y=2-t$ et $y=1-\frac t4$, et se coupent en $(\frac43,\frac23)$. On obtient
+\paragraph{Exercice 6.} La fonction $f(t)=\frac1t$ est convexe sur $[1,2]$, car $f''(t)=\frac2{t^3}>0$. La corde donne $\ln2<\frac34$. Les tangentes en $1$ et en $2$ sont $y=2-t$ et $y=1-\frac t4$ ; elles se coupent en $(\frac43,\frac23)$. On obtient
 \[
   \ln2>\int_1^{4/3}(2-t)\dd t+\int_{4/3}^2\Big(1-\frac t4\Big)\dd t=\frac5{18}+\frac7{18}=\frac23 .
 \]
-Le point milieu donne la même minoration $f(\frac32)=\frac23$. Ainsi $\frac23<\ln2<\frac34$. Comme $\frac14\leq f''\leq2$ sur $[1,2]$, la proposition \ref{prop:quadrature} donne plus précisément $\ln2-\frac23=\frac{1}{24}f''(\eta)\geq\frac1{96}$ et $\frac34-\ln2=\frac1{12}f''(\xi)\geq\frac{1}{48}$, d'où $0{,}677<\frac23+\frac1{96}\leq\ln2\leq\frac34-\frac1{48}<0{,}730$, en accord avec $\ln2=0{,}6931\ldots$
+Le point milieu donne ici la même minoration, $f(\frac32)=\frac23$. Ainsi $\frac23<\ln2<\frac34$. On fait mieux avec les termes d'erreur. Comme $\frac14\leq f''\leq2$ sur $[1,2]$, la proposition \ref{prop:quadrature} donne $\ln2-\frac23=\frac{1}{24}f''(\eta)\geq\frac1{96}$ et $\frac34-\ln2=\frac1{12}f''(\xi)\geq\frac{1}{48}$. D'où
+\[
+  0{,}677<\frac23+\frac1{96}\leq\ln2\leq\frac34-\frac1{48}<0{,}730,
+\]
+en accord avec $\ln2=0{,}6931\ldots$
 
-\paragraph{Exercice 7.} Par la proposition \ref{prop:taylor}, l'erreur commise en sommant jusqu'à $k=n$ est $R_n\in\big]\frac{1}{(n+1)!},\frac{e}{(n+1)!}\big[$. On a $\frac e{14!}\approx3{,}1\cdot10^{-11}<10^{-10}$, alors que $\frac1{13!}\approx1{,}6\cdot10^{-10}>10^{-10}$. Il faut donc et il suffit de sommer jusqu'à $k=13$, soit $14$ termes.
+\paragraph{Exercice 7.} Par la proposition \ref{prop:taylor}, l'erreur commise en sommant jusqu'à $k=n$ est $R_n$, qui est compris entre $\frac{1}{(n+1)!}$ et $\frac{e}{(n+1)!}$. On a $\frac e{14!}\approx3{,}1\cdot10^{-11}<10^{-10}$, donc sommer jusqu'à $k=13$ suffit. En revanche $\frac1{13!}\approx1{,}6\cdot10^{-10}>10^{-10}$, donc s'arrêter à $k=12$ ne suffit pas. Il faut donc sommer jusqu'à $k=13$, soit $14$ termes.
 
 \begin{thebibliography}{9}
 \bibitem{gourdon} X. Gourdon, \emph{Les maths en tête. Analyse}, Ellipses.
@@ -468,6 +688,6 @@ Le point milieu donne la même minoration $f(\frac32)=\frac23$. Ainsi $\frac23<\
 \bibitem{dunham} W. Dunham, \emph{Euler: The Master of Us All}, MAA.
 \end{thebibliography}
 
-\paragraph{Source.} Feuille d'exercices de terminale S (2013), d'après \emph{Method'S}.
+\paragraph{Source.} Feuille d'exercices de terminale S (2003), d'après \emph{Method'S}.
 
 \end{document}

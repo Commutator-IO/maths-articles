@@ -1,0 +1,13 @@
+% Ce qu'une `tikzpicture` des fiches peut utiliser, en plus de TikZ.
+%
+% Lu deux fois : par chaque document (\input après \usepackage{tikz}), pour le
+% PDF, et par scripts/tikz.mjs, qui compile chaque figure seule pour la vue web.
+% Une bibliothèque ou une couleur ajoutée ici atteint les deux ; ajoutée
+% ailleurs, elle n'en atteint qu'un, et le PDF et l'écran ne disent plus la
+% même chose.
+
+\usetikzlibrary{calc,arrows.meta,patterns}
+
+% La couleur d'accent du site, pour ce qu'une figure veut faire ressortir.
+\definecolor{accent}{HTML}{38539D}
+\definecolor{accent2}{HTML}{A04B2E}

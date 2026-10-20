@@ -40,7 +40,7 @@
 \newcommand{\dd}{\,\mathrm{d}}
 
 \title{Autour du nombre $e$\\[2pt]
-\large Factorielles, inégalités de moyennes, irrationalité}
+\large Ce qu'on peut tirer de l'inégalité $e^x\geq 1+x$}
 \author{Michel Hua}
 \date{Octobre 2026}
 
@@ -48,29 +48,59 @@
 \maketitle
 
 \begin{abstract}
-On reprend une feuille de problèmes de terminale consacrée à l'exponentielle, dont les trois parties tournent autour du nombre $e$. L'encadrement $2\leq(1+\frac1n)^n\leq e$ donne un premier encadrement de $n!$, que l'on pousse jusqu'à la formule de Stirling avec un reste explicite. L'inégalité $\ln x\leq x-1$ donne l'inégalité arithmético-géométrique, que l'on replace dans la famille des moyennes d'ordre $p$. Enfin, les sommes partielles de $\sum 1/k!$ fournissent deux suites adjacentes de limite $e$, la formule de Taylor avec reste intégral en donne la vitesse, et l'on en déduit l'irrationalité de $e$ et un développement asymptotique de $n!\,e$ modulo $1$.
+Une feuille de problèmes de terminale sur l'exponentielle pose trois questions qui semblent sans rapport. Quelle est la taille de $n!$ ? Pourquoi la moyenne géométrique de nombres positifs est-elle plus petite que leur moyenne arithmétique ? Comment calculer $e$, et est-ce une fraction ? On montre que les trois réponses reposent sur une seule inégalité, $e^x\geq1+x$, qui dit que le graphe de l'exponentielle est au-dessus de sa tangente en $0$. On pousse ensuite chaque réponse aussi loin que possible : jusqu'à la formule de Stirling avec un reste explicite, jusqu'à la famille des moyennes d'ordre $p$, et jusqu'à l'irrationalité de $e$ et un développement asymptotique de $n!\,e$ modulo $1$.
 \end{abstract}
 
 \paragraph{Leçons concernées.} 224 (Exemples de développements asymptotiques de suites et de fonctions), 223 (Suites numériques), 229 (Fonctions monotones, fonctions convexes), 218 (Formules de Taylor), 230 (Séries numériques).
 
-\paragraph{Développements possibles.} Formule de Stirling avec reste (théorème \ref{thm:stirling}) ; monotonie des moyennes d'ordre $p$ (théorème \ref{thm:moyennes}) ; reste de la série de $e$ et irrationalité de $e$ (proposition \ref{prop:reste} et théorème \ref{thm:irr}).
+\paragraph{Développements possibles.} Formule de Stirling avec reste (théorème \ref{thm:stirling}) ; monotonie des moyennes d'ordre $p$ (théorème \ref{thm:moyennes}) ; reste de la série de $e$ et irrationalité de $e$ (proposition \ref{prop:reste} et théorème \ref{thm:irr}). LEANSENTENCE
 
-\paragraph{Notations.} On note $u_n\sim v_n$ l'équivalence de suites et $O(\cdot)$ la domination usuelle. Les fonctions $\ln$ et $\exp$ sont supposées connues, avec $e=\exp(1)$.
+\paragraph{Prérequis.} Les fonctions $\ln$ et $\exp$ et leurs propriétés usuelles, avec $e=\exp(1)$ ; suites adjacentes ; convexité ; séries entières (pour un seul calcul, au lemme \ref{lem:wn}). On note $u_n\sim v_n$ l'équivalence de suites et $O(\cdot)$ la domination usuelle.
 
 \tableofcontents
 
 % ==========================================================
-\section{Factorielles et formule de Stirling}
+\section{Une inégalité, trois questions}
 % ==========================================================
 
+Tout part de l'inégalité suivante.
+
+\begin{lemme}[Inégalité de la tangente]\label{lem:tangente}
+Pour tout réel $x$, $e^x\geq1+x$, avec égalité si et seulement si $x=0$. De façon équivalente, pour tout $y>0$, $\ln y\leq y-1$, avec égalité si et seulement si $y=1$.
+\end{lemme}
+
+\begin{proof}
+La fonction $\varphi(x)=e^x-1-x$ a pour dérivée $e^x-1$. Elle décroît donc sur $]-\infty,0]$ et croît sur $[0,+\infty[$. Son minimum est atteint seulement en $0$, où elle vaut $0$. Pour la seconde forme, on pose $y=e^x$, c'est-à-dire $x=\ln y$.
+\end{proof}
+
+Géométriquement, la droite $y=1+x$ est la tangente en $0$ au graphe de $\exp$, et ce graphe est au-dessus de ses tangentes parce que $\exp$ est convexe. Symétriquement, $y-1$ est la tangente en $1$ à $\ln$, qui est concave.
+
+Voici comment cette inégalité intervient dans les trois parties de la feuille.
+\begin{itemize}[nosep]
+\item \emph{Factorielles} (section 2). Avec $x=\frac1n$, elle donne $1+\frac1n\leq e^{1/n}$, donc $\big(1+\frac1n\big)^n\leq e$. Ce quotient est exactement le rapport de deux termes consécutifs de la suite $n^n/n!$.
+\item \emph{Moyennes} (section 3). Sous la forme $\ln y\leq y-1$, appliquée à $y=a_i/m$, elle donne l'inégalité arithmético-géométrique.
+\item \emph{Le nombre $e$} (section 4). C'est le cas $n=1$ des inégalités $e^x\geq\sum_{k=0}^n\frac{x^k}{k!}$ pour $x\geq0$. En les rendant précises, on calcule $e$ et on montre qu'il est irrationnel.
+\end{itemize}
+On reviendra à ce fil conducteur à la section 5.
+
+% ==========================================================
+\section{Quelle est la taille de \texorpdfstring{$n!$}{n!} ?}
+% ==========================================================
+
+Le nombre $n!$ croît très vite : $10!=3\,628\,800$ et $20!\approx2{,}4\cdot10^{18}$. On cherche à le comparer à des fonctions plus simples. On le fait en deux temps : un encadrement grossier, qui découle directement de la feuille, puis l'équivalent exact.
+
 \subsection{Un premier encadrement}
+
+L'idée de la feuille est de comparer $n!$ à $n^n$. Le quotient $u_n=n^n/n!$ est plus simple à étudier qu'on ne le croit, car le rapport de deux termes consécutifs se simplifie. On commence par encadrer ce rapport.
 
 \begin{lemme}\label{lem:2e}
 Pour tout $n\geq1$, on a $2\leq\big(1+\frac1n\big)^n<e$.
 \end{lemme}
 
 \begin{proof}
-Par la formule du binôme, $\big(1+\frac1n\big)^n\geq1+n\cdot\frac1n=2$ (inégalité de Bernoulli). Par concavité de $\ln$, on a $\ln(1+x)\leq x$ pour $x>-1$, avec égalité seulement en $x=0$ ; donc $n\ln\big(1+\frac1n\big)<1$, et l'on applique $\exp$, qui est strictement croissante.
+\emph{Minoration.} Par la formule du binôme, $\big(1+\frac1n\big)^n\geq1+n\cdot\frac1n=2$. C'est l'inégalité de Bernoulli $(1+x)^n\geq1+nx$ (exercice \ref{exo:bernoulli}).
+
+\emph{Majoration.} Le lemme \ref{lem:tangente} avec $x=\frac1n\neq0$ donne $1+\frac1n<e^{1/n}$. On élève à la puissance $n$.
 \end{proof}
 
 \begin{proposition}\label{prop:encadrement}
@@ -83,30 +113,52 @@ Soit $u_n=\dfrac{n^n}{n!}$ pour $n\geq1$. Alors $\dfrac{u_{n+1}}{u_n}=\big(1+\fr
 De plus $n!\leq\big(\frac n2\big)^n$ pour tout $n\geq6$.
 \end{proposition}
 
-\begin{proof}
-On a $\dfrac{u_{n+1}}{u_n}=\dfrac{(n+1)^{n+1}}{(n+1)!}\cdot\dfrac{n!}{n^n}=\dfrac{(n+1)^n}{n^n}$. Par le lemme \ref{lem:2e}, ce quotient est dans $[2,e[$, donc $(u_n)$ est strictement croissante. Comme $u_1=1$, le produit télescopique $u_n=\prod_{k=1}^{n-1}u_{k+1}/u_k$ donne $2^{n-1}\leq u_n\leq e^{n-1}$, ce qui se réécrit comme annoncé.
+L'idée est d'écrire $u_n$ comme un produit télescopique de rapports, et d'encadrer chaque rapport par le lemme \ref{lem:2e}.
 
-Pour la dernière assertion, on a $u_6=\frac{46656}{720}=64{,}8\geq2^6$, et $u_{n+1}\geq2u_n$ donne $u_n\geq2^n$ pour $n\geq6$ par récurrence. (L'inégalité est fausse pour $n=5$ : $u_5=\frac{3125}{120}<32$.)
+\begin{proof}
+Le calcul du rapport est direct :
+\[
+  \frac{u_{n+1}}{u_n}=\frac{(n+1)^{n+1}}{(n+1)!}\cdot\frac{n!}{n^n}=\frac{(n+1)^{n+1}}{(n+1)\,n^n}=\frac{(n+1)^n}{n^n}=\Big(1+\frac1n\Big)^n .
+\]
+Par le lemme \ref{lem:2e}, ce rapport est dans $[2,e[$. Il est $>1$, donc $(u_n)$ est strictement croissante. Comme $u_1=1$, on a
+\[
+  u_n=\prod_{k=1}^{n-1}\frac{u_{k+1}}{u_k},
+\]
+produit de $n-1$ facteurs compris entre $2$ et $e$. D'où $2^{n-1}\leq u_n\leq e^{n-1}$. On remplace $u_n$ par $n^n/n!$ et on isole $n!$.
+
+Pour la dernière assertion, on part de $u_6=\frac{46656}{720}=64{,}8\geq2^6$. Ensuite $u_{n+1}\geq2u_n$, donc $u_n\geq2^n$ pour tout $n\geq6$ par récurrence, ce qui s'écrit $n!\leq(n/2)^n$.
 \end{proof}
 
 \begin{remarque}
-La minoration $n!\geq(n/e)^n$, un peu plus faible que celle de la proposition, s'obtient en une ligne : $e^n=\sum_{k\geq0}\frac{n^k}{k!}\geq\frac{n^n}{n!}$.
+\begin{enumerate}[nosep]
+\item Le seuil $6$ est le bon : pour $n=5$, $u_5=\frac{3125}{120}\approx26{,}04<32$, donc $5!>(5/2)^5$.
+\item La minoration $n!\geq(n/e)^n$, un peu plus faible que celle de la proposition, s'obtient en une ligne. La série de $e^n$ a tous ses termes positifs, donc elle dépasse chacun d'eux : $e^n=\sum_{k\geq0}\frac{n^k}{k!}\geq\frac{n^n}{n!}$.
+\end{enumerate}
 \end{remarque}
+
+La feuille demandait ensuite la limite de $n!/a^n$. L'encadrement suffit à y répondre : la factorielle bat toute suite géométrique.
 
 \begin{corollaire}\label{cor:croissances}
 Pour tout réel $a>0$, $\dfrac{n!}{a^n}\to+\infty$ ; autrement dit $a^n=o(n!)$.
 \end{corollaire}
 
 \begin{proof}
-Par la proposition \ref{prop:encadrement}, $\dfrac{n!}{a^n}\geq e\Big(\dfrac{n}{ea}\Big)^n$, et $\dfrac{n}{ea}\geq2$ dès que $n\geq2ea$, donc le minorant tend vers $+\infty$.
+Par la proposition \ref{prop:encadrement},
+\[
+  \frac{n!}{a^n}\geq e\Big(\frac{n}{ea}\Big)^n .
+\]
+Dès que $n\geq2ea$, le nombre $\frac{n}{ea}$ est au moins $2$, donc le minorant est au moins $e\,2^n$, qui tend vers $+\infty$.
 \end{proof}
 
 \subsection{La formule de Stirling}
 
-L'encadrement précédent a le bon ordre de grandeur exponentiel, $\ln n!=n\ln n+O(n)$, mais laisse un facteur $(e/2)^n$ d'incertitude. On le raffine en étudiant la suite
+L'encadrement de la proposition \ref{prop:encadrement} donne le bon ordre de grandeur du logarithme, $\ln n!=n\ln n+O(n)$. Mais entre le minorant et le majorant, il reste un facteur de l'ordre de $(e/2)^n$, qui est énorme. Pour faire mieux, on cherche un équivalent de $n!$.
+
+\emph{D'où vient la forme de la réponse ?} La minoration $n!\geq e\,(n/e)^n$ suggère de comparer $n!$ à $(n/e)^n$. On va voir qu'il faut encore un facteur $\sqrt n$. On étudie donc le logarithme du quotient :
 \[
   w_n=\ln n!-\Big(n+\frac12\Big)\ln n+n,\qquad n\geq1 .
 \]
+Le plan est simple : montrer que $(w_n)$ converge, en contrôlant ses accroissements, puis identifier sa limite.
 
 \begin{lemme}\label{lem:wn}
 Pour tout $n\geq1$,
@@ -116,20 +168,30 @@ Pour tout $n\geq1$,
 En particulier $w_n-w_{n+1}=\dfrac1{12n^2}+O\Big(\dfrac1{n^3}\Big)$.
 \end{lemme}
 
+L'idée de la preuve : l'accroissement $w_n-w_{n+1}$ s'exprime avec $\ln\big(1+\frac1n\big)$. Un changement de variable bien choisi en fait une série entière à termes positifs, que l'on encadre par son premier terme et par une série géométrique.
+
 \begin{proof}
-On calcule
+On calcule d'abord l'accroissement. Comme $\ln(n+1)!=\ln n!+\ln(n+1)$,
 \[
   w_n-w_{n+1}=-\ln(n+1)-\Big(n+\frac12\Big)\ln n+\Big(n+\frac32\Big)\ln(n+1)-1
   =\Big(n+\frac12\Big)\ln\Big(1+\frac1n\Big)-1 .
 \]
-Posons $t=\frac1{2n+1}\in\,]0,1[$. Alors $\frac{1+t}{1-t}=\frac{2n+2}{2n}=1+\frac1n$ et $n+\frac12=\frac1{2t}$. Le développement en série entière $\ln\frac{1+t}{1-t}=2\sum_{k\geq0}\frac{t^{2k+1}}{2k+1}$, valable pour $|t|<1$, donne
+Posons $t=\frac1{2n+1}\in\,]0,1[$. Alors $\frac{1+t}{1-t}=\frac{2n+2}{2n}=1+\frac1n$ et $n+\frac12=\frac1{2t}$. Le développement en série entière
+\[
+  \ln\frac{1+t}{1-t}=\ln(1+t)-\ln(1-t)=2\sum_{k\geq0}\frac{t^{2k+1}}{2k+1},\qquad|t|<1,
+\]
+donne
 \[
   w_n-w_{n+1}=\frac1{2t}\ln\frac{1+t}{1-t}-1=\sum_{k\geq1}\frac{t^{2k}}{2k+1}.
 \]
-Cette somme est minorée par son premier terme $\frac{t^2}3$, et majorée par $\frac13\sum_{k\geq1}t^{2k}=\frac{t^2}{3(1-t^2)}$. Or $\frac{t^2}{1-t^2}=\frac1{(2n+1)^2-1}=\frac1{4n(n+1)}$, d'où l'encadrement. Les deux bornes valent $\frac1{12n^2}+O(\frac1{n^3})$.
+Tous les termes sont positifs. La somme est donc minorée par son premier terme $\frac{t^2}3$. Elle est majorée par $\frac13\sum_{k\geq1}t^{2k}=\frac{t^2}{3(1-t^2)}$, puisque $2k+1\geq3$. Enfin
+\[
+  \frac{t^2}{1-t^2}=\frac1{(2n+1)^2-1}=\frac1{4n(n+1)},
+\]
+d'où l'encadrement. Les deux bornes valent $\frac1{12n^2}+O(\frac1{n^3})$.
 \end{proof}
 
-Pour identifier la limite, on utilise les intégrales de Wallis, étudiées en détail dans la fiche \texttt{lecons/236-calcul-integrales/calcul-integral.tex}. On rappelle l'énoncé et une preuve courte.
+Le lemme montre que $(w_n)$ décroît, mais pas trop vite. Elle a donc une limite $\ell$ ; il reste à la calculer. Pour cela, on utilise une autre suite dont on connaît l'équivalent : les intégrales de Wallis. Elles sont étudiées en détail dans la fiche \texttt{lecons/236-calcul-integrales/calcul-integral.tex} ; on rappelle l'énoncé et une preuve courte.
 
 \begin{lemme}[Wallis]\label{lem:wallis}
 Soit $W_n=\int_0^{\pi/2}\sin^nt\dd t$. Alors $W_n\sim\sqrt{\dfrac{\pi}{2n}}$, et
@@ -141,12 +203,16 @@ Soit $W_n=\int_0^{\pi/2}\sin^nt\dd t$. Alors $W_n\sim\sqrt{\dfrac{\pi}{2n}}$, et
 \end{lemme}
 
 \begin{proof}
-Une intégration par parties ($\sin^{n+2}=\sin^{n+1}\cdot\sin$) donne $(n+2)W_{n+2}=(n+1)W_n$. Avec $W_0=\frac\pi2$, on obtient la formule pour $W_{2p}$, et la suite $(n+1)W_{n+1}W_n$ est constante, égale à $W_1W_0=\frac\pi2$. Comme $0\leq\sin t\leq1$ sur $[0,\frac\pi2]$, la suite $(W_n)$ est décroissante et strictement positive, donc
+Une intégration par parties, en écrivant $\sin^{n+2}=\sin^{n+1}\cdot\sin$, donne $(n+2)W_{n+2}=(n+1)W_n$. Avec $W_0=\frac\pi2$, on en déduit la formule pour $W_{2p}$. Avec $W_1=1$, on voit que la suite $(n+1)W_{n+1}W_n$ est constante, égale à $W_1W_0=\frac\pi2$.
+
+Comme $0\leq\sin t\leq1$ sur $[0,\frac\pi2]$, la suite $(W_n)$ est décroissante et strictement positive. Donc
 \[
   \frac{n+1}{n+2}=\frac{W_{n+2}}{W_n}\leq\frac{W_{n+1}}{W_n}\leq1,
 \]
-d'où $W_{n+1}\sim W_n$, puis $W_n^2\sim\frac{\pi}{2(n+1)}\sim\frac\pi{2n}$. Enfin $\frac{(2p)!}{4^p(p!)^2}=\frac2\pi W_{2p}\sim\frac2\pi\sqrt{\frac{\pi}{4p}}=\frac1{\sqrt{\pi p}}$.
+d'où $W_{n+1}\sim W_n$. Alors $\frac\pi2=(n+1)W_{n+1}W_n\sim(n+1)W_n^2$, soit $W_n^2\sim\frac\pi{2n}$. Enfin $\frac{(2p)!}{4^p(p!)^2}=\frac2\pi W_{2p}\sim\frac2\pi\sqrt{\frac{\pi}{4p}}=\frac1{\sqrt{\pi p}}$.
 \end{proof}
+
+On peut maintenant énoncer le résultat principal de la section.
 
 \begin{theoreme}[Stirling]\label{thm:stirling}
 On a $n!\sim\sqrt{2\pi n}\,\Big(\dfrac ne\Big)^n$. Plus précisément, pour tout $n\geq1$, il existe $\theta_n\in\,]0,1]$ tel que
@@ -155,26 +221,43 @@ On a $n!\sim\sqrt{2\pi n}\,\Big(\dfrac ne\Big)^n$. Plus précisément, pour tout
 \]
 \end{theoreme}
 
-\begin{proof}
-Par le lemme \ref{lem:wn}, $(w_n)$ est strictement décroissante et $\big(w_n-\frac1{12n}\big)$ est croissante. Comme $w_n-\frac1{12n}\leq w_n$, ces deux suites sont adjacentes et convergent vers une même limite $\ell$. En sommant l'encadrement du lemme \ref{lem:wn} de $k=n$ à $+\infty$, on obtient $0<w_n-\ell\leq\frac1{12n}$, c'est-à-dire $n!=e^{\ell}\sqrt n\,(n/e)^n e^{\theta_n/(12n)}$ avec $\theta_n\in\,]0,1]$.
+La preuve a deux étapes. On montre d'abord que $w_n$ converge, avec un reste contrôlé, grâce au lemme \ref{lem:wn}. On identifie ensuite la constante en écrivant de deux façons l'équivalent de $\frac{(2p)!}{4^p(p!)^2}$.
 
-Il reste à montrer que $C=e^\ell$ vaut $\sqrt{2\pi}$. Puisque $n!\sim C\sqrt n\,(n/e)^n$,
+\begin{proof}
+\emph{Convergence.} Par le lemme \ref{lem:wn}, la suite $(w_n)$ est strictement décroissante. La majoration du lemme s'écrit
 \[
-  \frac{(2p)!}{4^p(p!)^2}\sim\frac{C\sqrt{2p}\,(2p/e)^{2p}}{4^p\,C^2p\,(p/e)^{2p}}=\frac{\sqrt2}{C\sqrt p},
+  \Big(w_{n+1}-\frac1{12(n+1)}\Big)-\Big(w_n-\frac1{12n}\Big)\geq0,
 \]
-et la comparaison avec le lemme \ref{lem:wallis} donne $\frac{\sqrt2}C=\frac1{\sqrt\pi}$, soit $C=\sqrt{2\pi}$.
+donc la suite $\big(w_n-\frac1{12n}\big)$ est croissante. Les deux suites diffèrent de $\frac1{12n}\to0$ : elles sont adjacentes et convergent vers une même limite $\ell$. En sommant l'encadrement du lemme \ref{lem:wn} de $k=n$ à $+\infty$, on obtient $0<w_n-\ell\leq\frac1{12n}$. En posant $\theta_n=12n\,(w_n-\ell)\in\,]0,1]$, on a donc
+\[
+  n!=e^{\ell}\sqrt n\,\Big(\frac ne\Big)^n e^{\theta_n/(12n)} .
+\]
+
+\emph{Identification de la constante.} Posons $C=e^\ell$, de sorte que $n!\sim C\sqrt n\,(n/e)^n$. On applique cet équivalent à $(2p)!$ et à $p!$ :
+\[
+  \frac{(2p)!}{4^p(p!)^2}\sim\frac{C\sqrt{2p}\,(2p/e)^{2p}}{4^p\,C^2p\,(p/e)^{2p}}=\frac{\sqrt2}{C\sqrt p}.
+\]
+Les puissances se simplifient, car $(2p)^{2p}=4^p\,p^{2p}$. La comparaison avec le lemme \ref{lem:wallis} donne $\frac{\sqrt2}C=\frac1{\sqrt\pi}$, soit $C=\sqrt{2\pi}$.
 \end{proof}
 
 \begin{remarque}
 \begin{enumerate}[nosep]
-\item La décroissance de $(w_n)$ donne aussi l'encadrement $\sqrt{2\pi n}\,(n/e)^n\leq n!\leq e\sqrt n\,(n/e)^n$, puisque $\ell\leq w_n\leq w_1=1$. Il est à comparer avec la proposition \ref{prop:encadrement}.
-\item Le lemme \ref{lem:wn} montre que $w_n-\ell=\sum_{k\geq n}(w_k-w_{k+1})=\frac1{12n}+O(\frac1{n^2})$. On obtient ainsi le début du développement asymptotique $\ln n!=n\ln n-n+\frac12\ln(2\pi n)+\frac1{12n}+O(\frac1{n^2})$. En poussant le calcul, on obtient la série de Stirling, dont les coefficients s'expriment à l'aide des nombres de Bernoulli et qui diverge pour tout $n$.
-\item Pour $n=10$ : $10!=3\,628\,800$, et $\sqrt{20\pi}\,(10/e)^{10}\approx3\,598\,696$, soit une erreur relative d'environ $0{,}83\,\%\approx\frac1{120}$.
+\item \emph{Comparaison avec l'encadrement de départ.} La décroissance de $(w_n)$ donne $\ell\leq w_n\leq w_1=1$, c'est-à-dire
+\[
+  \sqrt{2\pi n}\,\Big(\frac ne\Big)^n\leq n!\leq e\sqrt n\,\Big(\frac ne\Big)^n .
+\]
+L'incertitude n'est plus un facteur exponentiel $(e/2)^n$, mais une constante $e/\sqrt{2\pi}\approx1{,}08$.
+\item \emph{Vers un développement asymptotique.} Le lemme \ref{lem:wn} montre que $w_n-\ell=\sum_{k\geq n}(w_k-w_{k+1})=\frac1{12n}+O(\frac1{n^2})$. On obtient ainsi le début du développement
+\[
+  \ln n!=n\ln n-n+\frac12\ln(2\pi n)+\frac1{12n}+O\Big(\frac1{n^2}\Big).
+\]
+En poussant le calcul, on obtient la série de Stirling. Ses coefficients s'expriment à l'aide des nombres de Bernoulli, et elle diverge pour tout $n$ : c'est un développement asymptotique, pas une série convergente.
+\item \emph{Un test numérique.} Pour $n=10$, $10!=3\,628\,800$ et $\sqrt{20\pi}\,(10/e)^{10}\approx3\,598\,696$. L'erreur relative est d'environ $0{,}83\,\%$, très proche de $\frac1{120}=\frac1{12n}$, comme le prévoit le théorème.
 \end{enumerate}
 \end{remarque}
 
 % ==========================================================
-\section{Inégalités entre moyennes}
+\section{Pourquoi la moyenne géométrique est-elle plus petite ?}
 % ==========================================================
 
 Soit $n\geq2$ et $a=(a_1,\dots,a_n)$ des réels \emph{strictement positifs}. On note
@@ -183,106 +266,140 @@ Soit $n\geq2$ et $a=(a_1,\dots,a_n)$ des réels \emph{strictement positifs}. On 
   g=\Big(\prod_{i=1}^na_i\Big)^{1/n},\qquad
   \frac1h=\frac1n\sum_{i=1}^n\frac1{a_i}
 \]
-leurs moyennes arithmétique, géométrique et harmonique.
+leurs moyennes arithmétique, géométrique et harmonique. Commençons par l'exemple de la feuille.
+
+\begin{exemple}[Exercice 2 de la feuille]\label{ex:4-10-25}
+Pour $(a_1,a_2,a_3)=(4,10,25)$, on trouve :
+\begin{itemize}[nosep]
+\item $m=\frac{4+10+25}3=\frac{39}3=13$ ;
+\item $g=\sqrt[3]{4\cdot10\cdot25}=\sqrt[3]{1000}=10$ ;
+\item $\frac1h=\frac13\big(\frac14+\frac1{10}+\frac1{25}\big)=\frac13\cdot\frac{25+10+4}{100}=\frac{13}{100}$, donc $h=\frac{100}{13}\approx7{,}69$.
+\end{itemize}
+On constate que $h<g<m$, et de plus que $m\,h=100=g^2$.
+
+Cette dernière égalité n'est pas un hasard : $4,10,25$ est une progression géométrique, de raison $\frac52$. Pour $(a,ar,ar^2)$ avec $a,r>0$, on a $g=ar$, $m=\frac{a(1+r+r^2)}3$ et $\frac1h=\frac{1+r+r^2}{3ar^2}$, donc $mh=a^2r^2=g^2$. Pour deux nombres, l'identité $mh=g^2$ est toujours vraie, car $\frac{a+b}2\cdot\frac{2ab}{a+b}=ab$. En revanche, elle est fausse en général pour trois nombres : pour $(1,1,4)$, on a $m=2$, $g=\sqrt[3]4$ et $h=\frac43$, donc $mh=\frac83$, alors que $g^2=\sqrt[3]{16}\approx2{,}52$.
+\end{exemple}
+
+L'ordre $h<g<m$ observé est général. C'est l'objet du théorème suivant.
 
 \begin{theoreme}\label{thm:hgm}
 On a $h\leq g\leq m$. Chacune de ces deux inégalités est une égalité si et seulement si $a_1=\cdots=a_n$.
 \end{theoreme}
 
+L'idée est de ramener une inégalité sur un \emph{produit} (la moyenne géométrique) à une inégalité sur une \emph{somme}, en prenant le logarithme. Le lemme \ref{lem:tangente} compare alors chaque $\ln a_i$ à une expression affine en $a_i$, et la somme des termes affines se calcule.
+
 \begin{proof}[Première preuve (méthode de la feuille)]
-La fonction $\varphi(x)=x-1-\ln x$ vérifie $\varphi'(x)=1-\frac1x$, donc $\varphi$ décroît sur $]0,1]$ et croît sur $[1,+\infty[$. Elle a un minimum strict en $1$, où elle vaut $0$. Ainsi $\ln x\leq x-1$ pour tout $x>0$, avec égalité si et seulement si $x=1$. En appliquant cette inégalité à $x=a_i/m$ et en sommant,
+On applique le lemme \ref{lem:tangente}, sous la forme $\ln y\leq y-1$, à $y=a_i/m$, et on somme sur $i$ :
 \[
-  n\ln\frac gm=\sum_{i=1}^n\ln\frac{a_i}m\leq\sum_{i=1}^n\Big(\frac{a_i}m-1\Big)=0,
+  n\ln\frac gm=\sum_{i=1}^n\ln\frac{a_i}m\leq\sum_{i=1}^n\Big(\frac{a_i}m-1\Big)=\frac{nm}m-n=0 .
 \]
-d'où $g\leq m$, avec égalité si et seulement si $a_i=m$ pour tout $i$. On applique ensuite ce résultat aux réels $1/a_i$, dont la moyenne géométrique vaut $1/g$ et la moyenne arithmétique $1/h$. On obtient $\frac1g\leq\frac1h$, soit $h\leq g$, avec le même cas d'égalité.
+Donc $g\leq m$. Il y a égalité si et seulement si chacune des $n$ inégalités est une égalité, c'est-à-dire si $a_i/m=1$ pour tout $i$.
+
+Pour $h$, on applique ce résultat aux réels $1/a_i$. Leur moyenne géométrique vaut $1/g$ et leur moyenne arithmétique vaut $1/h$. On obtient $\frac1g\leq\frac1h$, soit $h\leq g$, avec le même cas d'égalité.
 \end{proof}
 
 \begin{proof}[Seconde preuve (convexité)]
-La fonction $\ln$ est strictement concave sur $]0,+\infty[$, car $\ln''(x)=-1/x^2<0$. L'inégalité de Jensen donne $\frac1n\sum\ln a_i\leq\ln\big(\frac1n\sum a_i\big)$, c'est-à-dire $\ln g\leq\ln m$, et la stricte concavité donne le cas d'égalité. On conclut pour $h$ comme ci-dessus.
+La fonction $\ln$ est strictement concave sur $]0,+\infty[$, car $\ln''(x)=-1/x^2<0$. L'inégalité de Jensen donne
+\[
+  \frac1n\sum_{i=1}^n\ln a_i\leq\ln\Big(\frac1n\sum_{i=1}^na_i\Big),
+\]
+c'est-à-dire $\ln g\leq\ln m$. La stricte concavité donne le cas d'égalité. On conclut pour $h$ comme ci-dessus.
 \end{proof}
 
-\begin{remarque}
-La première preuve est en fait celle de Jensen pour $\ln$, la droite $y=x-1$ étant la tangente au graphe de $\ln$ en $1$. Remplacer $1$ par $m$ revient à se placer au point où l'on applique Jensen. C'est la preuve « par la tangente » de l'inégalité de Jensen, qui vaut pour toute fonction concave dérivable.
+\begin{remarque}[Pourquoi les deux preuves sont la même]
+La droite $y\mapsto y-1$ est la tangente au graphe de $\ln$ au point $1$. Appliquer $\ln y\leq y-1$ à $y=a_i/m$ revient à comparer $\ln$ à sa tangente au point $m$, c'est-à-dire au barycentre des $a_i$. C'est exactement la preuve « par la tangente » de l'inégalité de Jensen, qui vaut pour toute fonction concave dérivable. La première preuve n'est donc pas une astuce : c'est Jensen, écrit à la main.
 \end{remarque}
 
-\begin{exemple}[Exercice 2 de la feuille]\label{ex:4-10-25}
-Pour $(a_1,a_2,a_3)=(4,10,25)$ : $m=\frac{39}3=13$, $g=\sqrt[3]{1000}=10$ et $\frac1h=\frac13\big(\frac14+\frac1{10}+\frac1{25}\big)=\frac13\cdot\frac{39}{100}=\frac{13}{100}$, donc $h=\frac{100}{13}\approx7{,}69$. On a bien $h<g<m$, et de plus $m\,h=100=g^2$.
-
-Cette dernière égalité n'est pas un hasard : $4,10,25$ est une progression géométrique de raison $\frac52$. Pour $(a,ar,ar^2)$ avec $a,r>0$, on a $g=ar$, $m=\frac{a(1+r+r^2)}3$ et $\frac1h=\frac{1+r+r^2}{3ar^2}$, donc $mh=a^2r^2=g^2$. Pour $n=2$, l'identité $mh=g^2$ vaut pour tout couple, car $\frac{a+b}2\cdot\frac{2ab}{a+b}=ab$. En revanche, pour $(1,1,4)$, on a $m=2$, $g=\sqrt[3]4$ et $h=\frac43$, donc $mh=\frac83\neq g^2=\sqrt[3]{16}\approx2{,}52$.
-\end{exemple}
+Voici une application qui relie cette section à la précédente.
 
 \begin{exemple}\label{ex:croissance-e}
-La suite $e_n=\big(1+\frac1n\big)^n$ est strictement croissante. En effet, appliquons $g<m$ aux $n+1$ réels $1+\frac1n,\dots,1+\frac1n,1$, qui ne sont pas tous égaux. On obtient
+La suite $e_n=\big(1+\frac1n\big)^n$ est strictement croissante. L'idée est de voir $e_n$ comme un produit de $n+1$ facteurs, dont on compare la moyenne géométrique à la moyenne arithmétique. On applique $g<m$ aux $n+1$ réels $1+\frac1n,\dots,1+\frac1n,1$, qui ne sont pas tous égaux. Leur produit vaut $e_n$ et leur somme $n+2$, donc
 \[
-  e_n^{1/(n+1)}<\frac{n(1+\frac1n)+1}{n+1}=1+\frac1{n+1},
+  e_n^{1/(n+1)}<\frac{n+2}{n+1}=1+\frac1{n+1},
 \]
-c'est-à-dire $e_n<e_{n+1}$. Avec le lemme \ref{lem:2e}, on retrouve que $(e_n)$ converge, en croissant, vers une limite $\leq e$ ; cette limite vaut $e$ puisque $n\ln(1+\frac1n)\to1$.
+c'est-à-dire $e_n<e_{n+1}$. Avec le lemme \ref{lem:2e}, on retrouve que $(e_n)$ converge en croissant vers une limite $\leq e$. Cette limite vaut $e$, puisque $n\ln(1+\frac1n)\to1$.
 \end{exemple}
 
 \subsection{Moyennes d'ordre \texorpdfstring{$p$}{p}}
+
+Les trois moyennes $h$, $g$, $m$ ne sont pas isolées : ce sont trois points d'une famille continue de moyennes, indexée par un réel $p$. L'inégalité $h\leq g\leq m$ dit alors simplement que cette famille est croissante en $p$.
 
 \begin{definition}
 Pour $p\in\R^*$, on pose $M_p(a)=\Big(\dfrac1n\sum_{i=1}^na_i^p\Big)^{1/p}$, et $M_0(a)=g$.
 \end{definition}
 
-Ainsi $M_1=m$, $M_{-1}=h$, et $M_2$ est la moyenne quadratique. On a aussi $M_{-p}(a)=1/M_p(1/a)$, où $1/a=(1/a_1,\dots,1/a_n)$.
+Ainsi $M_1=m$ et $M_{-1}=h$, et $M_2$ est la moyenne quadratique. On a aussi $M_{-p}(a)=1/M_p(1/a)$, où $1/a=(1/a_1,\dots,1/a_n)$. Cette symétrie permettra de traiter les $p$ négatifs à partir des $p$ positifs.
 
 \begin{theoreme}\label{thm:moyennes}
 L'application $p\mapsto M_p(a)$ est continue et croissante sur $\R$. Elle est strictement croissante si les $a_i$ ne sont pas tous égaux, et constante sinon. De plus $M_p(a)\to\max a_i$ quand $p\to+\infty$ et $M_p(a)\to\min a_i$ quand $p\to-\infty$.
 \end{theoreme}
 
+L'idée est la suivante. Pour $0<p<q$, l'inégalité $M_p\leq M_q$ est l'inégalité de Jensen pour la fonction convexe $x\mapsto x^{q/p}$. Les $p$ négatifs s'en déduisent par la symétrie $a\mapsto1/a$, et le passage par $p=0$ est l'inégalité arithmético-géométrique.
+
 \begin{proof}
 Si les $a_i$ sont tous égaux à $c$, alors $M_p(a)=c$ pour tout $p$. Supposons-les non tous égaux.
 
-\emph{Cas $0<p<q$.} La fonction $x\mapsto x^{q/p}$ est strictement convexe sur $]0,+\infty[$ puisque $q/p>1$. Par Jensen appliqué aux réels $b_i=a_i^p$, qui ne sont pas tous égaux,
+\emph{Cas $0<p<q$.} La fonction $x\mapsto x^{q/p}$ est strictement convexe sur $]0,+\infty[$, puisque $q/p>1$. On applique Jensen aux réels $b_i=a_i^p$, qui ne sont pas tous égaux :
 \[
   M_p(a)^q=\Big(\frac1n\sum b_i\Big)^{q/p}<\frac1n\sum b_i^{q/p}=M_q(a)^q ,
 \]
-et l'on prend la racine $q$-ième.
+et on prend la racine $q$-ième.
 
-\emph{Cas $p<q<0$.} On a $0<-q<-p$, donc, par le cas précédent appliqué à $1/a$, $M_{-q}(1/a)<M_{-p}(1/a)$, et en passant aux inverses $M_p(a)<M_q(a)$.
+\emph{Cas $p<q<0$.} On a $0<-q<-p$. Le cas précédent, appliqué à $1/a$, donne $M_{-q}(1/a)<M_{-p}(1/a)$. En passant aux inverses, $M_p(a)<M_q(a)$.
 
-\emph{Cas où $p$ ou $q$ est nul.} Pour $q>0$, le théorème \ref{thm:hgm} appliqué aux $a_i^q$ donne $g^q<M_q(a)^q$, soit $M_0<M_q$. Pour $p<0$, il donne de même $g^p<M_p(a)^p$, et comme $x\mapsto x^{1/p}$ est décroissante, $M_p(a)<g=M_0(a)$. Le cas $p<0<q$ s'en déduit par transitivité.
+\emph{Cas où $p$ ou $q$ est nul.} Pour $q>0$, le théorème \ref{thm:hgm} appliqué aux $a_i^q$ donne $g^q<M_q(a)^q$, soit $M_0<M_q$. Pour $p<0$, il donne de même $g^p<M_p(a)^p$. Comme $x\mapsto x^{1/p}$ est décroissante, on en déduit $M_p(a)<g=M_0(a)$. Le cas $p<0<q$ s'en déduit par transitivité.
 
-\emph{Continuité en $0$.} Pour $p\to0$, on a $a_i^p=e^{p\ln a_i}=1+p\ln a_i+O(p^2)$, donc
+\emph{Continuité en $0$.} Pour $p\to0$, on a $a_i^p=e^{p\ln a_i}=1+p\ln a_i+O(p^2)$. Donc
 \[
   \ln M_p(a)=\frac1p\ln\Big(1+\frac pn\sum_i\ln a_i+O(p^2)\Big)=\frac1n\sum_i\ln a_i+O(p)\longrightarrow\ln g .
 \]
 Ailleurs, la continuité est claire.
 
-\emph{Limites.} Soit $A=\max a_i$. Pour $p>0$, on a $n^{-1/p}A\leq M_p(a)\leq A$, et $n^{-1/p}\to1$. On en déduit le cas $p\to-\infty$ par $M_{-p}(a)=1/M_p(1/a)$.
+\emph{Limites.} Soit $A=\max a_i$. Pour $p>0$, la somme $\sum a_i^p$ est comprise entre $A^p$ et $nA^p$, donc $n^{-1/p}A\leq M_p(a)\leq A$, et $n^{-1/p}\to1$. On en déduit le cas $p\to-\infty$ par $M_{-p}(a)=1/M_p(1/a)$.
 \end{proof}
 
 \begin{remarque}
-En particulier $\min a_i\leq h\leq g\leq m\leq M_2\leq\max a_i$. Sur l'exemple \ref{ex:4-10-25}, $M_2=\sqrt{247}\approx15{,}7$.
+En particulier $\min a_i\leq h\leq g\leq m\leq M_2\leq\max a_i$. Sur l'exemple \ref{ex:4-10-25}, $M_2=\sqrt{\frac{16+100+625}3}=\sqrt{247}\approx15{,}7$, qui est bien entre $m=13$ et $\max a_i=25$.
 \end{remarque}
 
 % ==========================================================
-\section{Deux suites adjacentes de limite \texorpdfstring{$e$}{e}}
+\section{Comment calculer \texorpdfstring{$e$}{e}, et est-ce une fraction ?}
 % ==========================================================
+
+Le lemme \ref{lem:tangente} dit que $e^x\geq1+x$. On peut faire mieux : pour $x\geq0$, l'exponentielle dépasse chacune de ses sommes de Taylor. En $x=1$, cela donne une suite croissante qui minore $e$. La feuille lui associe une suite décroissante qui le majore. On va voir que ces deux suites permettent de calculer $e$ très vite, puis de montrer qu'il n'est pas rationnel.
+
+\subsection{Deux suites adjacentes}
 
 Pour $n\geq1$, on pose
 \[
   u_n=\sum_{k=0}^n\frac1{k!},\qquad v_n=u_n+\frac1{n\cdot n!} .
 \]
-(Dans cette section, $u_n$ ne désigne plus la suite de la section 1.)
+Dans cette section, $u_n$ ne désigne plus la suite de la section 2. Le terme correctif $\frac1{n\cdot n!}$ n'est pas arbitraire : c'est la somme de la série géométrique $\frac1{(n+1)!}\sum_{j\geq0}\frac1{(n+1)^j}=\frac1{(n+1)!}\cdot\frac{n+1}n$, qui majore les termes oubliés $\sum_{k>n}\frac1{k!}$.
 
 \begin{proposition}\label{prop:adjacentes}
 Les suites $(u_n)$ et $(v_n)$ sont adjacentes : $(u_n)$ est strictement croissante, $(v_n)$ est strictement décroissante et $v_n-u_n\to0$. Leur limite commune $\ell$ vérifie donc $u_n<\ell<v_n$ pour tout $n\geq1$.
 \end{proposition}
 
 \begin{proof}
-On a $u_{n+1}-u_n=\frac1{(n+1)!}>0$ et $v_n-u_n=\frac1{n\cdot n!}\to0$. Enfin
+La suite $(u_n)$ croît strictement, car $u_{n+1}-u_n=\frac1{(n+1)!}>0$. L'écart $v_n-u_n=\frac1{n\cdot n!}$ tend vers $0$. Pour $(v_n)$, on réduit au même dénominateur :
 \[
   v_{n+1}-v_n=\frac1{(n+1)!}+\frac1{(n+1)(n+1)!}-\frac1{n\cdot n!}
   =\frac{n(n+1)+n-(n+1)^2}{n(n+1)\,(n+1)!}=-\frac1{n(n+1)\,(n+1)!}<0 .
 \]
-Les inégalités strictes $u_n<\ell<v_n$ viennent de la stricte monotonie.
+Les inégalités strictes $u_n<\ell<v_n$ viennent de la stricte monotonie : $u_n<u_{n+1}\leq\ell$ et $\ell\leq v_{n+1}<v_n$.
 \end{proof}
 
-\begin{exemple}
-On a $u_1=2$, $v_1=3$, $u_2=\frac52$, $v_2=\frac{11}4$, $u_3=\frac83$ et $v_3=\frac{49}{18}$. L'amplitude $v_n-u_n=\frac1{n\cdot n!}$ vaut $\frac1{600}$ pour $n=5$ et $\frac1{4320}<10^{-3}$ pour $n=6$. Avec $u_6=\frac{1957}{720}\approx2{,}71806$ et $v_6=\frac{11743}{4320}\approx2{,}71829$, on obtient $2{,}718<\ell<2{,}7183$. On conjecture $\ell=e$.
+\begin{exemple}[Exercice 3 de la feuille]
+On a $u_1=2$, $v_1=3$, $u_2=\frac52$, $v_2=\frac{11}4$, $u_3=\frac83$ et $v_3=\frac{49}{18}$. Pour un encadrement d'amplitude $10^{-3}$, il faut $\frac1{n\cdot n!}\leq10^{-3}$. L'amplitude vaut $\frac1{600}$ pour $n=5$, ce qui ne suffit pas, et $\frac1{4320}<10^{-3}$ pour $n=6$. Avec $u_6=\frac{1957}{720}\approx2{,}71806$ et $v_6=\frac{11743}{4320}\approx2{,}71829$, on obtient
+\[
+  2{,}718<\ell<2{,}7183 .
+\]
+On conjecture que $\ell=e$.
 \end{exemple}
+
+\subsection{La limite est \texorpdfstring{$e$}{e}}
+
+Pour démontrer la conjecture, on calcule exactement l'écart $e-u_n$. L'idée de la feuille est d'étudier la fonction $f(x)=\big(\sum_{k\leq n}\frac{x^k}{k!}\big)e^{-x}$ : sa dérivée est très simple, car les termes de la somme se compensent deux à deux.
 
 \begin{proposition}\label{prop:reste}
 Pour tout $n\geq1$,
@@ -295,49 +412,75 @@ En particulier $u_n\to e$, donc $\ell=e$, et $e=\sum_{k\geq0}\frac1{k!}$.
 \end{proposition}
 
 \begin{proof}
-C'est la formule de Taylor avec reste intégral appliquée à $\exp$ entre $0$ et $1$, à l'ordre $n$. Pour rester au niveau de la feuille, on peut la retrouver ainsi. Soit
+C'est la formule de Taylor avec reste intégral, appliquée à $\exp$ entre $0$ et $1$ à l'ordre $n$. Pour rester au niveau de la feuille, on la retrouve ainsi. Soit
 \[
   f(x)=\Big(\sum_{k=0}^n\frac{x^k}{k!}\Big)e^{-x},\qquad x\in[0,1].
 \]
 Elle est dérivable, et
 \[
-  f'(x)=\Big(\sum_{k=1}^n\frac{x^{k-1}}{(k-1)!}-\sum_{k=0}^n\frac{x^k}{k!}\Big)e^{-x}=-\frac{x^n}{n!}e^{-x},
+  f'(x)=\Big(\sum_{k=1}^n\frac{x^{k-1}}{(k-1)!}-\sum_{k=0}^n\frac{x^k}{k!}\Big)e^{-x}=-\frac{x^n}{n!}e^{-x}.
 \]
-car la somme télescope. Comme $f(0)=1$ et $f(1)=u_ne^{-1}$,
+En effet, la première somme vaut $\sum_{k=0}^{n-1}\frac{x^k}{k!}$, et il ne reste que le dernier terme de la seconde. Comme $f(0)=1$ et $f(1)=u_ne^{-1}$, on intègre $f'$ de $0$ à $1$ :
 \[
   u_ne^{-1}-1=-\frac1{n!}\int_0^1x^ne^{-x}\dd x,
   \qquad\text{soit}\qquad
-  e-u_n=\frac1{n!}\int_0^1x^ne^{1-x}\dd x ,
+  e-u_n=\frac1{n!}\int_0^1x^ne^{1-x}\dd x .
 \]
-et le changement de variable $t=1-x$ donne la formule. Pour $t\in\,]0,1[$, on a $1<e^t<e$, et $\int_0^1(1-t)^n\dd t=\frac1{n+1}$, d'où l'encadrement (strict, car l'intégrande est continue et les inégalités sont strictes sur $]0,1[$). Le majorant tend vers $0$.
+Le changement de variable $t=1-x$ donne la formule.
+
+Pour l'encadrement, on a $1<e^t<e$ pour $t\in\,]0,1[$, et $\int_0^1(1-t)^n\dd t=\frac1{n+1}$. Les inégalités sont strictes, car l'intégrande est continue et les inégalités sont strictes sur $]0,1[$. Le majorant $\frac e{(n+1)!}$ tend vers $0$.
 \end{proof}
 
 \begin{remarque}
 \begin{enumerate}[nosep]
-\item La proposition \ref{prop:adjacentes} donne un majorant plus fin que la proposition \ref{prop:reste} : $e-u_n<\frac1{n\cdot n!}$. La comparaison des deux minorants et majorants montre que $e-u_n\sim\frac1{(n+1)!}$ ; on précise ce point à l'exercice \ref{exo:sin}.
-\item La convergence est très rapide : pour obtenir $d$ décimales, il suffit que $e/(n+1)!\leq10^{-d}$, et par Stirling le plus petit tel $n$ vérifie $n\ln n\sim d\ln10$. Par exemple $n=17$ suffit pour $15$ décimales, car $e/18!\approx4{,}2\cdot10^{-16}$.
-\item Pour $x=-1$, la même méthode donne la série alternée $\frac1e=\sum_{k\geq0}\frac{(-1)^k}{k!}=\frac12-\frac1{2\cdot3}+\frac1{2\cdot3\cdot4}-\cdots$. C'est le développement de Pierce de $1/e$, de chiffres $q_i=i+1$, qui ne s'arrête pas ; cela redonne l'irrationalité de $e$ (voir la fiche \texttt{lecons/142-pgcd-ppcm/divisibilite-pgcd-congruences.tex}).
+\item La proposition \ref{prop:adjacentes} donne un majorant plus fin : $e-u_n<\frac1{n\cdot n!}$. En comparant avec le minorant $\frac1{(n+1)!}$, on obtient $e-u_n\sim\frac1{(n+1)!}$ : l'erreur commise est essentiellement le premier terme oublié. L'exercice \ref{exo:sin} précise ce point.
+\item \emph{La convergence est très rapide.} Pour obtenir $d$ décimales, il suffit que $e/(n+1)!\leq10^{-d}$. Par Stirling, le plus petit tel $n$ vérifie $n\ln n\sim d\ln10$. Par exemple, $n=17$ suffit pour $15$ décimales, car $e/18!\approx4{,}2\cdot10^{-16}$. Comparer avec $\big(1+\frac1n\big)^n$, dont l'erreur est de l'ordre de $\frac e{2n}$ (exercice \ref{exo:dl}).
+\item La même méthode, en $x=-1$, donne la série alternée
+\[
+  \frac1e=\sum_{k\geq0}\frac{(-1)^k}{k!}=\frac12-\frac1{2\cdot3}+\frac1{2\cdot3\cdot4}-\cdots
+\]
+C'est le développement de Pierce de $1/e$, de chiffres $q_i=i+1$. Il ne s'arrête pas, ce qui redonne l'irrationalité de $e$ (voir la fiche \texttt{lecons/142-pgcd-ppcm/divisibilite-pgcd-congruences.tex}).
 \end{enumerate}
 \end{remarque}
+
+\subsection{\texorpdfstring{$e$}{e} n'est pas une fraction}
+
+On revient à la dernière question de la feuille. L'idée est de comparer deux précisions. Si $e$ était une fraction $p/q$, alors $q!\,e$ serait un entier. Mais $q!\,u_q$ est aussi un entier, et l'écart $q!\,(e-u_q)$ est strictement compris entre $0$ et $1$, par la proposition \ref{prop:adjacentes}. Un entier ne peut pas être dans $]0,1[$.
 
 \begin{theoreme}\label{thm:irr}
 Le nombre $e$ est irrationnel.
 \end{theoreme}
 
 \begin{proof}
-Supposons $e=\frac pq$ avec $p,q$ entiers, $q\geq1$. Par la proposition \ref{prop:adjacentes} et $\ell=e$,
+Supposons $e=\frac pq$ avec $p,q$ entiers, $q\geq1$. Par la proposition \ref{prop:adjacentes}, et puisque $\ell=e$,
 \[
   u_q<\frac pq<u_q+\frac1{q\cdot q!} .
 \]
-En multipliant par $q\cdot q!>0$, on obtient $0<p\cdot q!-q\cdot q!\,u_q<1$. Or $q!\,u_q=\sum_{k=0}^q\frac{q!}{k!}$ est un entier, donc $p\cdot q!-q\cdot q!\,u_q$ est un entier strictement compris entre $0$ et $1$. C'est absurde.
+On multiplie par $q\cdot q!>0$ :
+\[
+  0<p\cdot q!-q\cdot q!\,u_q<1 .
+\]
+Or $q!\,u_q=\sum_{k=0}^q\frac{q!}{k!}$ est un entier, car $k!$ divise $q!$ pour $k\leq q$. Donc $p\cdot q!-q\cdot q!\,u_q$ est un entier strictement compris entre $0$ et $1$. C'est absurde.
 \end{proof}
 
 \begin{remarque}
 \begin{enumerate}[nosep]
-\item Autrement dit, si $e$ était rationnel de dénominateur $q$, le réel $q!\,(e-u_q)$ serait un entier. Or il est dans $\big]0,\frac1q\big[$. Le principe est que $e$ est approché par des rationnels $u_q$, de dénominateur divisant $q!$, beaucoup mieux que ne le permettrait un rationnel fixé.
-\item La même idée, appliquée simultanément aux séries de $e$ et de $e^{-1}$, montre que $e^2$ est irrationnel et même non quadratique (Liouville, 1840) : si $e^2=\frac pq$, on écrit $qe=pe^{-1}$. Hermite a démontré en 1873 que $e$ est transcendant. On ne démontre pas ces résultats ici.
+\item \emph{Pourquoi ça marche.} Les rationnels $u_q$ ont un dénominateur qui divise $q!$, et ils approchent $e$ à moins de $\frac1{q\cdot q!}$. Une fraction fixe $p/q$ ne peut pas être approchée aussi bien par des fractions de dénominateur $q!$ : l'écart entre deux telles fractions distinctes est au moins $\frac1{q!}$. C'est le même principe que dans toutes les preuves d'irrationalité par approximation.
+\item La même idée, appliquée simultanément aux séries de $e$ et de $e^{-1}$, montre que $e^2$ est irrationnel, et même non quadratique (Liouville, 1840). Si $e^2=\frac pq$, on écrit $qe=pe^{-1}$ et l'on compare les deux développements. Hermite a démontré en 1873 que $e$ est transcendant. On ne démontre pas ces résultats ici.
 \end{enumerate}
 \end{remarque}
+
+% ==========================================================
+\section{Retour à la question de départ}
+% ==========================================================
+
+On s'était demandé ce que l'on pouvait tirer de la seule inégalité $e^x\geq1+x$. Le bilan est le suivant.
+\begin{itemize}[nosep]
+\item \emph{Taille de $n!$.} Appliquée en $x=\frac1n$, elle encadre le rapport $u_{n+1}/u_n$ et donne $e\,(n/e)^n\leq n!$. Le facteur $(n/e)^n$ est le bon : la formule de Stirling ne fait qu'ajouter le facteur $\sqrt{2\pi n}$.
+\item \emph{Moyennes.} Appliquée sous la forme $\ln y\leq y-1$, elle donne $g\leq m$. C'est un cas de l'inégalité de Jensen : la tangente à une fonction concave est au-dessus de son graphe.
+\item \emph{Le nombre $e$.} C'est le premier cas des inégalités $e^x\geq\sum_{k\leq n}\frac{x^k}{k!}$. Rendues précises par la formule de Taylor, elles donnent une approximation de $e$ si bonne que $e$ ne peut pas être rationnel.
+\end{itemize}
+Dans les trois cas, le mécanisme est la convexité de l'exponentielle, utilisée de plus en plus finement.
 
 % ==========================================================
 \section{Exercices}
@@ -348,10 +491,10 @@ Montrer que $(1+x)^n\geq1+nx$ pour tout $x\geq-1$ et tout $n\in\N$. Que donne la
 \end{exercice}
 
 \begin{exercice}
-Calculer $\displaystyle\lim_{n\to+\infty}\frac{n!}{n^n}$, $\displaystyle\lim_{n\to+\infty}\frac{(n!)^{1/n}}{n}$ et donner un équivalent de $\dbinom{2n}{n}$.
+Calculer $\displaystyle\lim_{n\to+\infty}\frac{n!}{n^n}$ et $\displaystyle\lim_{n\to+\infty}\frac{(n!)^{1/n}}{n}$, puis donner un équivalent de $\dbinom{2n}{n}$.
 \end{exercice}
 
-\begin{exercice}
+\begin{exercice}\label{exo:dl}
 Montrer que $\big(1+\frac1n\big)^n=e-\dfrac{e}{2n}+\dfrac{11e}{24n^2}+O\Big(\dfrac1{n^3}\Big)$.
 \end{exercice}
 
@@ -371,32 +514,54 @@ On pose $r_n=n!\,(e-u_n)$. Montrer que $r_n=\dfrac1n+O\Big(\dfrac1{n^3}\Big)$, p
 \section{Corrigés}
 % ==========================================================
 
-\paragraph{Exercice 1.} Par récurrence sur $n$ : si $(1+x)^n\geq1+nx$, alors, comme $1+x\geq0$, $(1+x)^{n+1}\geq(1+nx)(1+x)=1+(n+1)x+nx^2\geq1+(n+1)x$. Les encadrements de la proposition \ref{prop:encadrement} donnent, en prenant le logarithme, $n\ln n-n+1\leq\ln n!\leq n\ln n-(n-1)\ln2$, donc $\ln n!=n\ln n+O(n)$ et $\ln n!\sim n\ln n$.
+\paragraph{Exercice 1.} On raisonne par récurrence sur $n$. Le cas $n=0$ est clair. Si $(1+x)^n\geq1+nx$, alors, comme $1+x\geq0$,
+\[
+  (1+x)^{n+1}\geq(1+nx)(1+x)=1+(n+1)x+nx^2\geq1+(n+1)x .
+\]
+L'hypothèse $x\geq-1$ sert à multiplier l'inégalité par $1+x$ sans en changer le sens. Les encadrements de la proposition \ref{prop:encadrement} donnent, en prenant le logarithme,
+\[
+  n\ln n-n+1\leq\ln n!\leq n\ln n-(n-1)\ln2 ,
+\]
+donc $\ln n!=n\ln n+O(n)$ et $\ln n!\sim n\ln n$.
 
-\paragraph{Exercice 2.} On a $\frac{n!}{n^n}=\frac1{u_n}\leq\frac1{2^{n-1}}\to0$. Par Stirling, $\frac{(n!)^{1/n}}n=\frac1e(2\pi n)^{1/(2n)}e^{\theta_n/(12n^2)}\to\frac1e$, puisque $\frac{\ln(2\pi n)}{2n}\to0$. Enfin $\binom{2n}n=\frac{(2n)!}{(n!)^2}\sim\frac{4^n}{\sqrt{\pi n}}$ par le lemme \ref{lem:wallis}, ou directement par Stirling.
+\paragraph{Exercice 2.} On a $\frac{n!}{n^n}=\frac1{u_n}\leq\frac1{2^{n-1}}\to0$, où $u_n$ est la suite de la section 2. Par Stirling,
+\[
+  \frac{(n!)^{1/n}}n=\frac1e\,(2\pi n)^{1/(2n)}\,e^{\theta_n/(12n^2)}\longrightarrow\frac1e ,
+\]
+puisque $\frac{\ln(2\pi n)}{2n}\to0$. Enfin $\binom{2n}n=\frac{(2n)!}{(n!)^2}\sim\frac{4^n}{\sqrt{\pi n}}$, par le lemme \ref{lem:wallis} ou directement par Stirling.
 
-\paragraph{Exercice 3.} Avec $x=\frac1n$, on a $n\ln(1+x)=\frac1x\big(x-\frac{x^2}2+\frac{x^3}3+O(x^4)\big)=1-\frac x2+\frac{x^2}3+O(x^3)$. Donc
+\paragraph{Exercice 3.} On écrit $\big(1+\frac1n\big)^n=\exp\big(n\ln(1+\frac1n)\big)$ et on développe l'exposant. Avec $x=\frac1n$,
+\[
+  n\ln(1+x)=\frac1x\Big(x-\frac{x^2}2+\frac{x^3}3+O(x^4)\Big)=1-\frac x2+\frac{x^2}3+O(x^3).
+\]
+Donc
 \[
   \Big(1+\frac1n\Big)^n=e\cdot\exp\Big(-\frac x2+\frac{x^2}3+O(x^3)\Big)
   =e\Big(1-\frac x2+\frac{x^2}3+\frac{x^2}8+O(x^3)\Big),
 \]
-et $\frac13+\frac18=\frac{11}{24}$. En particulier $e-\big(1+\frac1n\big)^n\sim\frac e{2n}$ : cette suite converge vers $e$ beaucoup plus lentement que $(u_n)$.
+où $\frac{x^2}8$ vient du carré $\frac12\big(-\frac x2\big)^2$. Comme $\frac13+\frac18=\frac{11}{24}$, on obtient le résultat. En particulier $e-\big(1+\frac1n\big)^n\sim\frac e{2n}$ : cette suite converge vers $e$ beaucoup plus lentement que $(u_n)$.
 
-\paragraph{Exercice 4.} On a $g'(x)=\frac1{n!}\big(1-x^ne^{-x}\big)\geq0$ sur $[0,1]$, puisque $0\leq x^n\leq1$ et $e^{-x}\leq1$. Donc $g(1)\geq g(0)$, c'est-à-dire $u_ne^{-1}+\frac1{n!}\geq1$, soit $u_n\geq e-\frac e{n!}$. De même $f'\leq0$ donne $f(1)\leq f(0)$, soit $u_n\leq e$. Par encadrement, $u_n\to e$. C'est la méthode de la feuille d'origine, un peu moins précise que la proposition \ref{prop:reste}.
+\paragraph{Exercice 4.} On a $g'(x)=f'(x)+\frac1{n!}=\frac1{n!}\big(1-x^ne^{-x}\big)\geq0$ sur $[0,1]$, puisque $0\leq x^n\leq1$ et $e^{-x}\leq1$. Donc $g(1)\geq g(0)$, c'est-à-dire $u_ne^{-1}+\frac1{n!}\geq1$, soit $u_n\geq e-\frac e{n!}$. De même, $f'\leq0$ donne $f(1)\leq f(0)$, soit $u_n\leq e$. Par encadrement, $u_n\to e$. C'est la méthode de la feuille d'origine ; elle est un peu moins précise que la proposition \ref{prop:reste}.
 
-\paragraph{Exercice 5.} L'expression est symétrique en $x$ et $y$ ; on peut supposer $x>y$ et poser $s=\frac12\ln\frac xy>0$. En divisant par $\sqrt{xy}$, l'inégalité s'écrit
+\paragraph{Exercice 5.} L'expression est symétrique en $x$ et $y$ ; on peut supposer $x>y$. On pose $s=\frac12\ln\frac xy>0$, de sorte que $x=\sqrt{xy}\,e^s$ et $y=\sqrt{xy}\,e^{-s}$. En divisant par $\sqrt{xy}$, l'inégalité à montrer s'écrit
 \[
-  1\leq\frac{e^{s}-e^{-s}}{2s}=\frac{\operatorname{sh}s}s\leq\frac{e^{s}+e^{-s}}2=\operatorname{ch}s .
+  1<\frac{e^{s}-e^{-s}}{2s}=\frac{\operatorname{sh}s}s<\frac{e^{s}+e^{-s}}2=\operatorname{ch}s .
 \]
-La première inégalité vient de $\operatorname{sh}s=\sum_{k\geq0}\frac{s^{2k+1}}{(2k+1)!}\geq s$. La seconde équivaut à $\operatorname{th}s\leq s$, qui découle de $\operatorname{th}'=1-\operatorname{th}^2\leq1$ et $\operatorname{th}0=0$. Les inégalités sont strictes pour $s>0$.
+La première inégalité vient de $\operatorname{sh}s=\sum_{k\geq0}\frac{s^{2k+1}}{(2k+1)!}>s$. La seconde équivaut à $\operatorname{th}s<s$, qui découle de $\operatorname{th}'=1-\operatorname{th}^2<1$ sur $]0,s]$ et de $\operatorname{th}0=0$.
 
-\paragraph{Exercice 6.} On a $r_n=\sum_{k>n}\frac{n!}{k!}=\frac1{n+1}+\frac1{(n+1)(n+2)}+\rho_n$ avec
+\paragraph{Exercice 6.} On développe $r_n$ en série et on isole les deux premiers termes :
 \[
-  0<\rho_n=\sum_{k\geq n+3}\frac{n!}{k!}\leq\sum_{j\geq3}\frac1{(n+1)^j}=\frac1{n(n+1)^2}=O\Big(\frac1{n^3}\Big).
+  r_n=\sum_{k>n}\frac{n!}{k!}=\frac1{n+1}+\frac1{(n+1)(n+2)}+\rho_n,
+  \qquad
+  0<\rho_n=\sum_{k\geq n+3}\frac{n!}{k!}\leq\sum_{j\geq3}\frac1{(n+1)^j}=\frac1{n(n+1)^2}.
 \]
-Or $\frac1{n+1}=\frac1n-\frac1{n(n+1)}$ et $\frac1{(n+1)(n+2)}-\frac1{n(n+1)}=-\frac2{n(n+1)(n+2)}=O(\frac1{n^3})$, donc $r_n=\frac1n+O(\frac1{n^3})$. Plus précisément, on peut montrer que $r_n=\frac1n-\frac1{n^3}+O(\frac1{n^4})$.
+Donc $\rho_n=O(\frac1{n^3})$. Ensuite $\frac1{n+1}=\frac1n-\frac1{n(n+1)}$, et $\frac1{(n+1)(n+2)}-\frac1{n(n+1)}=-\frac2{n(n+1)(n+2)}=O(\frac1{n^3})$. Les termes en $\frac1{n^2}$ se compensent, et $r_n=\frac1n+O(\frac1{n^3})$. Plus précisément, on peut montrer que $r_n=\frac1n-\frac1{n^3}+O(\frac1{n^4})$.
 
-Ensuite $n!\,e=n!\,u_n+r_n$ avec $n!\,u_n\in\N$, donc $\sin(2\pi\,n!\,e)=\sin(2\pi r_n)=2\pi r_n+O(r_n^3)=\frac{2\pi}n+O(\frac1{n^3})$. La série $\sum\sin(2\pi\,n!\,e)$ est à termes positifs à partir d'un certain rang (car $0<r_n<\frac1n$, d'après la proposition \ref{prop:adjacentes}) et son terme général est équivalent à celui de la série harmonique : elle diverge. En revanche, $\sum\big(\sin(2\pi\,n!\,e)-\frac{2\pi}n\big)$ converge absolument.
+Ensuite $n!\,e=n!\,u_n+r_n$ avec $n!\,u_n\in\N$. Par périodicité du sinus,
+\[
+  \sin(2\pi\,n!\,e)=\sin(2\pi r_n)=2\pi r_n+O(r_n^3)=\frac{2\pi}n+O\Big(\frac1{n^3}\Big).
+\]
+Pour $n\geq3$, on a $0<r_n<\frac1n$ par la proposition \ref{prop:adjacentes}, donc $0<2\pi r_n<\pi$ et les termes de la série $\sum\sin(2\pi\,n!\,e)$ sont positifs. Ils sont équivalents à ceux de la série harmonique $\sum\frac{2\pi}n$ : la série diverge. En revanche, $\sum\big(\sin(2\pi\,n!\,e)-\frac{2\pi}n\big)$ converge absolument.
 
 \begin{thebibliography}{9}
 \bibitem{gourdon} X. Gourdon, \emph{Les maths en tête. Analyse}, Ellipses.
@@ -405,6 +570,6 @@ Ensuite $n!\,e=n!\,u_n+r_n$ avec $n!\,u_n\in\N$, donc $\sin(2\pi\,n!\,e)=\sin(2\
 \bibitem{rombaldi} J.-É. Rombaldi, \emph{Éléments d'analyse réelle}, EDP Sciences.
 \end{thebibliography}
 
-\paragraph{Source.} Feuille de problèmes de terminale S (2013), d'après le manuel \emph{Terracher}.
+\paragraph{Source.} Feuille de problèmes de terminale S (2003), d'après le manuel \emph{Terracher}.
 
 \end{document}

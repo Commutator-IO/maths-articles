@@ -23,14 +23,20 @@
  */
 
 import { copyFile, cp, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { basename, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import katex from 'katex';
+import { FIGURES, PICTURE, pictureHash } from './tikz.mjs';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const SOURCE = resolve(ROOT, 'lecons');
 const OUT = resolve(ROOT, 'dist');
+
+/** Le dépôt GitHub où ouvrir les issues de relecture, lu dans package.json. */
+const REPO = /github\.com[/:]([^/]+\/[^/.]+)/.exec(
+  JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf8')).repository?.url ?? '',
+)?.[1] ?? '';
 
 // ---------------------------------------------------------------------------
 // Utilitaires.
@@ -173,6 +179,9 @@ function liftMath(tex, doc, held = []) {
   };
 
   const out = tex
+    // Les figures d'abord : elles contiennent des $, des & et des accolades
+    // que toutes les passes suivantes abîmeraient.
+    .replace(PICTURE, (m) => keep(m, 'picture'))
     .replace(/\\begin\{(equation|align|gather|multline)(\*?)\}([\s\S]*?)\\end\{\1\2\}/g,
       (all, env, star, body) => {
         if (env !== 'equation' && !star) {
@@ -202,6 +211,7 @@ function liftMath(tex, doc, held = []) {
  */
 function checkMath(held, macros) {
   for (const { raw, display } of held) {
+    if (display === 'picture') continue;
     try {
       katex.renderToString(raw, { displayMode: display, throwOnError: true, macros: { ...macros }, strict: 'ignore' });
     } catch (e) {
@@ -210,9 +220,29 @@ function checkMath(held, macros) {
   }
 }
 
-function dropMathBack(html, held) {
+/**
+ * Une figure TikZ devient l'image de son SVG, compilé par scripts/tikz.mjs et
+ * nommé par l'empreinte de sa source. Pas de SVG : le rendu échoue et dit quoi
+ * lancer, plutôt que de publier une page où manque une figure.
+ */
+function renderPicture(raw, rootRel) {
+  const hash = pictureHash(raw);
+  const svg = resolve(FIGURES, `${hash}.svg`);
+  if (!existsSync(svg)) {
+    throw new Error(`pas de SVG pour la figure ${hash} — lancer \`npm run tikz\` (il faut tectonic et pdftocairo)`);
+  }
+  mkdirSync(resolve(OUT, 'figures'), { recursive: true });
+  copyFileSync(svg, resolve(OUT, 'figures', `${hash}.svg`));
+  // pdftocairo donne la taille en points ; 1 pt = 4/3 px, à la taille du PDF.
+  const pt = Number(/<svg[^>]*\swidth="([\d.]+)(?:pt)?"/.exec(readFileSync(svg, 'utf8'))?.[1] ?? 0);
+  const width = pt ? ` style="width:${(pt * 4 / 3).toFixed(0)}px"` : '';
+  return `<span class="ma-pic"><img src="${rootRel}figures/${hash}.svg" alt=""${width}></span>`;
+}
+
+function dropMathBack(html, held, rootRel) {
   return html.replace(MARKED(), (_, i) => {
     const { raw, display, id } = held[Number(i)];
+    if (display === 'picture') return renderPicture(raw, rootRel);
     const body = escapeHtml(raw);
     return display
       ? `<span class="ltx_Math ltx_display"${id ? ` id="${id}"` : ''}>\\[${body}\\]</span>`
@@ -485,6 +515,22 @@ function environment(name, inner, doc) {
     case 'center':
       return [`<div class="ltx_align_center">${blocks(inner.replace(/\\renewcommand\{\\arraystretch\}\{[^{}]*\}/g, ''), doc).join('\n')}</div>`];
 
+    case 'figure': {
+      const opt = readOptional(inner, 0);
+      let body = opt ? inner.slice(opt.end) : inner;
+      const num = String(doc.figure = (doc.figure ?? 0) + 1);
+      const id = `fig-${num}`;
+      doc.target(num, id);
+      let caption = '';
+      const at = body.search(/\\caption\s*\{/);
+      if (at !== -1) {
+        const g = readGroup(body, body.indexOf('{', at));
+        caption = `<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_figure">Figure ${num}.</span> ${inline(g.arg, doc)}</figcaption>`;
+        body = body.slice(0, at) + body.slice(g.end);
+      }
+      return [`<figure class="ltx_figure" id="${id}">${blocks(body, doc).join('\n')}${caption}</figure>`];
+    }
+
     case 'quote':
     case 'quotation':
       return [`<blockquote class="ltx_quote">${blocks(inner, doc).join('\n')}</blockquote>`];
@@ -652,7 +698,7 @@ function tocHtml(doc) {
   return `<nav class="ltx_TOC"><h6 class="ltx_title ltx_title_contents">Table des matières</h6><ul class="ltx_toclist">${entries.join('\n')}</ul></nav>`;
 }
 
-export function render(tex, file) {
+export function render(tex, file, rootRel = '../../') {
   const at = tex.indexOf('\\begin{document}');
   const end = tex.lastIndexOf('\\end{document}');
   if (at === -1 || end === -1) throw new Error('pas de \\begin{document} … \\end{document}');
@@ -670,7 +716,7 @@ export function render(tex, file) {
   html = html.replace('TOC', () => tocHtml(doc));
   html = resolveRefs(html, doc, file);
   checkMath(held, pre.macros);
-  html = dropMathBack(html, held);
+  html = dropMathBack(html, held, rootRel);
 
   const plainTitle = pre.title.split(/\\\\/)[0].replace(/\$([^$]*)\$/g, '$1')
     .replace(/\\([a-zA-Z]+)/g, (_, c) => (c === 'sqrt' ? '√' : pre.macros[`\\${c}`] ?? '').replace(/\\mathbb\{(.)\}/, '$1'))
@@ -709,6 +755,13 @@ const STYLE = `
   .ltx_Math.ltx_display { display: block; margin: .9rem 0; text-align: center;
                           max-width: 100%; overflow-x: auto; overflow-y: hidden; }
   .ltx_align_center { text-align: center; }
+  .ltx_figure { margin: 1.6rem 0; text-align: center; }
+  .ltx_figure .ltx_p { text-align: center; }
+  .ma-pic { display: block; margin: .6rem 0; overflow-x: auto; }
+  .ma-pic img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+  .ltx_caption { font-family: var(--sans); font-size: 13.5px; line-height: 1.5; color: var(--ink2);
+                 max-width: 36rem; margin: .5rem auto 0; text-align: left; }
+  .ltx_tag_figure { font-weight: 700; }
   .ltx_tabular { margin: 1.2rem auto; border-collapse: collapse; font-size: 15px; text-align: left; }
   .ltx_tabular th { font-family: var(--sans); font-size: 12px; font-weight: 700; letter-spacing: .05em;
                     text-transform: uppercase; color: var(--ink3); padding: 0 12px 8px 0;
@@ -729,6 +782,7 @@ const STYLE = `
   .ma-nav a:hover { color: var(--accent); }
   .ma-nav .ma-crumb { color: var(--ink3); margin-right: auto; }
   .ma-nav .ma-crumb a { color: var(--ink3); }
+  .ma-tip { font-family: var(--sans); font-size: 12.5px; color: var(--ink3); margin: .2rem 0 0; }
   @media (max-width: 40rem) { body, .ltx_p { font-size: 16px; } .ltx_title_document { font-size: 1.5rem; } }
 `;
 
@@ -739,7 +793,7 @@ ${links.map(([href, text]) => `<a href="${href}">${text}</a>`).join('\n')}
 </div></header>`;
 }
 
-function readingPage({ title, html, macros, rootRel, crumb, links }) {
+function readingPage({ title, html, macros, rootRel, crumb, links, lecon, source }) {
   return `<!doctype html>
 <html lang="fr" data-theme="light">
 <head>
@@ -748,17 +802,21 @@ function readingPage({ title, html, macros, rootRel, crumb, links }) {
 <title>${escapeHtml(title)}</title>
 <link rel="stylesheet" href="${rootRel}vendor/ar5iv.css">
 <link rel="stylesheet" href="${rootRel}vendor/katex/katex.min.css">
+<link rel="stylesheet" href="${rootRel}notes.css">
 <style>${STYLE}</style>
 </head>
 <body>
 ${nav(rootRel, crumb, links)}
 <main class="ltx_page_main">
+<p class="ma-tip">Sélectionnez un passage pour le commenter ou en faire une issue GitHub.</p>
 <article class="ltx_document">
 ${html}
 </article>
 </main>
 <script defer src="${rootRel}vendor/katex/katex.min.js"></script>
 <script defer src="${rootRel}vendor/katex/auto-render.min.js"></script>
+<script>window.MA_NOTES = ${JSON.stringify({ repo: REPO, lecon, title, source }).replace(/</g, '\\u003c')};</script>
+<script defer src="${rootRel}notes.js"></script>
 <script>
 // Les macros du préambule, pour que KaTeX compose les mêmes formules que le PDF.
 var MACROS = ${JSON.stringify(macros).replace(/</g, '\\u003c')};
@@ -903,7 +961,10 @@ async function main() {
     throw new Error('KaTeX absent de public/vendor/katex — lancer npm install');
   }
 
-  const dirs = (await readdir(SOURCE, { withFileTypes: true })).filter((d) => d.isDirectory()).map((d) => d.name).sort();
+  // lecons/figures/ tient les SVG et le réglage TikZ communs, pas une leçon.
+  await rm(resolve(OUT, 'figures'), { recursive: true, force: true });
+  const dirs = (await readdir(SOURCE, { withFileTypes: true }))
+    .filter((d) => d.isDirectory() && d.name !== 'figures').map((d) => d.name).sort();
   const folders = [];
   const refused = [];
   for (const dir of dirs) {
@@ -937,9 +998,9 @@ async function main() {
         ...lean.map((l) => [`${l.name}.html`, 'Lean']),
       ];
       try {
-        const { html, title, macros } = render(tex, `${dir}/${f}`);
+        const { html, title, macros } = render(tex, `${dir}/${f}`, rootRel);
         await writeFile(resolve(out, `${stem}.html`),
-          readingPage({ title, html, macros, rootRel, crumb, links }));
+          readingPage({ title, html, macros, rootRel, crumb, links, lecon: numero, source: `lecons/${dir}/${f}` }));
         await copyFile(resolve(SOURCE, dir, f), resolve(out, f));
         await writeFile(resolve(out, `${f}.html`), sourcePage({
           text: tex, file: f, rootRel, crumb, kind: 'LaTeX',

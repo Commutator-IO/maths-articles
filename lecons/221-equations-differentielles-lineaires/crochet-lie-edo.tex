@@ -19,12 +19,15 @@
 \usepackage{enumitem}
 \usepackage{microtype}
 \usepackage[hidelinks]{hyperref}
+\usepackage{tikz}
+\input{../figures/tikz-setup.tex}
 
 % ---------- Environnements ----------
 \theoremstyle{plain}
 \newtheorem{theoreme}{Théorème}[section]
 \newtheorem{proposition}[theoreme]{Proposition}
 \newtheorem{lemme}[theoreme]{Lemme}
+\newtheorem{conjecture}[theoreme]{Conjecture}
 \theoremstyle{definition}
 \newtheorem{definition}[theoreme]{Définition}
 \newtheorem{exemple}[theoreme]{Exemple}
@@ -34,6 +37,11 @@
 
 % ---------- Notations ----------
 \newcommand{\R}{\mathbb{R}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\F}{\mathbb{F}}
+\DeclareMathOperator{\ad}{ad}
 \newcommand{\Id}{\mathrm{Id}}
 \newcommand{\Dx}{D}
 \newcommand{\M}[1]{M_{#1}}
@@ -49,12 +57,12 @@
 \maketitle
 
 \begin{abstract}
-On résout en L2 l'équation $y''+a(x)y'+b(x)y=f(x)$ par la méthode de variation des constantes, avec une condition auxiliaire, $C_1'\varphi_1+C_2'\varphi_2=0$, qui paraît tomber du ciel. Cet article propose deux lectures de cette méthode fondées sur une seule notion, le \emph{crochet de Lie} $[A,B]=AB-BA$. D'abord, en factorisant l'opérateur différentiel en deux opérateurs du premier ordre : c'est possible sans effort quand les coefficients commutent avec la dérivation, et le commutateur mesure exactement l'obstruction sinon. Ensuite, en regardant les translations par des solutions de l'équation homogène comme des transformations qui commutent : la variation des constantes est alors le changement de coordonnées qui les « redresse ». On termine par la forme matricielle, où la commutation décide si l'exponentielle donne la solution, puis on reprend les exemples d'une leçon filmée de Canal-U qui procède par « dérivée exacte » et par factorisation.
+On résout en L2 l'équation $y''+a(x)y'+b(x)y=f(x)$ par la méthode de variation des constantes, avec une condition auxiliaire, $C_1'\varphi_1+C_2'\varphi_2=0$, qui paraît tomber du ciel. Cet article propose deux lectures de cette méthode fondées sur une seule notion, le \emph{crochet de Lie} $[A,B]=AB-BA$. D'abord, en factorisant l'opérateur différentiel en deux opérateurs du premier ordre : c'est possible sans effort quand les coefficients commutent avec la dérivation, et le commutateur mesure exactement l'obstruction sinon. Ensuite, en regardant les translations par des solutions de l'équation homogène comme des transformations qui commutent : la variation des constantes est alors le changement de coordonnées qui les « redresse ». On passe ensuite à la forme matricielle, où la commutation décide si l'exponentielle donne la solution, puis on reprend les exemples d'une leçon filmée de Canal-U qui procède par « dérivée exacte » et par factorisation. On termine en réduisant les équations modulo un nombre premier $p$. Le crochet y fabrique un invariant, la \emph{$p$-courbure}, et une question posée par Grothendieck, qu'on appelle aujourd'hui la conjecture de Grothendieck--Katz, demande si cet invariant détecte les équations dont les solutions sont algébriques. Elle est ouverte en général. Nous la démontrons dans les deux cadres de cet article : les coefficients constants, et l'ordre $1$.
 \end{abstract}
 
 \paragraph{Leçons concernées.} 221 (Équations différentielles linéaires, systèmes d'équations différentielles linéaires), 220 (Équations différentielles ordinaires, exemples), 156 (Exponentielle de matrices).
 
-\paragraph{Développements possibles.} Factorisation de $L$ et équation de Riccati (proposition \ref{prop:riccati} et proposition \ref{prop:y1}) ; variation des constantes comme redressement de symétries qui commutent (section 5) ; condition de commutation pour l'exponentielle (proposition \ref{prop:expo}) et formule de Duhamel. Le fichier \texttt{CrochetLieEDO.lean} vérifie la plupart de ces énoncés avec Mathlib.
+\paragraph{Développements possibles.} Factorisation de $L$ et équation de Riccati (proposition \ref{prop:riccati} et proposition \ref{prop:y1}) ; variation des constantes comme redressement de symétries qui commutent (section 5) ; condition de commutation pour l'exponentielle (proposition \ref{prop:expo}) et formule de Duhamel. La conjecture de Grothendieck--Katz à coefficients constants et à l'ordre 1 (théorèmes \ref{thm:gkconst} et \ref{thm:gkordre1}), avec la formule de Jacobson (proposition \ref{prop:jacobson}). Le fichier \texttt{CrochetLieEDO.lean} vérifie la plupart des énoncés des sections 2 à 7 avec Mathlib ; la formalisation de la section 8 est en cours.
 
 \paragraph{Prérequis.} Équations différentielles linéaires d'ordre 1 et 2, wronskien, calcul matriciel ($2\times 2$), exponentielle de matrice. Les fonctions sont supposées de classe $C^\infty$ sur un intervalle $I\subset\R$, ce qui évite de discuter la régularité.
 
@@ -288,7 +296,27 @@ On admettra le résultat suivant, classique en géométrie différentielle.
 Deux champs de vecteurs ont un crochet nul si et seulement si leurs flots commutent. Si de plus ils sont linéairement indépendants en chaque point, il existe des coordonnées locales $(C_1, C_2)$ dans lesquelles ils s'écrivent $\partial/\partial C_1$ et $\partial/\partial C_2$ (redressement simultané).
 \end{theoreme}
 
-Ici, on n'a même pas besoin du théorème : les translations $T^{\varphi_1}_t$ et $T^{\varphi_2}_s$ commutent visiblement, car $Y + t\Phi_1 + s\Phi_2 = Y + s\Phi_2 + t\Phi_1$. Les coefficients de $X_{\varphi_1}$ et $X_{\varphi_2}$ ne dépendent pas de $(y,y')$, donc $\cro{X_{\varphi_1}}{X_{\varphi_2}} = 0$.
+Ici, on n'a même pas besoin du théorème : les translations $T^{\varphi_1}_t$ et $T^{\varphi_2}_s$ commutent visiblement, car $Y + t\Phi_1 + s\Phi_2 = Y + s\Phi_2 + t\Phi_1$. Les coefficients de $X_{\varphi_1}$ et $X_{\varphi_2}$ ne dépendent pas de $(y,y')$, donc $\cro{X_{\varphi_1}}{X_{\varphi_2}} = 0$. La figure \ref{fig:parallelogramme} montre ce que cela veut dire : par les deux chemins, on arrive au même point.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=1.15,>={Stealth[length=2.6mm]}]
+  \draw[->,gray] (-0.4,0) -- (5.2,0) node[below] {$y$};
+  \draw[->,gray] (0,-0.4) -- (0,3.4) node[left] {$y'$};
+  \coordinate (Y) at (0.8,0.6);
+  \coordinate (A) at ($(Y)+(2.6,0.7)$);
+  \coordinate (B) at ($(Y)+(0.9,1.8)$);
+  \coordinate (C) at ($(A)+(0.9,1.8)$);
+  \fill[accent!8] (Y) -- (A) -- (C) -- (B) -- cycle;
+  \draw[->,thick,accent] (Y) -- node[below right] {$t\,\Phi_1$} (A);
+  \draw[->,thick,accent2] (A) -- node[right] {$s\,\Phi_2$} (C);
+  \draw[->,thick,accent2] (Y) -- node[left] {$s\,\Phi_2$} (B);
+  \draw[->,thick,accent] (B) -- node[above left] {$t\,\Phi_1$} (C);
+  \fill (Y) circle (1.6pt) node[below left] {$Y$};
+  \fill (C) circle (1.6pt) node[above right] {$Y + t\Phi_1 + s\Phi_2$};
+\end{tikzpicture}
+\caption{Dans le plan des phases, à $x$ fixé : translater d'abord par $t\Phi_1$ puis par $s\Phi_2$, ou dans l'ordre inverse, mène au même point. C'est la commutation $\cro{X_{\varphi_1}}{X_{\varphi_2}} = 0$. Les coordonnées $(C_1, C_2)$ de la variation des constantes sont celles de ce quadrillage par $\Phi_1$ et $\Phi_2$.}\label{fig:parallelogramme}
+\end{figure}
 
 \subsection{Redresser les symétries, c'est faire varier les constantes}
 
@@ -371,7 +399,7 @@ donne directement la solution. C'est encore la variation des constantes, avec la
 \section{Exemples d'une leçon filmée (Canal-U)}\label{sec:video}
 % ==========================================================
 
-Une leçon vidéo de Canal-U consacrée aux équations différentielles linéaires d'ordre 1 et 2 ne parle ni de variation des constantes ni de commutateur. Elle utilise pourtant exactement les deux idées du lemme \ref{lem:conj} et de la section 3 : la conjugaison pour l'ordre 1, la factorisation pour l'ordre 2. On reprend ici ses exemples dans le langage de cet article.
+Une leçon vidéo de Canal-U, \href{https://www.canal-u.tv/chaines/les-amphis-de-france-5/mathematiques-deug-1/equations-differentielles}{« Équations différentielles »} (série \emph{Mathématiques DEUG 1} des Amphis de France~5), consacrée aux équations différentielles linéaires d'ordre 1 et 2, ne parle ni de variation des constantes ni de commutateur. Elle utilise pourtant exactement les deux idées du lemme \ref{lem:conj} et de la section 3 : la conjugaison pour l'ordre 1, la factorisation pour l'ordre 2. On reprend ici ses exemples dans le langage de cet article.
 
 \subsection{Ordre 1 : la « dérivée exacte »}
 
@@ -501,6 +529,262 @@ Or $(i-j)(i-j^2) = i^2 - i(j + j^2) + j^3 = -1 + i + 1 = i$, donc $y = -i\,e^{ix
 \end{exemple}
 
 % ==========================================================
+\section{Réduire modulo \texorpdfstring{$p$}{p} : la \texorpdfstring{$p$}{p}-courbure et une question de Grothendieck}\label{sec:pcourbure}
+% ==========================================================
+
+Les équations rencontrées jusqu'ici ont des solutions de deux natures très différentes. L'équation $y' = \frac{y}{2x}$ a pour solution $\sqrt x$, qui vérifie l'équation polynomiale $y^2 = x$ : on dit que c'est une fonction \emph{algébrique}. L'équation $y' = y$ a pour solution $e^x$, qui ne vérifie aucune équation de ce genre. Voici la question de cette section : peut-on voir la différence sur l'équation elle-même, sans la résoudre ?
+
+Une idée de Grothendieck répond, au moins en partie. Elle consiste à lire l'équation \emph{modulo un nombre premier} $p$. Pour s'en faire une intuition, regardons les séries. Celle de $e^x = \sum x^n/n!$ a pour dénominateurs les factorielles, et tout nombre premier $p$ divise $n!$ dès que $n \geq p$ : cette série n'a aucun sens modulo $p$, quel que soit $p$. Celle de $\sqrt{1+u} = \sum \binom{1/2}{n} u^n$ n'a au dénominateur que des puissances de $2$ : elle a un sens modulo tout $p$ impair. Les solutions algébriques semblent « survivre » à la réduction modulo $p$, pour presque tout $p$, et les autres non.
+
+Le crochet de Lie va transformer cette intuition en un calcul. Modulo $p$, la puissance $p$-ième de l'opérateur $\Dx - A$ cesse d'être un opérateur différentiel : c'est une simple matrice, la \emph{$p$-courbure}, et on peut la calculer sans résoudre l'équation. La question est alors de savoir si cette matrice nulle pour presque tout $p$ suffit à garantir des solutions algébriques. Grothendieck l'a posée dans ses notes sur les connexions de Gauss--Manin (cote 93 du fonds de Montpellier, pages 193 et 194, sous la forme « la réciproque est-elle vraie ? ») ; on l'appelle aujourd'hui la conjecture de Grothendieck--Katz, et elle est ouverte. Nous allons la démontrer dans les deux cadres de cet article : les coefficients constants (section 6), et l'ordre $1$ (lemme \ref{lem:conj}).
+
+\paragraph{Notations.} On note $\F_p = \Z/p\Z$ et $\F_p(x)$ le corps des fractions rationnelles à coefficients dans $\F_p$. La dérivation $\Dx$ y est définie par les formules habituelles, $\Dx(x^n) = n x^{n-1}$ et la règle du quotient. Une fonction $y$ définie sur un intervalle $I$ est \emph{algébrique} s'il existe un polynôme non nul $P \in \C[x, Y]$ tel que $P(x, y(x)) = 0$ pour tout $x \in I$.
+
+\subsection{Dériver modulo \texorpdfstring{$p$}{p}}
+
+Modulo $p$, la dérivée se comporte bizarrement : $\Dx(x^p) = p\,x^{p-1} = 0$, alors que $x^p$ n'est pas constante. Ce défaut est en fait une force, et voici sa forme précise.
+
+\begin{lemme}\label{lem:dp}
+Soit $\mathcal R$ un anneau commutatif muni d'une dérivation $\Dx$.
+\begin{enumerate}[nosep]
+\item Pour tous $f, g \in \mathcal R$ et $n \geq 0$, $\Dx^n(fg) = \sum_{k=0}^n \binom nk \Dx^k f \cdot \Dx^{n-k} g$ (formule de Leibniz).
+\item Si $p \cdot 1 = 0$ dans $\mathcal R$, alors $\Dx^p$ est encore une dérivation : $\Dx^p(fg) = f\,\Dx^p g + g\,\Dx^p f$.
+\item Sur $\F_p(x)$, on a $\Dx^p = 0$.
+\end{enumerate}
+\end{lemme}
+
+\begin{proof}
+1. Par récurrence sur $n$, avec la relation de Pascal $\binom nk + \binom n{k-1} = \binom{n+1}k$.
+
+2. Pour $0 < k < p$, le nombre premier $p$ divise $\binom pk = \frac{p!}{k!\,(p-k)!}$, car il divise le numérateur et pas le dénominateur. Il ne reste que les termes $k = 0$ et $k = p$.
+
+3. D'après le point 2, $\Dx^p$ est une dérivation de $\F_p(x)$, et $\Dx^p(x) = 0$ puisque $\Dx^2 x = 0$. Une dérivation nulle sur $x$ est nulle sur tout polynôme, par la règle de Leibniz, puis sur tout quotient : en dérivant $g \cdot \frac1g = 1$, on trouve $\Dx^p\big(\frac1g\big) = -\frac{\Dx^p g}{g^2}$.
+\end{proof}
+
+Le second outil est une propriété du crochet lui-même. On note $\ad_X$ l'opérateur $Y \mapsto \cro XY$.
+
+\begin{lemme}\label{lem:adp}
+Soit $\mathcal A$ un anneau (non nécessairement commutatif) dans lequel $p \cdot 1 = 0$. Pour tous $X, Y \in \mathcal A$,
+\[
+  \ad_X^{\,p}(Y) = \cro{X^p}{Y} .
+\]
+\end{lemme}
+
+\begin{proof}
+Écrivons $\ad_X = \lambda - \rho$, où $\lambda(Y) = XY$ et $\rho(Y) = YX$. Les deux opérations $\lambda$ et $\rho$ commutent, par associativité : $X(YX) = (XY)X$. On peut donc développer $(\lambda - \rho)^p$ par la formule du binôme, et les coefficients intermédiaires sont divisibles par $p$ comme dans le lemme précédent : $(\lambda-\rho)^p = \lambda^p + (-1)^p\rho^p = \lambda^p - \rho^p$ (pour $p = 2$, $-1 = 1$). Or $\lambda^p(Y) - \rho^p(Y) = X^pY - YX^p$.
+\end{proof}
+
+\subsection{La \texorpdfstring{$p$}{p}-courbure}
+
+Considérons un système $Y' = A(x)\,Y$, où $A$ est une matrice $n \times n$ à coefficients dans $\Q(x)$. Une équation d'ordre $2$ s'y ramène par la section 5.1. Pour presque tout $p$, aucun dénominateur des coefficients de $A$ ne s'annule modulo $p$ ; on dit alors que $p$ est \emph{bon}, et on note $A_p$ la matrice réduite, à coefficients dans $\F_p(x)$.
+
+\begin{definition}
+Pour $p$ bon, on note $\nabla_p = \Dx - A_p$ l'opérateur qui agit sur les vecteurs $Y \in \F_p(x)^n$, $\Dx$ dérivant chaque coordonnée. La \emph{$p$-courbure} du système est l'opérateur $\psi_p = (\nabla_p)^p$.
+\end{definition}
+
+En caractéristique nulle, la puissance $n$-ième d'un opérateur du premier ordre est un opérateur différentiel d'ordre $n$. Modulo $p$, la puissance $p$-ième perd toutes ses dérivées, et c'est le crochet qui le montre.
+
+\begin{proposition}\label{prop:psilin}
+La $p$-courbure est $\F_p(x)$-linéaire : $\psi_p(fY) = f\,\psi_p(Y)$ pour toute $f \in \F_p(x)$. C'est donc la multiplication par une matrice $n \times n$ à coefficients dans $\F_p(x)$, encore notée $\psi_p$.
+\end{proposition}
+
+\begin{proof}
+La relation fondamentale (proposition \ref{prop:heisenberg}) donne $\cro{\Dx}{\M f} = \M{f'}$, et $A_p$ commute avec la multiplication par la fonction $f$ (une matrice commute avec les scalaires). Donc $\cro{\nabla_p}{\M f} = \M{f'}$, puis, en itérant, $\ad_{\nabla_p}^{\,k}(\M f) = \M{\Dx^k f}$. Avec $k = p$ et le lemme \ref{lem:dp}, $\ad_{\nabla_p}^{\,p}(\M f) = \M{\Dx^p f} = 0$. Le lemme \ref{lem:adp} dit que c'est $\cro{\nabla_p^p}{\M f}$ : $\psi_p$ commute avec toutes les multiplications.
+\end{proof}
+
+Pourquoi cette matrice parle-t-elle de solutions ? Parce qu'elle tue toutes celles qui existent modulo $p$.
+
+\begin{proposition}\label{prop:psisol}
+S'il existe une matrice $\Phi$ inversible, à coefficients dans $\F_p(x)$, dont les colonnes sont solutions ($\nabla_p \Phi = 0$), alors $\psi_p = 0$.
+\end{proposition}
+
+\begin{proof}
+On a $\psi_p \Phi = \nabla_p^{\,p} \Phi = 0$, et $\psi_p$ est une matrice d'après la proposition \ref{prop:psilin}. Comme $\Phi$ est inversible, $\psi_p = 0$.
+\end{proof}
+
+La réciproque est vraie aussi : c'est le théorème de descente de Cartier, que nous n'utiliserons pas. Ainsi $\psi_p = 0$ signifie exactement que le système a, modulo $p$, autant de solutions indépendantes que d'inconnues. Une solution algébrique se réduisant, pour presque tout $p$, en une solution modulo $p$, on s’attend à ce qu’un système à solutions algébriques ait une $p$-courbure nulle pour presque tout $p$, et c’est bien un théorème (N.~Katz). La question de Grothendieck porte sur la réciproque.
+
+\begin{conjecture}[Grothendieck--Katz]\label{conj:gk}
+Soit $A \in M_n(\Q(x))$. Le système $Y' = AY$ admet $n$ solutions indépendantes dont toutes les coordonnées sont algébriques si et seulement si $\psi_p = 0$ pour presque tout nombre premier $p$.
+\end{conjecture}
+
+\begin{remarque}
+N.~Katz a démontré la conjecture pour les connexions de Gauss--Manin, c'est-à-dire pour les équations de Picard--Fuchs que satisfont les périodes d'une famille de variétés algébriques (\emph{Invent. Math.} 18, 1972). Le cas d'une seule équation d'ordre $1$ est connu en général (D.~et G.~Chudnovsky, 1985 ; J.-B.~Bost, 2001 ; Y.~André, 2004). Le cas général est ouvert. Les deux théorèmes qui suivent en sont des cas particuliers, dans les cadres de cet article, avec des démonstrations complètes et élémentaires.
+\end{remarque}
+
+\subsection{Coefficients constants : le crochet est nul}
+
+Quand $A$ est constante, tout se simplifie, pour la même raison qu'à la section 3 : $\Dx$ commute avec $A$.
+
+\begin{proposition}\label{prop:psiconst}
+Si $A \in M_n(\Q)$ est constante et $p$ bon, alors $\psi_p = -A_p^{\,p}$.
+\end{proposition}
+
+\begin{proof}
+La matrice $A_p$ est constante, donc $\cro{\Dx}{A_p} = 0$ (proposition \ref{prop:heisenberg}, coefficient par coefficient). Pour deux opérateurs qui commutent, la formule du binôme s'applique, et les coefficients intermédiaires sont divisibles par $p$ : $(\Dx - A_p)^p = \Dx^p + (-A_p)^p = \Dx^p - A_p^{\,p}$. Enfin $\Dx^p = 0$ par le lemme \ref{lem:dp}.
+\end{proof}
+
+\begin{exemple}
+Pour $y' = y$, on a $\psi_p = -1$ pour tout $p$ : la $p$-courbure ne s'annule jamais, comme les factorielles de $e^x$ l'annonçaient. Pour $y'' - 3y' + 2y = 0$ (exemple \ref{ex:const}), la matrice est $A = \begin{pmatrix} 0 & 1 \\ -2 & 3 \end{pmatrix}$, de valeurs propres $1$ et $2$. Pour $p \geq 3$, ces valeurs propres sont distinctes dans $\F_p$, donc $A_p$ est diagonalisable, et $A_p^{\,p}$ a pour valeurs propres $1^p = 1$ et $2^p = 2$ (petit théorème de Fermat) : $A_p^{\,p} = A_p$ et $\psi_p = -A_p \neq 0$.
+\end{exemple}
+
+Pour énoncer le théorème, il nous faut un dernier fait, qui dit que l'exponentielle n'est pas algébrique.
+
+\begin{lemme}\label{lem:expalg}
+Pour $\lambda \in \C$ non nul, la fonction $x \mapsto e^{\lambda x}$ n'est algébrique sur aucun intervalle.
+\end{lemme}
+
+\begin{proof}
+Supposons $P(x, e^{\lambda x}) = 0$ sur un intervalle $I$, avec $P = \sum_{k=0}^d c_k(x) Y^k$ non nul, et $c_d \neq 0$. La fonction $z \mapsto \sum_k c_k(z) e^{k\lambda z}$ est définie sur $\C$ tout entier et développable en série entière ; nulle sur $I$, elle est nulle partout, par le principe des zéros isolés. Prenons $z = s\bar\lambda$ avec $s$ réel, de sorte que $e^{k\lambda z} = e^{k|\lambda|^2 s}$, et divisons par $e^{d|\lambda|^2 s}$ :
+\[
+  c_d(s\bar\lambda) = -\sum_{k<d} c_k(s\bar\lambda)\, e^{-(d-k)|\lambda|^2 s} \xrightarrow[s \to +\infty]{} 0 ,
+\]
+car l'exponentielle l'emporte sur tout polynôme. Mais un polynôme non nul ne tend pas vers $0$ à l'infini : contradiction.
+\end{proof}
+
+\begin{theoreme}[Grothendieck--Katz à coefficients constants]\label{thm:gkconst}
+Soit $A \in M_n(\Q)$. Les conditions suivantes sont équivalentes :
+\begin{enumerate}[nosep]
+\item toutes les solutions de $Y' = AY$ sont algébriques ;
+\item $A$ est nilpotente ;
+\item $\psi_p = 0$ pour tout $p$ bon et $\geq n$, donc pour presque tout $p$ ;
+\item $\psi_p = 0$ pour une infinité de nombres premiers $p$.
+\end{enumerate}
+\end{theoreme}
+
+L'idée est simple : d'après la proposition \ref{prop:psiconst}, la $p$-courbure est $-A_p^{\,p}$, et il s'agit de voir que « $A^p$ est nul modulo $p$ pour une infinité de $p$ » force $A$ à être nilpotente.
+
+\begin{proof}
+2 $\Rightarrow$ 1. Si $A^n = 0$, la série de l'exponentielle s'arrête : $e^{xA} = \sum_{k<n} \frac{x^k}{k!} A^k$ est une matrice de polynômes, et les solutions $e^{xA} Y_0$ (section 6) aussi.
+
+2 $\Rightarrow$ 3. Si $A^n = 0$, alors $A_p^{\,n} = 0$, donc $A_p^{\,p} = 0$ dès que $p \geq n$. Et 3 $\Rightarrow$ 4 est évident.
+
+4 $\Rightarrow$ 2. Si $\psi_p = 0$, alors $A_p^{\,p} = 0$ : la matrice $A_p$ est nilpotente, donc toutes ses valeurs propres (dans une clôture algébrique de $\F_p$) sont nulles, et son polynôme caractéristique est $t^n$. Or ce polynôme caractéristique est la réduction modulo $p$ de celui de $A$, $\chi_A(t) = t^n + c_{n-1}t^{n-1} + \cdots + c_0$. Chaque coefficient $c_j$ est donc, pour une infinité de $p$, un rationnel dont le numérateur est divisible par $p$. Un entier divisible par une infinité de nombres premiers est nul : $\chi_A = t^n$, et $A^n = 0$ par le théorème de Cayley--Hamilton.
+
+1 $\Rightarrow$ 2. Si $A$ n'est pas nilpotente, elle a une valeur propre $\lambda \neq 0$ et un vecteur propre $v \in \C^n$. Alors $Y(x) = e^{\lambda x} v$ est solution, et l'une de ses coordonnées est $v_j e^{\lambda x}$ avec $v_j \neq 0$. Elle n'est pas algébrique, d'après le lemme \ref{lem:expalg}.
+\end{proof}
+
+\subsection{L'ordre 1 : une formule de Jacobson}
+
+Passons à l'équation $y' = a(x)\,y$, c'est-à-dire à l'opérateur $\Dx - a$ du lemme \ref{lem:conj}. Ici $\Dx$ ne commute plus avec $a$, et la formule du binôme ne s'applique pas. Il faut calculer $(\Dx + b)^p$ autrement ; le résultat est remarquablement simple.
+
+\begin{proposition}[formule de Jacobson en rang $1$]\label{prop:jacobson}
+Soit $\mathcal R$ un anneau commutatif muni d'une dérivation $\Dx$, avec $p \cdot 1 = 0$, et $b \in \mathcal R$. Comme opérateurs sur $\mathcal R$,
+\[
+  (\Dx + b)^p = \Dx^p + \big(b^p + \Dx^{p-1} b\big) .
+\]
+\end{proposition}
+
+On procède en trois étapes. La première ramène tout à une seule fonction, $u_m = (\Dx+b)^m(1)$. La deuxième écrit $u_m$ comme une somme sur les façons de découper $\{1, \dots, m\}$ en paquets. La troisième fait tourner ces découpages, et la plupart disparaissent modulo $p$.
+
+\begin{proof}
+\emph{Étape 1.} Pour tout $n$ et toute $y \in \mathcal R$, on a
+\[
+  (\Dx+b)^n (y) = \sum_{k=0}^n \binom nk\, u_{n-k}\, \Dx^k y .
+\]
+C'est vrai pour $n = 0$. Si c'est vrai au rang $n$, on applique $\Dx + b$ : le terme $u_{n-k}\Dx^k y$ donne $(\Dx u_{n-k} + b\,u_{n-k})\Dx^k y + u_{n-k}\Dx^{k+1}y = u_{n-k+1}\Dx^k y + u_{n-k}\Dx^{k+1} y$, et la relation de Pascal regroupe les termes. Pour $n = p$, les coefficients $\binom pk$ avec $0<k<p$ sont nuls dans $\mathcal R$, et il reste $(\Dx+b)^p(y) = u_p\,y + \Dx^p y$.
+
+\emph{Étape 2.} Notons $\Pi_n$ l'ensemble des partitions de $\{1, \dots, n\}$ en parties non vides, qu'on appelle des blocs. Alors
+\[
+  u_n = \sum_{\pi \in \Pi_n}\ \prod_{B \in \pi} \Dx^{|B|-1} b .
+\]
+Par récurrence, à partir de $u_{n+1} = \Dx u_n + b\, u_n$. Une partition de $\{1, \dots, n+1\}$ s'obtient à partir d'une partition $\pi$ de $\{1, \dots, n\}$ de deux façons. Ou bien $n+1$ forme un bloc à lui seul, ce qui multiplie le produit par $b$ : c'est le terme $b\,u_n$. Ou bien on ajoute $n+1$ à l'un des blocs $B$ de $\pi$, ce qui remplace le facteur $\Dx^{|B|-1}b$ par $\Dx^{|B|}b$ ; en sommant sur les blocs $B$, on obtient exactement la dérivée du produit, par la règle de Leibniz : c'est le terme $\Dx u_n$.
+
+\emph{Étape 3.} Prenons $n = p$ et identifions $\{1, \dots, p\}$ à $\Z/p\Z$. La rotation $\sigma : i \mapsto i+1$ agit sur les partitions, et ne change pas le produit associé, qui ne dépend que des tailles des blocs. Les orbites ont $1$ ou $p$ éléments, puisque $\sigma^p = \mathrm{id}$ et que $p$ est premier. Une orbite à $p$ éléments contribue $p$ fois le même produit, soit $0$ dans $\mathcal R$. Restent les partitions fixées par $\sigma$. Si $\pi$ est fixée et si $B$ est le bloc qui contient $0$, ou bien $\sigma(B) = B$, et alors $B$ contient $0, 1, 2, \dots$, donc $B = \Z/p\Z$ et $\pi$ n'a qu'un bloc ; ou bien les translatés $\sigma^k(B)$, $0 \leq k < p$, sont $p$ blocs distincts (si deux coïncidaient, $B$ serait stable par une puissance de $\sigma$ qui engendre le groupe, donc par $\sigma$), ce qui, dans un ensemble à $p$ éléments, impose des singletons. Il ne reste que deux termes : un seul bloc, qui donne $\Dx^{p-1}b$, et $p$ singletons, qui donnent $b^p$.
+\end{proof}
+
+\begin{exemple}
+Pour $p = 3$ : les cinq partitions de $\{1,2,3\}$ donnent $u_3 = b^3 + 3\,b\,b' + b''$. Les trois partitions en un bloc de deux et un singleton forment une orbite de la rotation, et leur contribution $3bb'$ disparaît modulo $3$.
+\end{exemple}
+
+Appliquons la proposition à l'équation $y' = a\,y$, avec $\mathcal R = \F_p(x)$, $b = -a_p$ et $\Dx^p = 0$. Notons $\Psi(b) = b^p + \Dx^{p-1}b$. L'application $\Psi$ est additive, parce que $(b+c)^p = b^p + c^p$ modulo $p$ (binôme encore) et que $\Dx^{p-1}$ est linéaire. La $p$-courbure est donc
+\[
+  \psi_p = \Psi(-a_p) = -\Psi(a_p) .
+\]
+Tout se ramène à calculer $\Psi$ sur les éléments simples d'une fraction rationnelle.
+
+\begin{lemme}\label{lem:psisimple}
+Soit $p$ premier, $\alpha, r, c \in \F_p$, et $n, k$ des entiers avec $0 \leq n \leq p-2$ et $2 \leq k \leq p-1$. Dans $\F_p(x)$ :
+\[
+  \Psi(\alpha x^n) = \alpha\, x^{np}, \qquad
+  \Psi\Big(\frac{r}{x-c}\Big) = 0, \qquad
+  \Psi\Big(\frac{r}{(x-c)^k}\Big) = \frac{r}{(x^p - c)^k} .
+\]
+\end{lemme}
+
+\begin{proof}
+Les puissances $p$-ièmes se calculent avec le petit théorème de Fermat ($\alpha^p = \alpha$ dans $\F_p$) et la formule du binôme modulo $p$, qui donne $(x-c)^p = x^p - c^p = x^p - c$. Restent les dérivées $(p-1)$-ièmes. D'abord $\Dx^{p-1}(x^n) = n(n-1)\cdots(n-p+2)\,x^{n-p+1}$, et ce produit contient le facteur $0$ puisque $n - p + 2 \leq 0 \leq n$. Ensuite
+\[
+  \Dx^{p-1}\big((x-c)^{-k}\big) = (-1)^{p-1}\, k(k+1)\cdots(k+p-2)\, (x-c)^{-k-p+1} .
+\]
+Pour $k \geq 2$, les $p-1$ entiers consécutifs $k, \dots, k+p-2$ contiennent $p$, et le produit est nul. Pour $k = 1$, il vaut $(p-1)!$, qui est congru à $-1$ modulo $p$ (théorème de Wilson) ; on trouve $\Dx^{p-1}\big(\frac{r}{x-c}\big) = -\frac{r}{(x-c)^p}$, qui compense exactement $\big(\frac{r}{x-c}\big)^p = \frac{r}{(x-c)^p}$. (Pour $p = 2$, le signe $(-1)^{p-1}$ vaut $-1 = 1$ et le calcul est le même.)
+\end{proof}
+
+Le lemme dit, en une phrase, que la $p$-courbure \emph{ignore les pôles simples et voit tout le reste}. C'est exactement ce qui sépare $x^r$, dont la dérivée logarithmique $r/x$ n'a qu'un pôle simple, de $e^x$ ou $e^{1/x}$.
+
+\begin{theoreme}[Grothendieck--Katz à l'ordre 1]\label{thm:gkordre1}
+Soit $a \in \Q(x)$ dont tous les pôles sont rationnels. Les conditions suivantes sont équivalentes :
+\begin{enumerate}[nosep]
+\item l'équation $y' = a\,y$ a une solution non nulle algébrique, sur un intervalle où $a$ n'a pas de pôle ;
+\item $a = \sum_i \frac{r_i}{x - c_i}$, avec des $r_i \in \Q$ et des $c_i \in \Q$ distincts ;
+\item $\psi_p = 0$ pour presque tout $p$ ;
+\item $\psi_p = 0$ pour une infinité de nombres premiers $p$.
+\end{enumerate}
+\end{theoreme}
+
+\begin{proof}
+2 $\Rightarrow$ 1. Soit $N$ un dénominateur commun des $r_i$. La fonction $y = \prod_i |x - c_i|^{r_i}$ vérifie $y'/y = \sum_i r_i/(x-c_i) = a$, et $y^N = \pm\prod_i (x-c_i)^{N r_i}$ est une fraction rationnelle : $y$ est algébrique.
+
+1 $\Rightarrow$ 2. Soit $y$ une solution algébrique non nulle, et $P(Y) = Y^d + c_{d-1}Y^{d-1} + \cdots + c_0$, à coefficients $c_k \in \C(x)$, un polynôme unitaire de degré minimal tel que $P(y) = 0$ ; il est irréductible. Dérivons l'identité $P(y(x)) = 0$, en utilisant $y' = ay$ :
+\[
+  \sum_{k=0}^d \big(c_k' + k\,a\,c_k\big)\, y^k = 0 \qquad (c_d = 1) .
+\]
+Le polynôme $Q(Y) = \sum_k (c_k' + k a c_k) Y^k$ a pour coefficient dominant $d\,a$, et $Q - d\,a\,P$, de degré $< d$, s'annule en $y$ : il est nul par minimalité. Donc $c_k' = (d-k)\,a\,c_k$ pour tout $k$, et en particulier $c_0' = d\,a\,c_0$. De plus $c_0 \neq 0$, sinon $Y$ diviserait le polynôme irréductible $P$, qui serait $Y$, et $y$ serait nulle. Écrivons $c_0 = \mu \prod_j (x - \gamma_j)^{m_j}$, avec $m_j \in \Z$ non nuls : alors $d\,a = c_0'/c_0 = \sum_j \frac{m_j}{x - \gamma_j}$. Ainsi $a = \sum_j \frac{m_j/d}{x-\gamma_j}$ : ses pôles $\gamma_j$ sont rationnels par hypothèse, et ses résidus $m_j/d$ sont rationnels.
+
+2 $\Rightarrow$ 3. Pour $p$ ne divisant aucun dénominateur des $r_i$ et des $c_i$, l'additivité de $\Psi$ et le lemme \ref{lem:psisimple} donnent $\psi_p = -\sum_i \Psi\big(\frac{r_i}{x-c_i}\big) = 0$. Et 3 $\Rightarrow$ 4 est évident.
+
+4 $\Rightarrow$ 2. Décomposons $a$ en éléments simples sur $\Q$, ce qui est possible puisque ses pôles sont rationnels :
+\[
+  a = P(x) + \sum_i \sum_{k=1}^{m_i} \frac{r_{ik}}{(x - c_i)^k} .
+\]
+Pour $p$ assez grand ($p > \deg P + 1$, $p > m_i$, $p$ ne divisant aucun dénominateur, et les $c_i$ distincts modulo $p$), l'additivité de $\Psi$ et le lemme \ref{lem:psisimple} donnent
+\[
+  \Psi(a_p) = R(x^p), \qquad\text{où}\qquad R(t) = P(t) + \sum_i \sum_{k=2}^{m_i} \frac{r_{ik}}{(t - c_i)^k} \in \F_p(t) .
+\]
+Les pôles simples ont disparu. Si $\psi_p = 0$, alors $R(x^p) = 0$, donc $R = 0$ (un polynôme $N(t)$ tel que $N(x^p) = 0$ est nul). Par unicité de la décomposition en éléments simples sur $\F_p$, les coefficients de $P$ et les $r_{ik}$ avec $k \geq 2$ sont nuls modulo $p$. Si cela arrive pour une infinité de $p$, ces rationnels sont nuls, et $a = \sum_i \frac{r_{i1}}{x - c_i}$.
+\end{proof}
+
+\begin{exemple}
+Pour $y' = \frac{r}{x}\,y$, avec $r \in \Q$, on trouve $\psi_p = 0$ pour presque tout $p$, et en effet $x^r$ est algébrique. Pour $y' = -\frac{1}{x^2}\,y$, le lemme donne $\psi_p = -\Psi(-x^{-2}) = x^{-2p} \neq 0$, et en effet la solution $e^{1/x}$ n'est pas algébrique. Dans l'exemple \ref{ex:var}, l'opérateur se factorise en deux facteurs $\Dx - \frac1x$, de $p$-courbure nulle, et les solutions $x$ et $x^2$ sont des polynômes. On peut le vérifier directement : la matrice $\Phi = \begin{pmatrix} x & x^2 \\ 1 & 2x \end{pmatrix}$ des solutions et de leurs dérivées a pour déterminant $x^2$, inversible dans $\F_p(x)$, et la proposition \ref{prop:psisol} donne $\psi_p = 0$ pour tout $p$.
+\end{exemple}
+
+\begin{remarque}[le lien avec la cote 93]
+La formule $\Psi(a) = R(x^p)$ dit que la $p$-courbure garde la partie non logarithmique de $a$, lue en $x^p$. Grothendieck écrit la même chose page 207 du dossier 93, pour la connexion $d + \omega$ sur une variété : la $p$-courbure y est $\omega^{\otimes p} - F^*(\widetilde C\omega)$, où $\widetilde C$ est l'opération de Cartier. Pour $\omega = a\,dx$ sur une droite, $\widetilde C$ garde exactement les termes $\frac{r\,dx}{x-c}$ (et ceux en $x^{p-1}dx$), et le terme $F^*(\widetilde C\omega)$ correspond à notre $\Dx^{p-1}a$, au signe près. Quand les pôles de $a$ ne sont pas rationnels, ses résidus $\rho$ sont des nombres algébriques. Le même calcul montre alors que $\rho^p \equiv \rho$ modulo les idéaux premiers au-dessus de presque tout $p$, et un théorème d'arithmétique (Kronecker, Chebotarev) en déduit que $\rho$ est rationnel. C'est la seule étape qui manque ici pour le cas général de l'ordre $1$.
+\end{remarque}
+
+Revenons à la question du début. La $p$-courbure se lit sur l'équation, sans la résoudre : il suffit de calculer une puissance de matrice ou une dérivée $(p-1)$-ième. Dans les deux cadres de cet article, elle répond exactement : nulle pour presque tout $p$ si et seulement si les solutions sont algébriques. Et c'est le crochet de Lie, à travers les lemmes \ref{lem:adp} et \ref{lem:dp}, qui fait de $\nabla_p^{\,p}$ une matrice plutôt qu'un opérateur différentiel.
+
+\subsection{Conclusion : l'énoncé général}
+
+La conjecture \ref{conj:gk} est le cas d'une seule variable. Grothendieck la pose pour plusieurs variables, et c'est encore le crochet de Lie qui en fixe le cadre. Un système d'équations aux dérivées partielles
+\[
+  \frac{\partial Y}{\partial x_i} = A_i(x_1, \dots, x_m)\, Y \qquad (1 \leq i \leq m)
+\]
+ne peut avoir assez de solutions que si les opérateurs $\nabla_i = \partial_i - A_i$ commutent : en dérivant $\partial_i Y = A_i Y$ par rapport à $x_j$ et en échangeant les rôles de $i$ et $j$, on trouve la condition $\cro{\nabla_i}{\nabla_j} = 0$. Ce crochet s'appelle la \emph{courbure} du système, et le système est dit \emph{intégrable} quand elle est nulle. Modulo $p$, chaque $\nabla_i^{\,p}$ est encore linéaire, par le même argument qu'à la proposition \ref{prop:psilin} : ce sont les $p$-courbures $\psi_{p,i}$. Le mot « $p$-courbure » vient de là.
+
+Le cadre naturel est celui d'une variété algébrique lisse $X$ sur un corps de nombres $K$ (par exemple le plan privé de quelques courbes, sur $\Q$) et d'un fibré vectoriel $E$ sur $X$ muni d'une connexion intégrable $\nabla$ : localement, c'est exactement un système comme ci-dessus, à coefficients fonctions rationnelles. Pour presque tout idéal premier $\mathfrak p$ de l'anneau des entiers de $K$, on peut réduire $(E, \nabla)$ modulo $\mathfrak p$, et la $p$-courbure de la réduction est l'application $\partial \mapsto \nabla_\partial^{\,p} - \nabla_{\partial^{[p]}}$, où $\partial^{[p]}$ est la dérivation $\partial^p$ (nulle pour $\partial = \partial_i$, ce qui redonne les $\psi_{p,i}$).
+
+\begin{conjecture}[Grothendieck--Katz, énoncé général]\label{conj:gkgen}
+Soit $X$ une variété lisse sur un corps de nombres $K$, et $(E, \nabla)$ un fibré vectoriel sur $X$ muni d'une connexion intégrable. Les conditions suivantes sont équivalentes :
+\begin{enumerate}[nosep]
+\item $(E, \nabla)$ admet localement une base de solutions algébriques ; de façon équivalente, $(E, \nabla)$ devient trivial après un revêtement fini étale de $X$ ou, sur $\C$, sa monodromie est un groupe fini ;
+\item pour presque tout idéal premier $\mathfrak p$ de l'anneau des entiers de $K$, la $p$-courbure de la réduction de $(E, \nabla)$ modulo $\mathfrak p$ est nulle.
+\end{enumerate}
+\end{conjecture}
+
+Le sens 1 $\Rightarrow$ 2 est démontré ; c'est l'autre sens que Grothendieck demande, page 194 du dossier 93. N.~Katz l'a démontré pour les connexions de Gauss--Manin (1972), et le cas où la monodromie est un groupe résoluble, qui contient le rang $1$, est connu (Chudnovsky, Bost, André). Le cas général est l'un des grands problèmes ouverts sur les équations différentielles. Les théorèmes \ref{thm:gkconst} et \ref{thm:gkordre1} en donnent une idée concrète : dans chacun, la $p$-courbure a mesuré exactement l'écart entre une équation et une équation à solutions algébriques.
+
+% ==========================================================
 \section{Synthèse}
 % ==========================================================
 
@@ -514,11 +798,12 @@ Factorisation de $L$ & $\Dx$ et les coefficients & immédiate si constants ; sin
 Variation des constantes & translations $X_{\varphi_1}, X_{\varphi_2}$ & deux primitives indépendantes, formule avec $W$ \\
 Réduction de l'ordre & $\langle X_\varphi, S\rangle$ seulement résoluble & deux primitives emboîtées \\
 Exponentielle de matrice & $A(x)$ et $A(s)$ & formule fermée si le crochet est nul \\
+$p$-courbure & $\nabla$ avec les multiplications, modulo $p$ & $\nabla_p^{\,p}$ est une matrice ; nulle pour presque tout $p$ si et seulement si les solutions sont algébriques (démontré à coefficients constants et à l'ordre 1) \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Dans chaque cas, le crochet de Lie mesure ce qui empêche d'intégrer « d'un seul coup ». S'il est nul, tout se découple. Si les symétries forment une algèbre résoluble, on intègre par étapes. Sinon, il faut une information supplémentaire, typiquement une solution de l'équation de Riccati.
+Dans chaque cas, le crochet de Lie mesure ce qui empêche d'intégrer « d'un seul coup ». S'il est nul, tout se découple. Si les symétries forment une algèbre résoluble, on intègre par étapes. Sinon, il faut une information supplémentaire, typiquement une solution de l'équation de Riccati. Et modulo $p$, le même crochet fait apparaître un invariant qui, d'après la conjecture de Grothendieck--Katz, dirait si les solutions sont algébriques.
 
 % ==========================================================
 \section{Exercices}
@@ -542,6 +827,18 @@ Calculer $\cro{X_\varphi}{S}$ en appliquant les deux champs à une fonction $g(y
 
 \begin{exercice}
 Soit $A(x) = \begin{pmatrix} 0 & 1 \\ 0 & x \end{pmatrix}$. Calculer $\cro{A(x)}{A(s)}$ et en déduire que la formule exponentielle de la proposition \ref{prop:expo} n'est pas applicable directement.
+\end{exercice}
+
+\begin{exercice}
+Calculer la $p$-courbure du système associé à $y'' + y = 0$ pour $p$ impair, et montrer qu'elle n'est jamais nulle. Qu'en déduit-on sur les solutions ? Retrouver le résultat avec la solution $e^{ix}$.
+\end{exercice}
+
+\begin{exercice}
+Soit $a = \frac1x + \frac1{x^2}$. Calculer $\psi_p$ pour l'équation $y' = a\,y$ et $p \geq 3$. Conclure avec le théorème \ref{thm:gkordre1}, puis vérifier que $y = x\,e^{-1/x}$ est solution.
+\end{exercice}
+
+\begin{exercice}
+Vérifier la formule $u_3 = b^3 + 3\,b\,b' + b''$ de l'exemple qui suit la proposition \ref{prop:jacobson}, en calculant $(\Dx + b)^3(1)$ directement. Écrire de même $u_4$ à l'aide des quinze partitions de $\{1,2,3,4\}$, et vérifier que $u_4 \neq b^4 + b'''$ en général : la simplification est propre aux nombres premiers.
 \end{exercice}
 
 % ==========================================================
@@ -601,5 +898,13 @@ qui n'est pas nul dès que $x \neq s$. L'hypothèse de la proposition \ref{prop:
   \cro{A(x)}{B(x)} = \begin{pmatrix} 0 & x^2/2 \\ 0 & x^3/2 \end{pmatrix} - \begin{pmatrix} 0 & x^2 \\ 0 & x^3/2 \end{pmatrix} = \begin{pmatrix} 0 & -x^2/2 \\ 0 & 0 \end{pmatrix} \neq 0
 \]
 pour $x \neq 0$. On ne peut donc pas conclure que $e^{B(x)}$ est une matrice fondamentale.
+
+\paragraph{Exercice 6.} Le système est $Y' = AY$ avec $A = \begin{pmatrix} 0 & 1 \\ -1 & 0 \end{pmatrix}$, constante, donc $\psi_p = -A_p^{\,p}$ (proposition \ref{prop:psiconst}). Comme $A^2 = -I$, on a $A^p = A\,(A^2)^{(p-1)/2} = (-1)^{(p-1)/2} A$, et $\psi_p = \pm A_p \neq 0$. Le théorème \ref{thm:gkconst} (condition 4 fausse) dit que les solutions ne sont pas toutes algébriques. En effet $e^{ix} = \cos x + i \sin x$ est solution, et elle n'est pas algébrique d'après le lemme \ref{lem:expalg}.
+
+\paragraph{Exercice 7.} D'après le lemme \ref{lem:psisimple}, $\Psi(1/x) = 0$ et $\Psi(1/x^2) = 1/x^{2p}$ (avec $c = 0$, $k = 2$), donc $\psi_p = -\Psi(a_p) = -x^{-2p} \neq 0$ pour tout $p \geq 3$. Par le théorème \ref{thm:gkordre1} (condition 4 fausse), l'équation n'a pas de solution algébrique non nulle : le pôle double de $a$ l'interdit. Et $y = x\,e^{-1/x}$ vérifie bien $y'/y = \frac1x + \frac1{x^2}$.
+
+\paragraph{Exercice 8.} On a $u_1 = b$, $u_2 = (\Dx + b)(b) = b' + b^2$, puis $u_3 = (\Dx+b)(b' + b^2) = b'' + 2bb' + bb' + b^3 = b^3 + 3bb' + b''$. Pour $\{1,2,3,4\}$ : un bloc ($1$ partition, $b'''$), un bloc de trois et un singleton ($4$ partitions, $4\,b\,b''$), deux blocs de deux ($3$ partitions, $3\,b'^2$), un bloc de deux et deux singletons ($6$ partitions, $6\,b^2 b'$), quatre singletons ($b^4$). Donc $u_4 = b^4 + 6b^2b' + 3b'^2 + 4bb'' + b'''$, qui est le total des $15$ partitions. Modulo $2$, il reste $b^4 + b'^2 + b'''$, et le terme $b'^2$ ne disparaît pas : la rotation de $\{1,2,3,4\}$ a des orbites de taille $2$, et la partition $\{1,3\},\{2,4\}$ est fixée par elle.
+
+\paragraph{Sources.} La leçon filmée \href{https://www.canal-u.tv/chaines/les-amphis-de-france-5/mathematiques-deug-1/equations-differentielles}{« Équations différentielles »}, série \emph{Mathématiques DEUG 1} des Amphis de France~5, sur Canal-U. Pour la $p$-courbure, le dossier 93 du fonds Grothendieck de l'université de Montpellier, « Connexions de Gauss-Manin et équations de Picard-Fuchs. Opération de Cartier », pages 193 à 194 et 204 à 212, dont une lecture est disponible sur \url{https://grothendieck.commutator.io} ; et N.~Katz, « Nilpotent connections and the monodromy theorem », \emph{Publ. Math. IHÉS} 39 (1970).
 
 \end{document}

@@ -33,6 +33,14 @@ npm run dev
 
 `npm run dev` construit le site, le sert sur http://localhost:4173 et le reconstruit à chaque modification. `npm run pdf` compile les PDF avec [Tectonic](https://tectonic-typesetting.github.io) quand il est installé. Lancez-le avant `npm run render` pour que les pages pointent vers les PDF.
 
+### Figures
+
+Les figures sont écrites en TikZ dans les `.tex`, avec les réglages communs de `lecons/figures/tikz-setup.tex`. `npm run tikz` compile chacune en SVG (Tectonic et pdftocairo), dans `lecons/figures/`, sous un nom tiré d'une empreinte de sa source. Ces SVG sont versionnés : le site se construit sans TeX, et une figure modifiée sans `npm run tikz` fait échouer le rendu.
+
+### Commenter un passage
+
+Sur chaque vue de lecture, sélectionner un passage fait apparaître « Commenter ». Le commentaire peut rester comme note dans le navigateur, ou devenir une issue GitHub pré-remplie : le passage cité (formules en TeX), le lien vers l'endroit exact, le fichier source et le commentaire. Rien n'est publié tant que le lecteur ne valide pas l'issue sur GitHub.
+
 ## Lean
 
 Le dossier `lean/` est un projet Lake qui ne fournit que Mathlib. Lean et Mathlib y ont les mêmes versions que dans grothendieck-project, figées par `lean/lake-manifest.json`. Les fichiers `.lean` restent rangés avec leur document, dans `lecons/<leçon>/`.
@@ -55,4 +63,4 @@ Le site est publié comme site de projet, à l'adresse `https://<utilisateur>.gi
 
 ## Origine des fiches
 
-Les fiches 126, 142, 224, 228 et 236 sont des réécritures, au niveau agrégation, de feuilles de soutien scolaire de terminale S (2013), tirées des manuels *Hyperbole*, *Bréal*, *Terracher* et *Method'S*. Les énoncés faux de ces feuilles y sont signalés et corrigés.
+Les fiches 126, 142, 224, 228 et 236 sont des réécritures, au niveau agrégation, de feuilles d’exercices de terminale S (2003), tirées des manuels *Hyperbole*, *Bréal*, *Terracher* et *Method'S*. Les énoncés faux de ces feuilles y sont signalés et corrigés.
