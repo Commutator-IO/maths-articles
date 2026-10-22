@@ -22,7 +22,10 @@ jobs:
 
       # Installe la version de Lean de lean/lean-toolchain, récupère le cache
       # précompilé de Mathlib et lance `lake build` (la racine, vide).
-      - uses: leanprover/lean-action@v1
+      # Version figée. Depuis v1.6.0, l'action calcule correctement la clé du
+      # cache GitHub quand le paquet Lake est dans un sous-dossier, comme ici
+      # (lean/).
+      - uses: leanprover/lean-action@v1.6.2
         with:
           lake-package-directory: lean
 
