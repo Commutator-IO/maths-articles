@@ -51,7 +51,7 @@
 \maketitle
 
 \begin{abstract}
-Pour calculer $\int_a^bf$, le réflexe est de chercher une primitive. Mais la plupart des intégrales intéressantes n'ont pas de primitive simple, ou alors on ne veut pas la valeur exacte, seulement un encadrement. Que faire alors ? Cette fiche part d'une feuille d'exercices de terminale et montre, sur chaque exercice, une méthode qui va bien plus loin que le calcul demandé. On rencontre : la linéarisation et les intégrales de Wallis, qui donnent la constante de la formule de Stirling ; l'intégration par parties et la dérivation par rapport à un paramètre, qui mènent au « rêve du bachelier » $\int_0^1x^{-x}\dd x=\sum n^{-n}$ ; les relations de récurrence, leur instabilité numérique et l'irrationalité de $e$ ; le noyau de Dirichlet, qui donne $\zeta(2)=\frac{\pi^2}6$ ; la convexité, qui encadre une intégrale et explique les méthodes des trapèzes et du point milieu ; enfin le reste intégral de la formule de Taylor.
+Pour calculer $\int_a^bf$, le réflexe est de chercher une primitive. La plupart des intégrales intéressantes n'en ont pourtant pas de simple, et souvent on veut seulement un encadrement, pas la valeur exacte. Cette fiche part d'une feuille d'exercices de terminale et tire de chaque exercice une méthode qui dépasse de loin le calcul demandé : la linéarisation et les intégrales de Wallis, qui donnent la constante de la formule de Stirling ; l'intégration par parties et la dérivation par rapport à un paramètre, qui mènent au « rêve du bachelier » $\int_0^1x^{-x}\dd x=\sum n^{-n}$ ; les relations de récurrence, leur instabilité numérique et l'irrationalité de $e$ ; le noyau de Dirichlet, qui donne $\zeta(2)=\frac{\pi^2}6$ ; la convexité, qui encadre une intégrale et explique les méthodes des trapèzes et du point milieu ; enfin le reste intégral de la formule de Taylor.
 \end{abstract}
 
 \paragraph{Leçons concernées.} 236 (Illustrer par des exemples quelques méthodes de calcul d'intégrales de fonctions d'une ou plusieurs variables), 239 (Fonctions définies par une intégrale dépendant d'un paramètre), 246 (Séries de Fourier), 235 (Problèmes d'interversion de symboles en analyse), 218 (Formules de Taylor), 230 (Séries de nombres réels ou complexes).
@@ -68,7 +68,7 @@ Pour calculer $\int_a^bf$, le réflexe est de chercher une primitive. Mais la pl
 \section{Calculer directement, puis par récurrence : Wallis}
 % ==========================================================
 
-On commence par les cas où une primitive existe et se trouve sans peine. Même là, il y a une méthode à retenir. Une valeur absolue se traite en coupant l'intervalle aux endroits où son contenu change de signe. Une puissance de sinus se traite en la transformant en somme de cosinus.
+On commence par les cas où une primitive existe et se trouve sans peine ; même là, il y a une méthode à retenir. Une valeur absolue, on la traite en coupant l'intervalle là où son contenu change de signe ; une puissance de sinus, en la transformant en somme de cosinus.
 
 \begin{exemple}[Exercice 1 de la feuille]\label{ex:abs}
 On veut $\int_0^4\big(|x-1|+|x-2|\big)\dd x$. Par linéarité, on calcule chaque morceau séparément. On coupe en $1$ pour le premier et en $2$ pour le second (relation de Chasles). Chaque morceau est l'aire de deux triangles :
@@ -97,7 +97,7 @@ On peut aussi écrire la fonction sans valeur absolue. Elle vaut $3-2x$ sur $[0,
 \caption{La fonction $|x-1|+|x-2|$ est affine par morceaux : l'aire sous la courbe, $9$, est la somme des aires $2$, $1$ et $6$ de trois trapèzes.}\label{fig:abs}
 \end{figure}
 
-Pour $\sin^4$, aucune primitive ne saute aux yeux. L'idée est de remplacer la puissance par une somme de cosinus, qu'on sait intégrer : c'est la \emph{linéarisation}.
+Pour $\sin^4$, aucune primitive ne saute aux yeux. On remplace donc la puissance par une somme de cosinus, qu'on sait intégrer : c'est la \emph{linéarisation}.
 
 \begin{exemple}[Linéarisation]\label{ex:sin4}
 Par les formules d'Euler,
@@ -135,7 +135,7 @@ Deux changements de variable seront utiles. Avec $x\mapsto\frac\pi2-x$, on voit 
 \caption{Les graphes de $\sin^n$ sur $[0,\frac\pi2]$ pour $n=1,2,4,8$. L'aire $W_n$ (colorée pour $n=8$) décroît comme $\sqrt{\pi/(2n)}$.}\label{fig:wallis}
 \end{figure}
 
-Le théorème suivant dit trois choses. On sait calculer $W_n$ par récurrence. Le produit $nW_nW_{n-1}$ ne dépend pas de $n$. Et de là, on tire la taille de $W_n$ quand $n$ est grand.
+Le théorème suivant calcule $W_n$ par récurrence, observe que le produit $nW_nW_{n-1}$ ne dépend pas de $n$, et tire de cette seule remarque la taille de $W_n$ quand $n$ est grand, puis le produit de Wallis.
 
 \begin{theoreme}[Wallis]\label{thm:wallis}
 \begin{enumerate}[nosep]
@@ -149,7 +149,7 @@ Le théorème suivant dit trois choses. On sait calculer $W_n$ par récurrence. 
 \end{enumerate}
 \end{theoreme}
 
-\emph{Idée de la preuve.} On intègre par parties en écrivant $\sin^n=\sin^{n-1}\cdot\sin$. La dérivée de $\sin^{n-1}$ fait apparaître $\cos^2=1-\sin^2$, donc à la fois $W_{n-2}$ et $W_n$. Pour l'équivalent, on encadre $W_n$ entre deux termes voisins de la suite.
+\emph{Idée de la preuve.} Tout part d'une intégration par parties où l'on écrit $\sin^n=\sin^{n-1}\cdot\sin$ : la dérivée de $\sin^{n-1}$ fait apparaître $\cos^2=1-\sin^2$, donc à la fois $W_{n-2}$ et $W_n$. L'équivalent demande un peu plus : on encadre $W_n$ entre deux termes voisins de la suite.
 
 \begin{proof}
 1. Pour $n\geq2$, on intègre par parties $\sin^{n-1}x\cdot\sin x$ :
@@ -177,10 +177,10 @@ Pour la dernière égalité, on regroupe $(2p)!(2p+1)!=\prod_{k=1}^p(2k)^2\cdot\
 On retrouve $\int_0^\pi\sin^4x\dd x=2W_4=2\cdot\frac34\cdot\frac12\cdot\frac\pi2=\frac{3\pi}8$, comme dans l'exemple \ref{ex:sin4}, sans avoir rien linéarisé.
 \end{exemple}
 
-Voici une application inattendue. La formule de Stirling dit que $n!$ se comporte comme $C\sqrt n\,(n/e)^n$. Établir la forme $\sqrt n\,(n/e)^n$ se fait par une comparaison série-intégrale ; c'est l'objet de la fiche de la leçon 224 (\emph{Autour du nombre $e$}). Mais cette méthode ne donne pas la valeur de $C$. Les intégrales de Wallis la donnent : il suffit de réinjecter l'équivalent dans la formule close de $W_{2p}$.
+Ces intégrales ont une application qu'on n'attendait pas. La formule de Stirling dit que $n!$ se comporte comme $C\sqrt n\,(n/e)^n$. La forme $\sqrt n\,(n/e)^n$ s'établit par une comparaison série-intégrale (c'est l'objet de la fiche de la leçon 224, \emph{Autour du nombre $e$}), mais cette méthode laisse la valeur de $C$ inconnue. Wallis la fournit : il suffit de réinjecter l'équivalent dans la formule close de $W_{2p}$.
 
 \begin{proposition}[Constante de Stirling]\label{prop:stirling}
-S'il existe $C>0$ tel que $n!\sim C\sqrt{n}\,\big(\frac ne\big)^n$, alors $C=\sqrt{2\pi}$. Autrement dit,
+S'il existe $C>0$ tel que $n!\sim C\sqrt{n}\,\big(\frac ne\big)^n$, alors $C=\sqrt{2\pi}$, c'est-à-dire
 \[
   n!\sim\sqrt{2\pi n}\,\Big(\frac ne\Big)^n .
 \]
@@ -230,7 +230,7 @@ En développant, $J_n(x)=\frac{x^{n+1}\ln^2x}{n+1}-\frac{2x^{n+1}\ln x}{(n+1)^2}
 Faisons tendre $x$ vers $0^+$, pour $n\geq0$. Comme $x^{n+1}\ln^jx\to0$, il reste $\int_0^1t^n\ln t\dd t=-\frac1{(n+1)^2}$ et $\int_0^1t^n\ln^2t\dd t=\frac{2}{(n+1)^3}$. On devine un motif. La proposition suivante le confirme, sans aucune intégration par parties.
 \end{remarque}
 
-L'idée est la suivante. On connaît une intégrale très simple, $\int_0^1t^s\dd t=\frac1{s+1}$, qui dépend d'un paramètre $s$. Si l'on dérive $t^s$ par rapport à $s$, on obtient $t^s\ln t$. Dériver $k$ fois sous l'intégrale fait donc apparaître $\ln^kt$. Il reste à justifier qu'on a le droit de dériver sous le signe intégrale.
+On part d'une intégrale très simple, $\int_0^1t^s\dd t=\frac1{s+1}$, qui dépend d'un paramètre $s$. Si l'on dérive $t^s$ par rapport à $s$, on obtient $t^s\ln t$ ; dériver $k$ fois sous l'intégrale fait donc apparaître $\ln^kt$. Tout le travail consiste à justifier qu'on a le droit de dériver sous le signe intégrale.
 
 \begin{proposition}\label{prop:moments-log}
 Pour tout réel $s>-1$ et tout $k\in\N$,
@@ -255,7 +255,7 @@ Comme tout point de $]-1,+\infty[$ a un voisinage contenu dans un $[a,+\infty[$ 
 Le changement de variable $t=e^{-u}$ donne une autre lecture. L'énoncé devient $\int_0^{+\infty}u^ke^{-(s+1)u}\dd u=\frac{k!}{(s+1)^{k+1}}$, c'est-à-dire $\Gamma(k+1)=k!$ après un changement d'échelle. Les deux preuves reposent sur la même méthode : dériver par rapport à un paramètre une intégrale qu'on connaît déjà.
 \end{remarque}
 
-On peut maintenant calculer une intégrale qui semble hors de portée : celle de $x^{-x}$, qui n'a pas de primitive élémentaire. L'idée est de développer $x^{-x}=e^{-x\ln x}$ en série entière de l'exponentielle. Chaque terme est un $x^k\ln^kx$, que la proposition \ref{prop:moments-log} sait intégrer. Il faut seulement justifier qu'on peut intégrer la série terme à terme.
+On peut maintenant calculer une intégrale qui semble hors de portée : celle de $x^{-x}$, qui n'a pas de primitive élémentaire. On développe $x^{-x}=e^{-x\ln x}$ en série entière de l'exponentielle ; chaque terme est un $x^k\ln^kx$, que la proposition \ref{prop:moments-log} sait intégrer, et il ne reste qu'à justifier l'intégration terme à terme.
 
 \begin{theoreme}[« Rêve du bachelier », Jean Bernoulli 1697]\label{thm:sophomore}
 \[
@@ -275,7 +275,7 @@ On somme sur $k\geq0$ et on pose $n=k+1$. Pour $x^x=e^{x\ln x}$, le même calcul
 \end{proof}
 
 \begin{remarque}
-La série converge très vite : $\int_0^1x^{-x}\dd x=1{,}29128\ldots$ et $\int_0^1x^x\dd x=0{,}78343\ldots$ Pourquoi l'interversion marche-t-elle si bien ? Parce que $|x\ln x|$ reste inférieur à $\frac1e$ : la série est dominée par celle de $e^{1/e}$. C'est l'exemple type d'une interversion série-intégrale justifiée par convergence normale sur un segment (leçon 235). Sur un intervalle non borné, il faudrait le théorème de convergence dominée.
+La série converge très vite : $\int_0^1x^{-x}\dd x=1{,}29128\ldots$ et $\int_0^1x^x\dd x=0{,}78343\ldots$ Si l'interversion se passe aussi bien, c'est que $|x\ln x|$ reste inférieur à $\frac1e$ : la série est dominée par celle de $e^{1/e}$. C'est l'exemple type d'une interversion série-intégrale justifiée par convergence normale sur un segment (leçon 235). Sur un intervalle non borné, il faudrait le théorème de convergence dominée.
 \end{remarque}
 
 % ==========================================================
@@ -319,7 +319,7 @@ La relation donne de proche en proche $I_1=1-\frac2e$, $I_2=2-\frac5e$, $I_3=6-\
 On vérifie le signe : l'intégrande vaut $-x(1-x)^2e^{-x}$, qui est négatif.
 \end{exemple}
 
-L'encadrement 3 a l'air anodin. Il démontre pourtant un résultat célèbre. L'idée : par la formule 2, $e\,I_n$ est la différence entre $n!\,e$ et un entier. Or $e\,I_n$ est strictement compris entre $0$ et $1$. Donc $n!\,e$ n'est jamais entier, ce qui est impossible si $e$ est rationnel.
+L'encadrement 3 a l'air anodin ; il démontre pourtant un résultat célèbre. Par la formule 2, $e\,I_n$ est la différence entre $n!\,e$ et un entier. Or $e\,I_n$ est strictement compris entre $0$ et $1$. Donc $n!\,e$ n'est jamais entier, ce qui est impossible si $e$ est rationnel.
 
 \begin{corollaire}[Irrationalité de $e$]\label{cor:e-irr}
 Le nombre $e$ est irrationnel.
@@ -330,7 +330,7 @@ Par la proposition \ref{prop:rec}, $e\,I_n=n!\,e-a_n$ avec $a_n=\sum_{k=0}^n\fra
 \end{proof}
 
 \begin{remarque}[Stabilité numérique]
-On pourrait croire que la relation 1 est un bon moyen de calculer $I_n$ sur ordinateur. C'est faux, et il est utile de comprendre pourquoi.
+On pourrait croire que la relation 1 est un bon moyen de calculer $I_n$ sur ordinateur. C'est faux, et la raison mérite qu'on s'y arrête.
 
 Partons d'une valeur approchée $\tilde I_0=I_0+\varepsilon$, par exemple l'arrondi flottant de $1-1/e$, avec $|\varepsilon|\approx10^{-16}$. La récurrence progressive donne $\tilde I_n=I_n+n!\,\varepsilon$ : l'erreur est multipliée par $n!$, alors que $I_n$ tend vers $0$. Dès $n\approx18$, on a $n!\cdot10^{-16}>1/(n+1)$ et le résultat calculé n'a plus aucun chiffre exact. La formule close 2 souffre du même défaut : elle multiplie par $n!$ la différence de deux nombres très proches, $1$ et $\frac1e\sum_{k\leq n}\frac1{k!}$.
 
@@ -345,7 +345,7 @@ L'exercice 4 de la feuille est un petit chef-d'œuvre. Il calcule
 \[
   \zeta(2)=\sum_{n=1}^\infty\frac1{n^2}=\frac{\pi^2}6
 \]
-avec uniquement des intégrations par parties. Voici le plan. On cherche une fonction $\varphi$ dont les « coefficients » $\int_0^\pi\varphi(x)\cos nx\dd x$ valent exactement $\frac1{n^2}$. Alors, en intégrant $\varphi$ contre la somme $f_n=\frac12+\cos x+\dots+\cos nx$, on fait apparaître la somme partielle $u_n=\sum_{k=1}^n\frac1{k^2}$. Il restera à montrer que cette intégrale tend vers une limite qu'on sait calculer.
+avec uniquement des intégrations par parties. On cherche d'abord une fonction $\varphi$ dont les « coefficients » $\int_0^\pi\varphi(x)\cos nx\dd x$ valent $\frac1{n^2}$. En intégrant $\varphi$ contre la somme $f_n=\frac12+\cos x+\dots+\cos nx$, on fait apparaître la somme partielle $u_n=\sum_{k=1}^n\frac1{k^2}$. Il restera à montrer que cette intégrale tend vers une limite qu'on sait calculer.
 
 On note $u_n=\sum_{k=1}^n\frac1{k^2}$ et, pour $x\in[0,\pi]$, $f_n(x)=\frac12+\sum_{k=1}^n\cos kx$. La première étape est d'écrire $f_n$ sans le signe somme.
 
@@ -353,7 +353,7 @@ On note $u_n=\sum_{k=1}^n\frac1{k^2}$ et, pour $x\in[0,\pi]$, $f_n(x)=\frac12+\s
 Pour $x\in\,]0,\pi]$, $f_n(x)=\dfrac{\sin\big((n+\frac12)x\big)}{2\sin(x/2)}$.
 \end{lemme}
 
-\emph{Idée.} On multiplie par $2\sin\frac x2$ pour que chaque terme devienne une différence de deux sinus, et la somme se télescope.
+Il suffit de multiplier par $2\sin\frac x2$ : chaque terme devient une différence de deux sinus, et la somme se télescope.
 
 \begin{proof}
 On a $2\sin\frac x2\cos kx=\sin\big((k+\frac12)x\big)-\sin\big((k-\frac12)x\big)$. En sommant pour $1\leq k\leq n$, tous les termes intermédiaires se simplifient : $2\sin\frac x2\,f_n(x)=\sin\frac x2+\sin\big((n+\frac12)x\big)-\sin\frac x2$. On divise par $2\sin\frac x2$, qui est non nul.
@@ -438,11 +438,11 @@ La fonction $y\mapsto\frac{\sin y}{y}$, prolongée par $1$ en $0$, est développ
 \end{proof}
 
 \begin{remarque}
-Pourquoi cela marche-t-il ? C'est de la théorie de Fourier déguisée (leçon 246). Les coefficients en cosinus du prolongement pair et $2\pi$-périodique de $\varphi$ sont les nombres $a_k=\frac2\pi\int_0^\pi\varphi(x)\cos kx\dd x$, et
+Ce calcul est de la théorie de Fourier déguisée (leçon 246). Les coefficients en cosinus du prolongement pair et $2\pi$-périodique de $\varphi$ sont les nombres $a_k=\frac2\pi\int_0^\pi\varphi(x)\cos kx\dd x$, et
 \[
   \frac2\pi\int_0^\pi\varphi f_n=\frac{a_0}2+\sum_{k=1}^na_k=S_n\varphi(0)
 \]
-est la somme partielle de Fourier de $\varphi$ en $0$. Le théorème dit simplement que $S_n\varphi(0)\to\varphi(0)=0$. On en déduit d'ailleurs, sur $[0,\pi]$,
+est la somme partielle de Fourier de $\varphi$ en $0$. Le théorème revient à dire que $S_n\varphi(0)\to\varphi(0)=0$. On en déduit d'ailleurs, sur $[0,\pi]$,
 \[
   \varphi(x)=\frac2\pi\Big(\sum_{n\geq1}\frac{\cos nx}{n^2}-\frac{\pi^2}6\Big).
 \] L'intérêt de la méthode est de n'utiliser que des intégrations par parties. Le même argument, avec un polynôme de degré $4$, donne $\zeta(4)=\frac{\pi^4}{90}$.
@@ -514,7 +514,7 @@ Pour la valeur exacte, on met le dénominateur sous forme canonique, $1+x+x^2=(x
 \]
 \end{proof}
 
-La majoration par la corde porte un nom : c'est la méthode des trapèzes. La minoration par la tangente au milieu de l'intervalle est la méthode du point milieu. On peut aller plus loin que l'encadrement et calculer leur erreur exactement. L'idée est d'écrire l'erreur comme l'intégrale de $f''$ contre un « noyau » positif. Le signe de l'erreur est alors celui de $f''$, et sa taille se lit sur l'intégrale du noyau.
+La majoration par la corde porte un nom : c'est la méthode des trapèzes. La minoration par la tangente au milieu de l'intervalle est la méthode du point milieu. On peut aller plus loin que l'encadrement et donner l'erreur elle-même, écrite comme l'intégrale de $f''$ contre un « noyau » positif. Le signe de l'erreur est alors celui de $f''$, et sa taille se lit sur l'intégrale du noyau.
 
 \begin{proposition}[Erreur des trapèzes et du point milieu]\label{prop:quadrature}
 Soit $f\in\mathcal C^2([a,b])$, $m=\frac{a+b}2$ et $h=b-a$. Alors
@@ -579,14 +579,14 @@ On peut aussi l'établir directement. On a $R_0=e-1$ et, par parties, $R_n=\big[
 \end{proof}
 
 \begin{remarque}
-Le changement de variable $u=1-x$ donne $R_n=\frac{e}{n!}\int_0^1u^ne^{-u}\dd u=\frac{e\,I_n}{n!}$. Les propositions \ref{prop:rec} et \ref{prop:taylor} disent donc la même chose sous deux formes. L'encadrement 3, multiplié par $n!$, est exactement celui qui sert dans la preuve du corollaire \ref{cor:e-irr}. La vitesse de convergence de $\sum\frac1{k!}$ vers $e$ est étudiée plus finement dans la fiche de la leçon 224.
+Le changement de variable $u=1-x$ donne $R_n=\frac{e}{n!}\int_0^1u^ne^{-u}\dd u=\frac{e\,I_n}{n!}$. Les propositions \ref{prop:rec} et \ref{prop:taylor} disent donc la même chose sous deux formes. L'encadrement 3, multiplié par $n!$, est celui-là même qui sert dans la preuve du corollaire \ref{cor:e-irr}. La vitesse de convergence de $\sum\frac1{k!}$ vers $e$ est étudiée plus finement dans la fiche de la leçon 224.
 \end{remarque}
 
 % ==========================================================
 \section{Synthèse}
 % ==========================================================
 
-Revenons à la question de départ : que faire quand on ne connaît pas de primitive ? Chaque exercice de la feuille illustre une réponse.
+Que faire, donc, quand on ne connaît pas de primitive ? Le tableau range les réponses rencontrées sur la feuille, une méthode par ligne.
 
 \begin{center}
 \renewcommand{\arraystretch}{1.25}
@@ -605,7 +605,7 @@ Taylor & lire un reste comme une intégrale & $0<e-\sum_{k\leq n}\frac1{k!}<\fra
 \end{tabular}
 \end{center}
 
-Le fil commun est le suivant. On ne calcule presque jamais une intégrale isolée. On la plonge dans une famille (indexée par un entier ou par un réel), et c'est la structure de la famille, récurrence ou dérivée, qui donne la valeur. Quand la valeur exacte est hors d'atteinte, la même structure donne au moins un encadrement, et souvent un résultat qui dépasse de loin l'exercice : la constante de Stirling, l'irrationalité de $e$, ou $\zeta(2)$.
+Un même geste revient partout : on ne calcule presque jamais une intégrale isolée, on la plonge dans une famille (indexée par un entier ou par un réel), et c'est la structure de la famille, récurrence ou dérivée, qui donne la valeur. Quand la valeur exacte est hors d'atteinte, la même structure donne au moins un encadrement, et souvent un résultat qui dépasse de loin l'exercice : la constante de Stirling, l'irrationalité de $e$, ou $\zeta(2)$.
 
 % ==========================================================
 \section{Exercices}

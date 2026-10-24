@@ -54,7 +54,7 @@
 \maketitle
 
 \begin{abstract}
-En terminale, on calcule $(2n+1)\pgcd(n+3)$ en écrivant $2n+1=2(n+3)-5$, et l'on conclut que ce PGCD divise $5$. Le geste est familier, mais il soulève une question : quelles transformations du couple $(a,b)$ a-t-on le droit de faire sans changer le PGCD ? On reprend une feuille de révision de terminale (divisibilité, PGCD, congruences) en cherchant, derrière chaque astuce, l'énoncé général qui la rend évidente. La réponse à la question de départ est l'action du groupe $\GL_2(\Z)$. Viennent ensuite le coût de l'algorithme d'Euclide (théorème de Lamé), le développement de Pierce, l'exposant du groupe $(\Z/n\Z)^\times$, l'obstruction modulo $16$ dans le problème de Waring pour les puissances quatrièmes et le paramétrage des triplets pythagoriciens. Deux énoncés de la feuille d'origine étaient faux ; on explique pourquoi et on les corrige (remarques \ref{rem:faux-gl2} et \ref{rem:faux-2005}).
+En terminale, on calcule $(2n+1)\pgcd(n+3)$ en écrivant $2n+1=2(n+3)-5$, et l'on conclut que ce PGCD divise $5$. Ce réflexe cache une question qu'on ne pose guère : quelles transformations du couple $(a,b)$ a-t-on le droit de faire sans changer le PGCD ? On reprend une feuille de révision de terminale (divisibilité, PGCD, congruences) en cherchant, derrière chaque astuce, l'énoncé général qui la rend évidente. Pour cette première question, c'est l'action du groupe $\GL_2(\Z)$. Viennent ensuite le coût de l'algorithme d'Euclide (théorème de Lamé), le développement de Pierce, l'exposant du groupe $(\Z/n\Z)^\times$, l'obstruction modulo $16$ dans le problème de Waring pour les puissances quatrièmes et le paramétrage des triplets pythagoriciens. Deux énoncés de la feuille d'origine étaient faux ; on explique pourquoi et on les corrige (remarques \ref{rem:faux-gl2} et \ref{rem:faux-2005}).
 \end{abstract}
 
 \paragraph{Leçons concernées.} 142 (PGCD et PPCM, algorithmes de calcul), 120 (Anneaux $\Z/n\Z$), 126 (Exemples d'équations en arithmétique), 121 (Nombres premiers).
@@ -83,7 +83,7 @@ D'où la question qui guide cette feuille.
 \emph{On remplace $(a,b)$ par $(\alpha a+\beta b,\ \gamma a+\delta b)$. Quand le PGCD est-il conservé ?}
 \end{center}
 
-La feuille d'origine répondait : toujours. C'est faux, et la section suivante dit exactement quand c'est vrai. Les sections d'après suivent le même fil : un exercice de la feuille, puis l'énoncé général qui l'explique.
+La feuille d'origine répondait : toujours. C'est faux, et la section suivante dit à quelle condition c'est vrai. Les sections d'après suivent le même fil : un exercice de la feuille, puis l'énoncé général qui l'explique.
 
 % ==========================================================
 \section{Le PGCD sous l'action de \texorpdfstring{$\GL_2(\Z)$}{GL2(Z)}}
@@ -123,23 +123,23 @@ Sinon, soit $p$ premier divisant $\det M$. La réduction $\overline M\in M_2(\F_
 \end{proof}
 
 \begin{remarque}
-Pourquoi le déterminant, et pas autre chose ? Parce que la question « peut-on revenir en arrière avec des coefficients entiers ? » est exactement la question « $M^{-1}$ est-elle à coefficients entiers ? ». Comme $\det M\cdot\det M^{-1}=1$ dans $\Z$, cela force $\det M=\pm1$. Le théorème dit que cette condition algébrique est aussi la bonne condition arithmétique.
+Pourquoi le déterminant, et pas autre chose ? Parce que se demander « peut-on revenir en arrière avec des coefficients entiers ? », c'est se demander « $M^{-1}$ est-elle à coefficients entiers ? ». Comme $\det M\cdot\det M^{-1}=1$ dans $\Z$, cela force $\det M=\pm1$. Le théorème dit que cette condition algébrique est aussi la bonne condition arithmétique.
 \end{remarque}
 
 \subsection{Les deux usages : corriger la feuille, et calculer}
 
-On peut maintenant répondre à la question de départ, et voir où la feuille se trompait.
+Le premier usage est négatif : il montre où la feuille se trompait.
 
 \begin{remarque}\label{rem:faux-gl2}
-La feuille d'origine demandait de montrer que $a\pgcd b=(\alpha a+\beta b)\pgcd(\gamma a+\delta b)$ pour tous entiers $\alpha,\beta,\gamma,\delta$. C'est faux. Prenons $M=\begin{pmatrix}1&1\\1&-1\end{pmatrix}$, de déterminant $-2$, et $(a,b)=(1,1)$. On obtient $(a',b')=(2,0)$, de PGCD $2$, alors que $1\pgcd1=1$. Ce contre-exemple n'est pas un hasard : c'est celui que fabrique la preuve du point 3. Avec $p=2$, le noyau de $\overline M$ est engendré par $(1,1)$, et l'on prend $a=b=1$. Le théorème \ref{thm:gl2} dit exactement quand l'énoncé est vrai : quand $\det M=\pm1$.
+La feuille d'origine demandait de montrer que $a\pgcd b=(\alpha a+\beta b)\pgcd(\gamma a+\delta b)$ pour tous entiers $\alpha,\beta,\gamma,\delta$. C'est faux. Prenons $M=\begin{pmatrix}1&1\\1&-1\end{pmatrix}$, de déterminant $-2$, et $(a,b)=(1,1)$. On obtient $(a',b')=(2,0)$, de PGCD $2$, alors que $1\pgcd1=1$. Ce contre-exemple n'est pas un hasard : c'est celui que fabrique la preuve du point 3. Avec $p=2$, le noyau de $\overline M$ est engendré par $(1,1)$, et l'on prend $a=b=1$. Le théorème \ref{thm:gl2} délimite le domaine de validité de l'énoncé : il faut et il suffit que $\det M=\pm1$.
 \end{remarque}
 
-Revenons au calcul du début. On l'a fait « à la main », mais il entre dans le cadre du théorème : on a
+Le second usage est le calcul lui-même. Celui du début, mené « à la main », entre dans le cadre du théorème : on a
 \[
   \begin{pmatrix}2n+1\\n+3\end{pmatrix}=\begin{pmatrix}2&1\\1&3\end{pmatrix}\begin{pmatrix}n\\1\end{pmatrix},
   \qquad \det=5 .
 \]
-Le point 1 donne aussitôt $(2n+1)\pgcd(n+3)\mid 5\,(n\pgcd1)=5$. Le $5$ de l'astuce, c'est le déterminant. Voici un exemple complet, tiré de la feuille, où l'on utilise cette remarque deux fois.
+Le point 1 donne aussitôt $(2n+1)\pgcd(n+3)\mid 5\,(n\pgcd1)=5$. Le $5$ de l'astuce, c'est le déterminant. Dans l'exemple suivant, tiré de la feuille, cette remarque sert deux fois.
 
 \begin{exemple}\label{ex:pgcd-n}
 Soit $n\geq5$, $a=n^3-n^2-12n$ et $b=2n^2-7n-4$. On cherche $a\pgcd b$.
@@ -188,7 +188,7 @@ avec les quotients $q=4$, $1$, $2$. Le produit des trois matrices correspondante
 
 \subsection{Coût de l'algorithme d'Euclide}
 
-Puisque l'algorithme d'Euclide est l'outil central, on veut savoir combien il coûte. L'intuition est la suivante : l'algorithme est lent quand les quotients sont petits, car alors les restes diminuent peu. Le pire cas est celui où tous les quotients valent $1$. On retrouve alors la relation $r_{i-1}=r_i+r_{i+1}$, qui est celle de Fibonacci. Le livre de Demazure \cite{demazure} replace ce résultat dans l'étude du coût des algorithmes arithmétiques.
+Tout repose sur l'algorithme d'Euclide ; reste à savoir ce qu'il coûte. Il est lent quand les quotients sont petits, car alors les restes diminuent peu. Le pire cas est celui où tous les quotients valent $1$. On retrouve alors la relation $r_{i-1}=r_i+r_{i+1}$, qui est celle de Fibonacci. Le livre de Demazure \cite{demazure} replace ce résultat dans l'étude du coût des algorithmes arithmétiques.
 
 On note $(F_k)$ la suite de Fibonacci, $F_1=F_2=1$, $F_{k+2}=F_{k+1}+F_k$, et $\varphi=\frac{1+\sqrt5}2$.
 
@@ -196,7 +196,7 @@ On note $(F_k)$ la suite de Fibonacci, $F_1=F_2=1$, $F_{k+2}=F_{k+1}+F_k$, et $\
 Soit $a>b\geq1$. Si l'algorithme d'Euclide appliqué à $(a,b)$ effectue $k$ divisions, alors $b\geq F_{k+1}$ et $a\geq F_{k+2}$. Par conséquent $k\leq 1+\log_\varphi b$.
 \end{theoreme}
 
-\paragraph{Idée de la preuve.} On remonte l'algorithme depuis la fin. Le dernier reste non nul vaut au moins $1$, l'avant-dernier au moins $2$. Ensuite, chaque reste est au moins la somme des deux suivants, comme pour Fibonacci. On compare donc les restes, lus à l'envers, à la suite de Fibonacci.
+\paragraph{Pourquoi Fibonacci.} On remonte l'algorithme depuis la fin. Le dernier reste non nul vaut au moins $1$, l'avant-dernier au moins $2$. Ensuite, chaque reste est au moins la somme des deux suivants, comme pour Fibonacci. On compare donc les restes, lus à l'envers, à la suite de Fibonacci.
 
 \begin{proof}
 On pose $r_0=a$, $r_1=b$ et $r_{i-1}=q_ir_i+r_{i+1}$ avec $0\leq r_{i+1}<r_i$, pour $1\leq i\leq k$, où $r_k\neq0$ et $r_{k+1}=0$.
@@ -215,7 +215,7 @@ La borne est atteinte pour deux termes consécutifs de la suite de Fibonacci : t
 \[
   13=1\cdot8+5,\quad 8=1\cdot5+3,\quad 5=1\cdot3+2,\quad 3=1\cdot2+1,\quad 2=2\cdot1+0 .
 \]
-On fait $k=5$ divisions, et l'on a bien $b=8=F_6=F_{k+1}$ et $a=13=F_7=F_{k+2}$. La figure \ref{fig:euclide} montre ce trajet dans le plan : chaque étape est une matrice de $\GL_2(\mathbb{Z})$, et les couples successifs restent collés à la droite de pente $1/\varphi$, puisque $F_{k}/F_{k+1}\to1/\varphi$. Les restes décroissent donc d'un facteur $\varphi$ à chaque étape, et pas plus vite : c'est exactement le pire cas. Le coût est donc $O(\log b)$ divisions. Comme la taille de $b$ (son nombre de chiffres) est de l'ordre de $\log b$, l'algorithme est linéaire en la taille des entrées.
+On fait $k=5$ divisions, et l'on a bien $b=8=F_6=F_{k+1}$ et $a=13=F_7=F_{k+2}$. La figure \ref{fig:euclide} montre ce trajet dans le plan : chaque étape est une matrice de $\GL_2(\mathbb{Z})$, et les couples successifs restent collés à la droite de pente $1/\varphi$, puisque $F_{k}/F_{k+1}\to1/\varphi$. Les restes décroissent d'un facteur $\varphi$ à chaque étape, et pas plus vite : on est dans le pire cas. Le coût est donc $O(\log b)$ divisions. Comme la taille de $b$ (son nombre de chiffres) est de l'ordre de $\log b$, l'algorithme est linéaire en la taille des entrées.
 \end{remarque}
 
 \begin{figure}[h]
@@ -242,7 +242,7 @@ On fait $k=5$ divisions, et l'on a bien $b=8=F_6=F_{k+1}$ et $a=13=F_7=F_{k+2}$.
 \section{Le développement de Pierce}
 % ==========================================================
 
-L'exercice 4 de la feuille d'origine décrit un algorithme sans le nommer. Il ressemble à l'algorithme d'Euclide, avec une différence : on divise toujours le \emph{même} nombre $y$ par les restes successifs, au lieu de diviser chaque reste par le suivant. On va voir que cela produit une écriture de $x/y$ comme somme alternée d'inverses d'entiers. Elle porte le nom de T.~A.~Pierce, qui l'a étudiée en 1929 \cite{pierce}.
+L'exercice 4 de la feuille d'origine décrit un algorithme sans le nommer. Il ressemble à l'algorithme d'Euclide, avec une différence : on divise toujours le \emph{même} nombre $y$ par les restes successifs, au lieu de diviser chaque reste par le suivant. On obtient ainsi une écriture de $x/y$ comme somme alternée d'inverses d'entiers, qui porte le nom de T.~A.~Pierce, qui l'a étudiée en 1929 \cite{pierce}.
 
 \begin{proposition}\label{prop:pierce}
 Soit $0<x<y$ deux entiers. On pose $r_0=x$, puis, tant que $r_{i-1}\neq0$, on effectue la division euclidienne $y=q_ir_{i-1}+r_i$ avec $0\leq r_i<r_{i-1}$. L'algorithme s'arrête après un nombre fini $n$ d'étapes, avec $r_n = 0$, et
@@ -252,7 +252,7 @@ Soit $0<x<y$ deux entiers. On pose $r_0=x$, puis, tant que $r_{i-1}\neq0$, on ef
 \]
 \end{proposition}
 
-\paragraph{Idée de la preuve.} L'arrêt vient de ce que les restes décroissent strictement. Pour la formule, une seule division suffit à exprimer $r_{i-1}/y$ en fonction de $r_i/y$ ; on itère, comme on développe une fraction continue. La croissance des quotients vient de ce que l'on divise $y$ par des restes de plus en plus petits.
+L'arrêt vient de ce que les restes décroissent strictement. Pour la formule, une seule division suffit à exprimer $r_{i-1}/y$ en fonction de $r_i/y$ ; on itère, comme on développe une fraction continue. La croissance des quotients vient de ce que l'on divise $y$ par des restes de plus en plus petits.
 
 \begin{proof}
 Les restes $r_0>r_1>\cdots$ sont des entiers positifs, donc l'algorithme s'arrête.
@@ -289,7 +289,7 @@ Le même algorithme, appliqué à un réel $t\in\,]0,1[$ (avec $q_i=\lfloor 1/t_
 \section{Ordres et exposant de \texorpdfstring{$(\Z/n\Z)^\times$}{(Z/nZ)*}}
 % ==========================================================
 
-Plusieurs exercices de la feuille demandent le dernier chiffre d'une énorme puissance, ou la divisibilité d'une différence de puissances. Ils reposent tous sur la même idée : modulo $n$, les puissances d'un entier premier à $n$ sont \emph{périodiques}. Il suffit donc de connaître une période commune à tous ces entiers. La plus petite s'appelle l'exposant du groupe.
+Plusieurs exercices de la feuille demandent le dernier chiffre d'une énorme puissance, ou la divisibilité d'une différence de puissances. Tous reposent sur un même fait : modulo $n$, les puissances d'un entier premier à $n$ sont \emph{périodiques}. Il suffit donc de connaître une période commune à tous ces entiers. La plus petite s'appelle l'exposant du groupe.
 
 Pour $n\geq2$, on note $\lambda(n)$ l'exposant du groupe $(\Z/n\Z)^\times$ (fonction de Carmichael) : c'est le plus petit $m\geq1$ tel que $u^m\equiv1\pmod n$ pour tout $u$ premier à $n$. Par le théorème chinois, $\lambda(n)$ est le PPCM des $\lambda(p^k)$ pour $p^k\,\|\,n$, avec $\lambda(p^k)=p^{k-1}(p-1)$ pour $p$ impair, $\lambda(2)=1$, $\lambda(4)=2$ et $\lambda(2^k)=2^{k-2}$ pour $k\geq3$. Il divise l'indicatrice d'Euler $\varphi(n)$, et il est souvent bien plus petit : $\lambda(60)=4$ alors que $\varphi(60)=16$.
 
@@ -312,7 +312,7 @@ On note $R_k=\frac{10^k-1}{9}=\underbrace{1\cdots1}_{k}$.
 \end{enumerate}
 \end{proposition}
 
-\paragraph{Idée de la preuve.} Pour le point 1, on n'a besoin de rien savoir sur $n$ : parmi $n+1$ nombres, deux ont le même reste modulo $n$, et leur différence convient. Pour le point 2, on traduit « $n$ divise $R_k$ » en une congruence sur $10^k$, et l'on reconnaît la définition de l'ordre.
+Les deux points ne demandent pas du tout le même effort. Le premier n'utilise rien de $n$ : parmi $n+1$ nombres, deux ont le même reste modulo $n$, et leur différence convient. Pour le second, on traduit « $n$ divise $R_k$ » en une congruence sur $10^k$, et l'on reconnaît la définition de l'ordre.
 
 \begin{proof}
 1. Parmi $R_1,\dots,R_{n+1}$, deux ont le même reste modulo $n$ (principe des tiroirs), disons $R_p$ et $R_{p'}$ avec $p<p'$. Alors $n$ divise $R_{p'}-R_p=10^p R_{p'-p}$, qui s'écrit avec $p'-p$ chiffres $1$ suivis de $p$ chiffres $0$.
@@ -354,7 +354,7 @@ Pour $x\in\Z$, $x^4\equiv0\pmod{16}$ si $x$ est pair et $x^4\equiv1\pmod{16}$ si
 Si $x=2t$ est pair, $x^4=16t^4$. Si $x=2t+1$ est impair, $x^2=4t(t+1)+1$, et $t(t+1)$ est pair, donc $x^2=1+8m$. Alors $x^4=1+16m+64m^2\equiv1\pmod{16}$.
 \end{proof}
 
-La conséquence est frappante. Une somme de $s$ puissances quatrièmes est congrue modulo $16$ au \emph{nombre de termes impairs}, qui est compris entre $0$ et $s$. Pour atteindre la classe $15$, il faut donc au moins $15$ termes.
+Une somme de $s$ puissances quatrièmes est donc congrue modulo $16$ au \emph{nombre de termes impairs}, qui est compris entre $0$ et $s$. Pour atteindre la classe $15$, il faut donc au moins $15$ termes.
 
 \begin{proposition}\label{prop:waring15}
 Un entier $N\equiv15\pmod{16}$ n'est pas somme de moins de $15$ puissances quatrièmes. En particulier $79=4\cdot2^4+15\cdot1^4$ n'est pas somme de moins de $19$ puissances quatrièmes.
@@ -368,7 +368,7 @@ La première assertion découle du lemme \ref{lem:mod16}, comme on vient de l'ex
 La feuille d'origine affirmait que $2005$ n'est pas somme de six puissances quatrièmes non nulles. Elle donnait pourtant l'égalité $2005=1^4+1^4+1^4+3^4+5^4+6^4=1+1+1+81+625+1296$, qui la contredit. L'énoncé correct porte sur $2015$. Comme $2015=16\cdot125+15$, la proposition \ref{prop:waring15} montre que $2015$ n'est pas somme de six puissances quatrièmes, ni même de quatorze. Pour $2005=16\cdot125+5$, la congruence n'interdit rien à partir de cinq termes, et l'on voit qu'il en suffit de six.
 \end{remarque}
 
-On sait donc qu'il faut parfois $15$ termes, et même $19$ pour $79$. Mais on pourrait espérer que, pour les \emph{grands} entiers, $15$ termes suffisent toujours. La proposition suivante montre que non. L'idée est de combiner la congruence modulo $16$ avec une descente : si tous les termes sont pairs, on peut tout diviser par $16$.
+On sait donc qu'il faut parfois $15$ termes, et même $19$ pour $79$. Mais on pourrait espérer que, pour les \emph{grands} entiers, $15$ termes suffisent toujours. Il n'en est rien. La preuve combine la congruence modulo $16$ avec une descente : si tous les termes sont pairs, on peut tout diviser par $16$.
 
 \begin{proposition}\label{prop:waring16}
 Pour tout $k\geq0$, l'entier $31\cdot16^k$ n'est pas somme de $15$ puissances quatrièmes (positives ou nulles). Il y a donc une infinité d'entiers qui ne sont pas somme de $15$ puissances quatrièmes.
@@ -392,7 +392,7 @@ Notons $g(4)$ le plus petit $s$ tel que tout entier soit somme de $s$ puissances
 
 L'exercice 3 de la feuille demandait de montrer que $60$ divise $xyz$ dès que $x^2+y^2=z^2$. On peut le faire à coups de congruences. Mais on comprend mieux en décrivant d'abord \emph{toutes} les solutions : les divisibilités se lisent ensuite sur la formule.
 
-On se ramène aux triplets \emph{primitifs}, où $x\pgcd y=1$ : un triplet quelconque en est un multiple. L'idée centrale est une factorisation : $x^2=z^2-y^2$, ou plutôt, avec $y$ pair, $(y/2)^2$ s'écrit comme produit de deux entiers premiers entre eux. Dans $\Z$, un tel produit ne peut être un carré que si chaque facteur en est un. Ce paramétrage est classique ; on le trouve, avec d'autres équations du même genre, au chapitre 13 de Hardy et Wright \cite{hw}.
+On se ramène aux triplets \emph{primitifs}, où $x\pgcd y=1$ : un triplet quelconque en est un multiple. Le ressort de la preuve est une factorisation : $x^2=z^2-y^2$, ou plutôt, avec $y$ pair, $(y/2)^2$ s'écrit comme produit de deux entiers premiers entre eux. Dans $\Z$, un tel produit ne peut être un carré que si chaque facteur en est un. Ce paramétrage est classique ; on le trouve, avec d'autres équations du même genre, au chapitre 13 de Hardy et Wright \cite{hw}.
 
 \begin{theoreme}\label{thm:pyth}
 Les solutions de $x^2+y^2=z^2$ en entiers $x,y,z\geq1$ avec $x\pgcd y=1$ et $y$ pair sont exactement
@@ -416,7 +416,7 @@ Un diviseur commun des deux facteurs divise leur somme $z$ et leur différence $
 Avec $(u,v)=(2,1)$, on trouve $(3,4,5)$. Avec $(u,v)=(3,2)$, on trouve $(5,12,13)$. Avec $(u,v)=(4,1)$, on trouve $(15,8,17)$. En revanche $(u,v)=(3,1)$ est exclu, car $u\equiv v\pmod 2$ : il donnerait $(8,6,10)$, qui n'est pas primitif.
 \end{exemple}
 
-On peut maintenant lire les divisibilités de l'exercice 3 directement sur le paramétrage.
+Les divisibilités de l'exercice 3 se lisent alors sur le paramétrage, sans autre calcul.
 
 \begin{corollaire}[Exercice 3 de la feuille]\label{cor:60}
 Si $x^2+y^2=z^2$ avec $x,y,z\geq1$, alors $3\mid xy$, l'un de $x,y$ est multiple de $4$, et $5\mid xyz$. En particulier $60\mid xyz$, et $60$ est optimal puisque $(3,4,5)$ donne $60$.
@@ -463,12 +463,12 @@ Avec $t=v/u$, on obtient $X=\dfrac{u^2-v^2}{u^2+v^2}$ et $Y=\dfrac{2uv}{u^2+v^2}
 \end{figure}
 
 % ==========================================================
-\section{Retour à la question de départ}
+\section{Bilan}
 % ==========================================================
 
-On se demandait quelles transformations $(a,b)\mapsto(\alpha a+\beta b,\gamma a+\delta b)$ conservent le PGCD. La réponse est nette : exactement celles de déterminant $\pm1$, c'est-à-dire l'action de $\GL_2(\Z)$ (théorème \ref{thm:gl2}). Pour les autres, le PGCD peut être multiplié, mais seulement par un diviseur du déterminant. C'est ce qui explique le $5$ du calcul initial : $(2n+1)\pgcd(n+3)$ divise $5$ parce que $\det\begin{pmatrix}2&1\\1&3\end{pmatrix}=5$. Et l'algorithme d'Euclide, qui n'utilise que des matrices de déterminant $-1$, montre que deux couples de même PGCD sont toujours reliés par $\GL_2(\Z)$.
+Parmi les transformations $(a,b)\mapsto(\alpha a+\beta b,\gamma a+\delta b)$, celles qui conservent le PGCD pour tout couple sont celles de déterminant $\pm1$, c'est-à-dire l'action de $\GL_2(\Z)$ (théorème \ref{thm:gl2}). Pour les autres, le PGCD peut être multiplié, mais seulement par un diviseur du déterminant. C'est ce qui explique le $5$ du calcul initial : $(2n+1)\pgcd(n+3)$ divise $5$ parce que $\det\begin{pmatrix}2&1\\1&3\end{pmatrix}=5$. Et l'algorithme d'Euclide, qui n'utilise que des matrices de déterminant $-1$, montre que deux couples de même PGCD sont toujours reliés par $\GL_2(\Z)$.
 
-La même démarche a guidé toute la feuille : derrière chaque astuce, un énoncé général.
+Le tableau reprend chaque exercice de la feuille avec l'énoncé qui se cachait derrière l'astuce.
 
 \begin{center}
 \renewcommand{\arraystretch}{1.25}
@@ -520,7 +520,7 @@ Soit $s\geq1$. Montrer que les sommes de $s$ puissances quatrièmes ne recouvren
 \section{Corrigés}
 % ==========================================================
 
-\paragraph{Exercice 1.} L'idée est de faire une division euclidienne de polynômes, pour se ramener à un diviseur de $n+1$ qui ne dépend plus de $n$. On a $3n^2+15n+19=(n+1)(3n+12)+7$. Donc $n+1\mid3n^2+15n+19\iff n+1\mid7\iff n+1\in\{1,7\}\iff n\in\{0,6\}$.
+\paragraph{Exercice 1.} Une division euclidienne de polynômes permet de se ramener à un diviseur de $n+1$ qui ne dépend plus de $n$. On a $3n^2+15n+19=(n+1)(3n+12)+7$. Donc $n+1\mid3n^2+15n+19\iff n+1\mid7\iff n+1\in\{1,7\}\iff n\in\{0,6\}$.
 
 \paragraph{Exercice 2.} $M\pgcd N$ divise $N-M=2$, donc vaut $1$ ou $2$. Si $n$ est pair, $M$ et $N$ sont impairs et $M\pgcd N=1$. Si $n$ est impair, ils sont pairs et $M\pgcd N=2$. Comme $81n^2-1=MN$ : si $n$ est impair, $M$ et $N$ sont pairs et $4\mid MN$ ; si $n$ est pair, $MN$ est impair.
 
@@ -529,7 +529,7 @@ Soit $s\geq1$. Montrer que les sommes de $s$ puissances quatrièmes ne recouvren
 \item Elle traverse les traits verticaux intérieurs $x=1,2,3,4,5$ : cela fait $5$ entrées.
 \item Elle traverse les traits horizontaux intérieurs $y=1,2,3$ : cela fait $3$ entrées.
 \item Si toutes ces traversées avaient lieu en des points différents, on compterait $1+5+3=9$ carrés.
-\item Mais au point $(3,2)$, elle traverse un trait vertical et un trait horizontal \emph{en même temps}, exactement par un coin. Elle n'entre alors que dans un seul nouveau carré, celui en diagonale, et on a compté cette entrée deux fois.
+\item Mais au point $(3,2)$, elle traverse un trait vertical et un trait horizontal \emph{en même temps}, puisqu'elle passe par un coin. Elle n'entre alors que dans un seul nouveau carré, celui en diagonale, et on a compté cette entrée deux fois.
 \end{itemize}
 Il reste $9-1=8$ carrés, ce sont les huit carrés grisés de la figure.
 

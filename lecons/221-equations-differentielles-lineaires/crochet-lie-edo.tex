@@ -532,17 +532,17 @@ Or $(i-j)(i-j^2) = i^2 - i(j + j^2) + j^3 = -1 + i + 1 = i$, donc $y = -i\,e^{ix
 \section{Réduire modulo \texorpdfstring{$p$}{p} : la \texorpdfstring{$p$}{p}-courbure et une question de Grothendieck}\label{sec:pcourbure}
 % ==========================================================
 
-Les équations rencontrées jusqu'ici ont des solutions de deux natures très différentes. L'équation $y' = \frac{y}{2x}$ a pour solution $\sqrt x$, qui vérifie l'équation polynomiale $y^2 = x$ : on dit que c'est une fonction \emph{algébrique}. L'équation $y' = y$ a pour solution $e^x$, qui ne vérifie aucune équation de ce genre. Voici la question de cette section : peut-on voir la différence sur l'équation elle-même, sans la résoudre ?
+Les équations rencontrées jusqu'ici ont des solutions de deux natures très différentes. L'équation $y' = \frac{y}{2x}$ a pour solution $\sqrt x$, qui vérifie l'équation polynomiale $y^2 = x$ : on dit que c'est une fonction \emph{algébrique}. L'équation $y' = y$ a pour solution $e^x$, qui ne vérifie aucune équation de ce genre. Peut-on lire la différence sur l'équation elle-même, sans la résoudre ?
 
-Une idée de Grothendieck répond, au moins en partie. Elle consiste à lire l'équation \emph{modulo un nombre premier} $p$. Pour s'en faire une intuition, regardons les séries. Celle de $e^x = \sum x^n/n!$ a pour dénominateurs les factorielles, et tout nombre premier $p$ divise $n!$ dès que $n \geq p$ : cette série n'a aucun sens modulo $p$, quel que soit $p$. Celle de $\sqrt{1+u} = \sum \binom{1/2}{n} u^n$ n'a au dénominateur que des puissances de $2$ : elle a un sens modulo tout $p$ impair. Les solutions algébriques semblent « survivre » à la réduction modulo $p$, pour presque tout $p$, et les autres non.
+Grothendieck propose une réponse, au moins partielle : lire l'équation \emph{modulo un nombre premier} $p$. Les séries entières en donnent une première intuition. Celle de $e^x = \sum x^n/n!$ a pour dénominateurs les factorielles, et tout nombre premier $p$ divise $n!$ dès que $n \geq p$ : cette série n'a aucun sens modulo $p$, quel que soit $p$. Celle de $\sqrt{1+u} = \sum \binom{1/2}{n} u^n$ n'a au dénominateur que des puissances de $2$ : elle a un sens modulo tout $p$ impair. Les solutions algébriques semblent « survivre » à la réduction modulo $p$, pour presque tout $p$, et les autres non.
 
-Le crochet de Lie va transformer cette intuition en un calcul. Modulo $p$, la puissance $p$-ième de l'opérateur $\Dx - A$ cesse d'être un opérateur différentiel : c'est une simple matrice, la \emph{$p$-courbure}, et on peut la calculer sans résoudre l'équation. La question est alors de savoir si cette matrice nulle pour presque tout $p$ suffit à garantir des solutions algébriques. Grothendieck l'a posée dans ses notes sur les connexions de Gauss--Manin ; on l'appelle aujourd'hui la conjecture de Grothendieck--Katz, et elle est ouverte. Nous allons la démontrer dans les deux cadres de cet article : les coefficients constants (section 6), et l'ordre $1$ (lemme \ref{lem:conj}).
+Le crochet de Lie transforme cette intuition en calcul. Modulo $p$, la puissance $p$-ième de l'opérateur $\Dx - A$ n'est plus un opérateur différentiel, mais une matrice, la \emph{$p$-courbure}, qu'on calcule sans résoudre l'équation. Reste à savoir si cette matrice, nulle pour presque tout $p$, garantit des solutions algébriques. Grothendieck a posé la question dans ses notes sur les connexions de Gauss--Manin ; c'est aujourd'hui la conjecture de Grothendieck--Katz, toujours ouverte. Dans les deux cadres de cet article, les coefficients constants de la section 6 et l'ordre $1$ du lemme \ref{lem:conj}, on peut la démontrer jusqu'au bout avec des moyens élémentaires.
 
 \paragraph{Notations.} On note $\F_p = \Z/p\Z$ et $\F_p(x)$ le corps des fractions rationnelles à coefficients dans $\F_p$. La dérivation $\Dx$ y est définie par les formules habituelles, $\Dx(x^n) = n x^{n-1}$ et la règle du quotient. Une fonction $y$ définie sur un intervalle $I$ est \emph{algébrique} s'il existe un polynôme non nul $P \in \C[x, Y]$ tel que $P(x, y(x)) = 0$ pour tout $x \in I$.
 
 \subsection{Dériver modulo \texorpdfstring{$p$}{p}}
 
-Modulo $p$, la dérivée se comporte bizarrement : $\Dx(x^p) = p\,x^{p-1} = 0$, alors que $x^p$ n'est pas constante. Ce défaut est en fait une force, et voici sa forme précise.
+Modulo $p$, la dérivée a un comportement déroutant : $\Dx(x^p) = p\,x^{p-1} = 0$, alors que $x^p$ n'est pas constante. Toute la suite repose sur ce phénomène, que le lemme suivant rend précis.
 
 \begin{lemme}\label{lem:dp}
 Soit $\mathcal R$ un anneau commutatif muni d'une dérivation $\Dx$.
@@ -592,7 +592,7 @@ La $p$-courbure est $\F_p(x)$-linéaire : $\psi_p(fY) = f\,\psi_p(Y)$ pour toute
 La relation fondamentale (proposition \ref{prop:heisenberg}) donne $\cro{\Dx}{\M f} = \M{f'}$, et $A_p$ commute avec la multiplication par la fonction $f$ (une matrice commute avec les scalaires). Donc $\cro{\nabla_p}{\M f} = \M{f'}$, puis, en itérant, $\ad_{\nabla_p}^{\,k}(\M f) = \M{\Dx^k f}$. Avec $k = p$ et le lemme \ref{lem:dp}, $\ad_{\nabla_p}^{\,p}(\M f) = \M{\Dx^p f} = 0$. Le lemme \ref{lem:adp} dit que c'est $\cro{\nabla_p^p}{\M f}$ : $\psi_p$ commute avec toutes les multiplications.
 \end{proof}
 
-Pourquoi cette matrice parle-t-elle de solutions ? Parce qu'elle tue toutes celles qui existent modulo $p$.
+Cette matrice renseigne sur les solutions pour une raison simple : elle annule toutes celles qui existent modulo $p$.
 
 \begin{proposition}\label{prop:psisol}
 S'il existe une matrice $\Phi$ inversible, à coefficients dans $\F_p(x)$, dont les colonnes sont solutions ($\nabla_p \Phi = 0$), alors $\psi_p = 0$.
@@ -602,14 +602,14 @@ S'il existe une matrice $\Phi$ inversible, à coefficients dans $\F_p(x)$, dont 
 On a $\psi_p \Phi = \nabla_p^{\,p} \Phi = 0$, et $\psi_p$ est une matrice d'après la proposition \ref{prop:psilin}. Comme $\Phi$ est inversible, $\psi_p = 0$.
 \end{proof}
 
-La réciproque est vraie aussi : c'est le théorème de descente de Cartier, que nous n'utiliserons pas. Ainsi $\psi_p = 0$ signifie exactement que le système a, modulo $p$, autant de solutions indépendantes que d'inconnues. Une solution algébrique se réduisant, pour presque tout $p$, en une solution modulo $p$, on s’attend à ce qu’un système à solutions algébriques ait une $p$-courbure nulle pour presque tout $p$, et c’est bien un théorème (N.~Katz). La question de Grothendieck porte sur la réciproque.
+La réciproque est vraie aussi : c'est le théorème de descente de Cartier, que nous n'utiliserons pas. Ainsi $\psi_p = 0$ veut dire que le système a, modulo $p$, autant de solutions indépendantes que d'inconnues. Comme une solution algébrique se réduit, pour presque tout $p$, en une solution modulo $p$, un système à solutions algébriques devrait avoir une $p$-courbure nulle pour presque tout $p$ ; c'est un théorème de N.~Katz. Grothendieck demande la réciproque.
 
 \begin{conjecture}[Grothendieck--Katz]\label{conj:gk}
 Soit $A \in M_n(\Q(x))$. Le système $Y' = AY$ admet $n$ solutions indépendantes dont toutes les coordonnées sont algébriques si et seulement si $\psi_p = 0$ pour presque tout nombre premier $p$.
 \end{conjecture}
 
 \begin{remarque}
-N.~Katz a démontré la conjecture pour les connexions de Gauss--Manin, c'est-à-dire pour les équations de Picard--Fuchs que satisfont les périodes d'une famille de variétés algébriques (\emph{Invent. Math.} 18, 1972). Le cas d'une seule équation d'ordre $1$ est connu en général (D.~et G.~Chudnovsky, 1985 ; J.-B.~Bost, 2001 ; Y.~André, 2004). Le cas général est ouvert. Les deux théorèmes qui suivent en sont des cas particuliers, dans les cadres de cet article, avec des démonstrations complètes et élémentaires.
+N.~Katz a démontré la conjecture pour les connexions de Gauss--Manin, c'est-à-dire pour les équations de Picard--Fuchs que satisfont les périodes d'une famille de variétés algébriques (\emph{Invent. Math.} 18, 1972). Le cas d'une seule équation d'ordre $1$ est connu en général (D.~et G.~Chudnovsky, 1985 ; J.-B.~Bost, 2001 ; Y.~André, 2004). Le cas général est ouvert. Les théorèmes \ref{thm:gkconst} et \ref{thm:gkordre1} en sont deux cas particuliers.
 \end{remarque}
 
 \subsection{Coefficients constants : le crochet est nul}
@@ -652,7 +652,7 @@ Soit $A \in M_n(\Q)$. Les conditions suivantes sont équivalentes :
 \end{enumerate}
 \end{theoreme}
 
-L'idée est simple : d'après la proposition \ref{prop:psiconst}, la $p$-courbure est $-A_p^{\,p}$, et il s'agit de voir que « $A^p$ est nul modulo $p$ pour une infinité de $p$ » force $A$ à être nilpotente.
+Avec la proposition \ref{prop:psiconst}, la $p$-courbure vaut $-A_p^{\,p}$. Tout revient donc à voir que « $A^p$ est nul modulo $p$ pour une infinité de $p$ » force $A$ à être nilpotente.
 
 \begin{proof}
 2 $\Rightarrow$ 1. Si $A^n = 0$, la série de l'exponentielle s'arrête : $e^{xA} = \sum_{k<n} \frac{x^k}{k!} A^k$ est une matrice de polynômes, et les solutions $e^{xA} Y_0$ (section 6) aussi.
@@ -666,7 +666,7 @@ L'idée est simple : d'après la proposition \ref{prop:psiconst}, la $p$-courbur
 
 \subsection{L'ordre 1 : une formule de Jacobson}
 
-Passons à l'équation $y' = a(x)\,y$, c'est-à-dire à l'opérateur $\Dx - a$ du lemme \ref{lem:conj}. Ici $\Dx$ ne commute plus avec $a$, et la formule du binôme ne s'applique pas. Il faut calculer $(\Dx + b)^p$ autrement ; le résultat est remarquablement simple.
+Passons à l'équation $y' = a(x)\,y$, c'est-à-dire à l'opérateur $\Dx - a$ du lemme \ref{lem:conj}. Ici $\Dx$ ne commute plus avec $a$, et la formule du binôme ne s'applique pas. Il faut calculer $(\Dx + b)^p$ autrement, et le résultat tient en une ligne.
 
 \begin{proposition}[formule de Jacobson en rang $1$]\label{prop:jacobson}
 Soit $\mathcal R$ un anneau commutatif muni d'une dérivation $\Dx$, avec $p \cdot 1 = 0$, et $b \in \mathcal R$. Comme opérateurs sur $\mathcal R$,
@@ -675,7 +675,7 @@ Soit $\mathcal R$ un anneau commutatif muni d'une dérivation $\Dx$, avec $p \cd
 \]
 \end{proposition}
 
-On procède en trois étapes. La première ramène tout à une seule fonction, $u_m = (\Dx+b)^m(1)$. La deuxième écrit $u_m$ comme une somme sur les façons de découper $\{1, \dots, m\}$ en paquets. La troisième fait tourner ces découpages, et la plupart disparaissent modulo $p$.
+La preuve ramène d'abord tout à une seule fonction, $u_m = (\Dx+b)^m(1)$, puis on écrit $u_m$ comme une somme sur les façons de découper $\{1, \dots, m\}$ en paquets ; en faisant tourner ces découpages, presque tous disparaissent modulo $p$.
 
 \begin{proof}
 \emph{Étape 1.} Pour tout $n$ et toute $y \in \mathcal R$, on a
@@ -720,7 +720,7 @@ Les puissances $p$-ièmes se calculent avec le petit théorème de Fermat ($\alp
 Pour $k \geq 2$, les $p-1$ entiers consécutifs $k, \dots, k+p-2$ contiennent $p$, et le produit est nul. Pour $k = 1$, il vaut $(p-1)!$, qui est congru à $-1$ modulo $p$ (théorème de Wilson) ; on trouve $\Dx^{p-1}\big(\frac{r}{x-c}\big) = -\frac{r}{(x-c)^p}$, qui compense exactement $\big(\frac{r}{x-c}\big)^p = \frac{r}{(x-c)^p}$. (Pour $p = 2$, le signe $(-1)^{p-1}$ vaut $-1 = 1$ et le calcul est le même.)
 \end{proof}
 
-Le lemme dit, en une phrase, que la $p$-courbure \emph{ignore les pôles simples et voit tout le reste}. C'est exactement ce qui sépare $x^r$, dont la dérivée logarithmique $r/x$ n'a qu'un pôle simple, de $e^x$ ou $e^{1/x}$.
+En une phrase : la $p$-courbure \emph{ignore les pôles simples et voit tout le reste}. Voilà ce qui sépare $x^r$, dont la dérivée logarithmique $r/x$ n'a qu'un pôle simple, de $e^x$ ou de $e^{1/x}$.
 
 \begin{theoreme}[Grothendieck--Katz à l'ordre 1]\label{thm:gkordre1}
 Soit $a \in \Q(x)$ dont tous les pôles sont rationnels. Les conditions suivantes sont équivalentes :
@@ -762,7 +762,7 @@ Pour $y' = \frac{r}{x}\,y$, avec $r \in \Q$, on trouve $\psi_p = 0$ pour presque
 La formule $\Psi(a) = R(x^p)$ dit que la $p$-courbure garde la partie non logarithmique de $a$, lue en $x^p$. Grothendieck écrit la même chose page 207 du dossier 93, pour la connexion $d + \omega$ sur une variété : la $p$-courbure y est $\omega^{\otimes p} - F^*(\widetilde C\omega)$, où $\widetilde C$ est l'opération de Cartier. Pour $\omega = a\,dx$ sur une droite, $\widetilde C$ garde exactement les termes $\frac{r\,dx}{x-c}$ (et ceux en $x^{p-1}dx$), et le terme $F^*(\widetilde C\omega)$ correspond à notre $\Dx^{p-1}a$, au signe près. Quand les pôles de $a$ ne sont pas rationnels, ses résidus $\rho$ sont des nombres algébriques. Le même calcul montre alors que $\rho^p \equiv \rho$ modulo les idéaux premiers au-dessus de presque tout $p$, et un théorème d'arithmétique (Kronecker, Chebotarev) en déduit que $\rho$ est rationnel. C'est la seule étape qui manque ici pour le cas général de l'ordre $1$.
 \end{remarque}
 
-Revenons à la question du début. La $p$-courbure se lit sur l'équation, sans la résoudre : il suffit de calculer une puissance de matrice ou une dérivée $(p-1)$-ième. Dans les deux cadres de cet article, elle répond exactement : nulle pour presque tout $p$ si et seulement si les solutions sont algébriques. Et c'est le crochet de Lie, à travers les lemmes \ref{lem:adp} et \ref{lem:dp}, qui fait de $\nabla_p^{\,p}$ une matrice plutôt qu'un opérateur différentiel.
+La question du début a donc une réponse, dans les deux cadres de cet article. La $p$-courbure se lit sur l'équation, au prix d'une puissance de matrice ou d'une dérivée $(p-1)$-ième, et elle est nulle pour presque tout $p$ si et seulement si les solutions sont algébriques. Sans les lemmes \ref{lem:adp} et \ref{lem:dp}, donc sans le crochet, $\nabla_p^{\,p}$ resterait un opérateur différentiel d'ordre $p$ et l'on n'aurait rien à calculer.
 
 \subsection{Conclusion : l'énoncé général}
 
@@ -772,7 +772,7 @@ La conjecture \ref{conj:gk} est le cas d'une seule variable. Grothendieck la pos
 \]
 ne peut avoir assez de solutions que si les opérateurs $\nabla_i = \partial_i - A_i$ commutent : en dérivant $\partial_i Y = A_i Y$ par rapport à $x_j$ et en échangeant les rôles de $i$ et $j$, on trouve la condition $\cro{\nabla_i}{\nabla_j} = 0$. Ce crochet s'appelle la \emph{courbure} du système, et le système est dit \emph{intégrable} quand elle est nulle. Modulo $p$, chaque $\nabla_i^{\,p}$ est encore linéaire, par le même argument qu'à la proposition \ref{prop:psilin} : ce sont les $p$-courbures $\psi_{p,i}$. Le mot « $p$-courbure » vient de là.
 
-Le cadre naturel est celui d'une variété algébrique lisse $X$ sur un corps de nombres $K$ (par exemple le plan privé de quelques courbes, sur $\Q$) et d'un fibré vectoriel $E$ sur $X$ muni d'une connexion intégrable $\nabla$ : localement, c'est exactement un système comme ci-dessus, à coefficients fonctions rationnelles. Pour presque tout idéal premier $\mathfrak p$ de l'anneau des entiers de $K$, on peut réduire $(E, \nabla)$ modulo $\mathfrak p$, et la $p$-courbure de la réduction est l'application $\partial \mapsto \nabla_\partial^{\,p} - \nabla_{\partial^{[p]}}$, où $\partial^{[p]}$ est la dérivation $\partial^p$ (nulle pour $\partial = \partial_i$, ce qui redonne les $\psi_{p,i}$).
+Le cadre naturel est celui d'une variété algébrique lisse $X$ sur un corps de nombres $K$ (par exemple le plan privé de quelques courbes, sur $\Q$) et d'un fibré vectoriel $E$ sur $X$ muni d'une connexion intégrable $\nabla$ : localement, c'est un système comme ci-dessus, à coefficients fonctions rationnelles. Pour presque tout idéal premier $\mathfrak p$ de l'anneau des entiers de $K$, on peut réduire $(E, \nabla)$ modulo $\mathfrak p$, et la $p$-courbure de la réduction est l'application $\partial \mapsto \nabla_\partial^{\,p} - \nabla_{\partial^{[p]}}$, où $\partial^{[p]}$ est la dérivation $\partial^p$ (nulle pour $\partial = \partial_i$, ce qui redonne les $\psi_{p,i}$).
 
 \begin{conjecture}[Grothendieck--Katz, énoncé général]\label{conj:gkgen}
 Soit $X$ une variété lisse sur un corps de nombres $K$, et $(E, \nabla)$ un fibré vectoriel sur $X$ muni d'une connexion intégrable. Les conditions suivantes sont équivalentes :
@@ -782,7 +782,7 @@ Soit $X$ une variété lisse sur un corps de nombres $K$, et $(E, \nabla)$ un fi
 \end{enumerate}
 \end{conjecture}
 
-Le sens 1 $\Rightarrow$ 2 est démontré ; c'est l'autre sens que Grothendieck demande, page 194 du dossier 93. N.~Katz l'a démontré pour les connexions de Gauss--Manin (1972), et le cas où la monodromie est un groupe résoluble, qui contient le rang $1$, est connu (Chudnovsky, Bost, André). Le cas général est l'un des grands problèmes ouverts sur les équations différentielles. Les théorèmes \ref{thm:gkconst} et \ref{thm:gkordre1} en donnent une idée concrète : dans chacun, la $p$-courbure a mesuré exactement l'écart entre une équation et une équation à solutions algébriques.
+Le sens 1 $\Rightarrow$ 2 est démontré ; c'est l'autre sens que Grothendieck demande, page 194 du dossier 93. N.~Katz l'a démontré pour les connexions de Gauss--Manin (1972), et le cas où la monodromie est un groupe résoluble, qui contient le rang $1$, est connu (Chudnovsky, Bost, André). Le cas général est l'un des grands problèmes ouverts sur les équations différentielles. Même pour une équation du second ordre à coefficients rationnels, on ne sait pas le trancher en général : les deux théorèmes de cette section s'arrêtent avant, aux coefficients constants et au premier ordre.
 
 % ==========================================================
 \section{Synthèse}

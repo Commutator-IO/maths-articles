@@ -48,7 +48,7 @@
 \maketitle
 
 \begin{abstract}
-Une feuille de problèmes de terminale sur l'exponentielle pose trois questions qui semblent sans rapport. Quelle est la taille de $n!$ ? Pourquoi la moyenne géométrique de nombres positifs est-elle plus petite que leur moyenne arithmétique ? Comment calculer $e$, et est-ce une fraction ? On montre que les trois réponses reposent sur une seule inégalité, $e^x\geq1+x$, qui dit que le graphe de l'exponentielle est au-dessus de sa tangente en $0$. On pousse ensuite chaque réponse aussi loin que possible : jusqu'à la formule de Stirling avec un reste explicite, jusqu'à la famille des moyennes d'ordre $p$, et jusqu'à l'irrationalité de $e$ et un développement asymptotique de $n!\,e$ modulo $1$.
+Une feuille de problèmes de terminale sur l'exponentielle pose trois questions sans rapport apparent. Quelle est la taille de $n!$ ? Pourquoi la moyenne géométrique de nombres positifs est-elle plus petite que leur moyenne arithmétique ? Comment calculer $e$, et est-ce une fraction ? Les trois réponses reposent sur une seule inégalité, $e^x\geq1+x$, qui dit que le graphe de l'exponentielle est au-dessus de sa tangente en $0$. Chacune est ensuite poussée plus loin que la feuille : la formule de Stirling avec un reste explicite, la famille des moyennes d'ordre $p$, l'irrationalité de $e$ et un développement asymptotique de $n!\,e$ modulo $1$.
 \end{abstract}
 
 \paragraph{Leçons concernées.} 224 (Exemples de développements asymptotiques de suites et de fonctions), 223 (Suites numériques), 229 (Fonctions monotones, fonctions convexes), 218 (Formules de Taylor), 230 (Séries numériques).
@@ -75,9 +75,9 @@ La fonction $\varphi(x)=e^x-1-x$ a pour dérivée $e^x-1$. Elle décroît donc s
 
 Géométriquement, la droite $y=1+x$ est la tangente en $0$ au graphe de $\exp$, et ce graphe est au-dessus de ses tangentes parce que $\exp$ est convexe. Symétriquement, $y-1$ est la tangente en $1$ à $\ln$, qui est concave.
 
-Voici comment cette inégalité intervient dans les trois parties de la feuille.
+Elle intervient dans chacune des trois parties de la feuille.
 \begin{itemize}[nosep]
-\item \emph{Factorielles} (section 2). Avec $x=\frac1n$, elle donne $1+\frac1n\leq e^{1/n}$, donc $\big(1+\frac1n\big)^n\leq e$. Ce quotient est exactement le rapport de deux termes consécutifs de la suite $n^n/n!$.
+\item \emph{Factorielles} (section 2). Avec $x=\frac1n$, elle donne $1+\frac1n\leq e^{1/n}$, donc $\big(1+\frac1n\big)^n\leq e$. Or ce quotient est le rapport de deux termes consécutifs de la suite $n^n/n!$.
 \item \emph{Moyennes} (section 3). Sous la forme $\ln y\leq y-1$, appliquée à $y=a_i/m$, elle donne l'inégalité arithmético-géométrique.
 \item \emph{Le nombre $e$} (section 4). C'est le cas $n=1$ des inégalités $e^x\geq\sum_{k=0}^n\frac{x^k}{k!}$ pour $x\geq0$. En les rendant précises, on calcule $e$ et on montre qu'il est irrationnel.
 \end{itemize}
@@ -91,7 +91,7 @@ Le nombre $n!$ croît très vite : $10!=3\,628\,800$ et $20!\approx2{,}4\cdot10^
 
 \subsection{Un premier encadrement}
 
-L'idée de la feuille est de comparer $n!$ à $n^n$. Le quotient $u_n=n^n/n!$ est plus simple à étudier qu'on ne le croit, car le rapport de deux termes consécutifs se simplifie. On commence par encadrer ce rapport.
+La feuille compare $n!$ à $n^n$. Le quotient $u_n=n^n/n!$ se prête bien à l'étude, car le rapport de deux termes consécutifs se simplifie. On commence par encadrer ce rapport.
 
 \begin{lemme}\label{lem:2e}
 Pour tout $n\geq1$, on a $2\leq\big(1+\frac1n\big)^n<e$.
@@ -113,7 +113,7 @@ Soit $u_n=\dfrac{n^n}{n!}$ pour $n\geq1$. Alors $\dfrac{u_{n+1}}{u_n}=\big(1+\fr
 De plus $n!\leq\big(\frac n2\big)^n$ pour tout $n\geq6$.
 \end{proposition}
 
-L'idée est d'écrire $u_n$ comme un produit télescopique de rapports, et d'encadrer chaque rapport par le lemme \ref{lem:2e}.
+On écrit $u_n$ comme un produit télescopique de rapports, que le lemme \ref{lem:2e} encadre un à un.
 
 \begin{proof}
 Le calcul du rapport est direct :
@@ -154,11 +154,11 @@ Dès que $n\geq2ea$, le nombre $\frac{n}{ea}$ est au moins $2$, donc le minorant
 
 L'encadrement de la proposition \ref{prop:encadrement} donne le bon ordre de grandeur du logarithme, $\ln n!=n\ln n+O(n)$. Mais entre le minorant et le majorant, il reste un facteur de l'ordre de $(e/2)^n$, qui est énorme. Pour faire mieux, on cherche un équivalent de $n!$.
 
-\emph{D'où vient la forme de la réponse ?} La minoration $n!\geq e\,(n/e)^n$ suggère de comparer $n!$ à $(n/e)^n$. On va voir qu'il faut encore un facteur $\sqrt n$. On étudie donc le logarithme du quotient :
+\emph{D'où vient la forme de la réponse ?} La minoration $n!\geq e\,(n/e)^n$ suggère de comparer $n!$ à $(n/e)^n$. Il manque encore un facteur $\sqrt n$, et c'est le logarithme du quotient corrigé qu'on étudie :
 \[
   w_n=\ln n!-\Big(n+\frac12\Big)\ln n+n,\qquad n\geq1 .
 \]
-Le plan est simple : montrer que $(w_n)$ converge, en contrôlant ses accroissements, puis identifier sa limite.
+Il faudra montrer que $(w_n)$ converge, en contrôlant ses accroissements, puis identifier sa limite.
 
 \begin{lemme}\label{lem:wn}
 Pour tout $n\geq1$,
@@ -168,7 +168,7 @@ Pour tout $n\geq1$,
 En particulier $w_n-w_{n+1}=\dfrac1{12n^2}+O\Big(\dfrac1{n^3}\Big)$.
 \end{lemme}
 
-L'idée de la preuve : l'accroissement $w_n-w_{n+1}$ s'exprime avec $\ln\big(1+\frac1n\big)$. Un changement de variable bien choisi en fait une série entière à termes positifs, que l'on encadre par son premier terme et par une série géométrique.
+L'accroissement $w_n-w_{n+1}$ s'exprime avec $\ln\big(1+\frac1n\big)$, et un changement de variable bien choisi en fait une série entière à termes positifs ; il ne reste qu'à l'encadrer par son premier terme et par une série géométrique.
 
 \begin{proof}
 On calcule d'abord l'accroissement. Comme $\ln(n+1)!=\ln n!+\ln(n+1)$,
@@ -191,7 +191,7 @@ Tous les termes sont positifs. La somme est donc minorée par son premier terme 
 d'où l'encadrement. Les deux bornes valent $\frac1{12n^2}+O(\frac1{n^3})$.
 \end{proof}
 
-Le lemme montre que $(w_n)$ décroît, mais pas trop vite. Elle a donc une limite $\ell$ ; il reste à la calculer. Pour cela, on utilise une autre suite dont on connaît l'équivalent : les intégrales de Wallis. Elles sont étudiées en détail dans la fiche \texttt{lecons/236-calcul-integrales/calcul-integral.tex} ; on rappelle l'énoncé et une preuve courte.
+Le lemme montre que $(w_n)$ décroît, mais pas trop vite. Elle a donc une limite $\ell$, qu'on calcule en passant par une autre suite dont l'équivalent est connu : les intégrales de Wallis. Elles sont étudiées en détail dans la fiche \texttt{lecons/236-calcul-integrales/calcul-integral.tex} ; on rappelle l'énoncé et une preuve courte.
 
 \begin{lemme}[Wallis]\label{lem:wallis}
 Soit $W_n=\int_0^{\pi/2}\sin^nt\dd t$. Alors $W_n\sim\sqrt{\dfrac{\pi}{2n}}$, et
@@ -212,7 +212,7 @@ Comme $0\leq\sin t\leq1$ sur $[0,\frac\pi2]$, la suite $(W_n)$ est décroissante
 d'où $W_{n+1}\sim W_n$. Alors $\frac\pi2=(n+1)W_{n+1}W_n\sim(n+1)W_n^2$, soit $W_n^2\sim\frac\pi{2n}$. Enfin $\frac{(2p)!}{4^p(p!)^2}=\frac2\pi W_{2p}\sim\frac2\pi\sqrt{\frac{\pi}{4p}}=\frac1{\sqrt{\pi p}}$.
 \end{proof}
 
-On peut maintenant énoncer le résultat principal de la section.
+Tout est en place pour le résultat principal de la section.
 
 \begin{theoreme}[Stirling]\label{thm:stirling}
 On a $n!\sim\sqrt{2\pi n}\,\Big(\dfrac ne\Big)^n$. Plus précisément, pour tout $n\geq1$, il existe $\theta_n\in\,]0,1]$ tel que
@@ -221,7 +221,7 @@ On a $n!\sim\sqrt{2\pi n}\,\Big(\dfrac ne\Big)^n$. Plus précisément, pour tout
 \]
 \end{theoreme}
 
-La preuve a deux étapes. On montre d'abord que $w_n$ converge, avec un reste contrôlé, grâce au lemme \ref{lem:wn}. On identifie ensuite la constante en écrivant de deux façons l'équivalent de $\frac{(2p)!}{4^p(p!)^2}$.
+La preuve suit le programme annoncé. La convergence de $w_n$, avec un reste contrôlé, vient du lemme \ref{lem:wn} ; pour la constante, on écrit de deux façons l'équivalent de $\frac{(2p)!}{4^p(p!)^2}$.
 
 \begin{proof}
 \emph{Convergence.} Par le lemme \ref{lem:wn}, la suite $(w_n)$ est strictement décroissante. La majoration du lemme s'écrit
@@ -280,13 +280,13 @@ On constate que $h<g<m$, et de plus que $m\,h=100=g^2$.
 Cette dernière égalité n'est pas un hasard : $4,10,25$ est une progression géométrique, de raison $\frac52$. Pour $(a,ar,ar^2)$ avec $a,r>0$, on a $g=ar$, $m=\frac{a(1+r+r^2)}3$ et $\frac1h=\frac{1+r+r^2}{3ar^2}$, donc $mh=a^2r^2=g^2$. Pour deux nombres, l'identité $mh=g^2$ est toujours vraie, car $\frac{a+b}2\cdot\frac{2ab}{a+b}=ab$. En revanche, elle est fausse en général pour trois nombres : pour $(1,1,4)$, on a $m=2$, $g=\sqrt[3]4$ et $h=\frac43$, donc $mh=\frac83$, alors que $g^2=\sqrt[3]{16}\approx2{,}52$.
 \end{exemple}
 
-L'ordre $h<g<m$ observé est général. C'est l'objet du théorème suivant.
+L'ordre $h<g<m$ observé ici ne doit rien au choix de ces trois nombres.
 
 \begin{theoreme}\label{thm:hgm}
 On a $h\leq g\leq m$. Chacune de ces deux inégalités est une égalité si et seulement si $a_1=\cdots=a_n$.
 \end{theoreme}
 
-L'idée est de ramener une inégalité sur un \emph{produit} (la moyenne géométrique) à une inégalité sur une \emph{somme}, en prenant le logarithme. Le lemme \ref{lem:tangente} compare alors chaque $\ln a_i$ à une expression affine en $a_i$, et la somme des termes affines se calcule.
+Le logarithme ramène une inégalité sur un \emph{produit} (la moyenne géométrique) à une inégalité sur une \emph{somme}. Le lemme \ref{lem:tangente} compare alors chaque $\ln a_i$ à une expression affine en $a_i$, et la somme des termes affines se calcule.
 
 \begin{proof}[Première preuve (méthode de la feuille)]
 On applique le lemme \ref{lem:tangente}, sous la forme $\ln y\leq y-1$, à $y=a_i/m$, et on somme sur $i$ :
@@ -307,13 +307,13 @@ c'est-à-dire $\ln g\leq\ln m$. La stricte concavité donne le cas d'égalité. 
 \end{proof}
 
 \begin{remarque}[Pourquoi les deux preuves sont la même]
-La droite $y\mapsto y-1$ est la tangente au graphe de $\ln$ au point $1$. Appliquer $\ln y\leq y-1$ à $y=a_i/m$ revient à comparer $\ln$ à sa tangente au point $m$, c'est-à-dire au barycentre des $a_i$. C'est exactement la preuve « par la tangente » de l'inégalité de Jensen, qui vaut pour toute fonction concave dérivable. La première preuve n'est donc pas une astuce : c'est Jensen, écrit à la main.
+La droite $y\mapsto y-1$ est la tangente au graphe de $\ln$ au point $1$. Appliquer $\ln y\leq y-1$ à $y=a_i/m$ revient à comparer $\ln$ à sa tangente au point $m$, c'est-à-dire au barycentre des $a_i$. On retrouve la preuve « par la tangente » de l'inégalité de Jensen, qui vaut pour toute fonction concave dérivable. La première preuve n'est donc pas une astuce : c'est Jensen, écrit à la main.
 \end{remarque}
 
-Voici une application qui relie cette section à la précédente.
+Cette inégalité éclaire après coup la section précédente.
 
 \begin{exemple}\label{ex:croissance-e}
-La suite $e_n=\big(1+\frac1n\big)^n$ est strictement croissante. L'idée est de voir $e_n$ comme un produit de $n+1$ facteurs, dont on compare la moyenne géométrique à la moyenne arithmétique. On applique $g<m$ aux $n+1$ réels $1+\frac1n,\dots,1+\frac1n,1$, qui ne sont pas tous égaux. Leur produit vaut $e_n$ et leur somme $n+2$, donc
+La suite $e_n=\big(1+\frac1n\big)^n$ est strictement croissante. Il suffit de voir $e_n$ comme un produit de $n+1$ facteurs et de comparer leurs moyennes géométrique et arithmétique. On applique $g<m$ aux $n+1$ réels $1+\frac1n,\dots,1+\frac1n,1$, qui ne sont pas tous égaux. Leur produit vaut $e_n$ et leur somme $n+2$, donc
 \[
   e_n^{1/(n+1)}<\frac{n+2}{n+1}=1+\frac1{n+1},
 \]
@@ -322,19 +322,19 @@ c'est-à-dire $e_n<e_{n+1}$. Avec le lemme \ref{lem:2e}, on retrouve que $(e_n)$
 
 \subsection{Moyennes d'ordre \texorpdfstring{$p$}{p}}
 
-Les trois moyennes $h$, $g$, $m$ ne sont pas isolées : ce sont trois points d'une famille continue de moyennes, indexée par un réel $p$. L'inégalité $h\leq g\leq m$ dit alors simplement que cette famille est croissante en $p$.
+Les trois moyennes $h$, $g$, $m$ ne sont pas isolées : ce sont trois points d'une famille continue de moyennes, indexée par un réel $p$. L'inégalité $h\leq g\leq m$ traduit alors la croissance de cette famille en $p$.
 
 \begin{definition}
 Pour $p\in\R^*$, on pose $M_p(a)=\Big(\dfrac1n\sum_{i=1}^na_i^p\Big)^{1/p}$, et $M_0(a)=g$.
 \end{definition}
 
-Ainsi $M_1=m$ et $M_{-1}=h$, et $M_2$ est la moyenne quadratique. On a aussi $M_{-p}(a)=1/M_p(1/a)$, où $1/a=(1/a_1,\dots,1/a_n)$. Cette symétrie permettra de traiter les $p$ négatifs à partir des $p$ positifs.
+Ainsi $M_1=m$ et $M_{-1}=h$, et $M_2$ est la moyenne quadratique. On a aussi $M_{-p}(a)=1/M_p(1/a)$, où $1/a=(1/a_1,\dots,1/a_n)$. Grâce à cette symétrie, les $p$ négatifs se ramèneront aux $p$ positifs.
 
 \begin{theoreme}\label{thm:moyennes}
 L'application $p\mapsto M_p(a)$ est continue et croissante sur $\R$. Elle est strictement croissante si les $a_i$ ne sont pas tous égaux, et constante sinon. De plus $M_p(a)\to\max a_i$ quand $p\to+\infty$ et $M_p(a)\to\min a_i$ quand $p\to-\infty$.
 \end{theoreme}
 
-L'idée est la suivante. Pour $0<p<q$, l'inégalité $M_p\leq M_q$ est l'inégalité de Jensen pour la fonction convexe $x\mapsto x^{q/p}$. Les $p$ négatifs s'en déduisent par la symétrie $a\mapsto1/a$, et le passage par $p=0$ est l'inégalité arithmético-géométrique.
+Pour $0<p<q$, l'inégalité $M_p\leq M_q$ n'est autre que l'inégalité de Jensen pour la fonction convexe $x\mapsto x^{q/p}$. Les $p$ négatifs s'en déduisent par la symétrie $a\mapsto1/a$, et le passage par $p=0$ est l'inégalité arithmético-géométrique.
 
 \begin{proof}
 Si les $a_i$ sont tous égaux à $c$, alors $M_p(a)=c$ pour tout $p$. Supposons-les non tous égaux.
@@ -366,7 +366,7 @@ En particulier $\min a_i\leq h\leq g\leq m\leq M_2\leq\max a_i$. Sur l'exemple \
 \section{Comment calculer \texorpdfstring{$e$}{e}, et est-ce une fraction ?}
 % ==========================================================
 
-Le lemme \ref{lem:tangente} dit que $e^x\geq1+x$. On peut faire mieux : pour $x\geq0$, l'exponentielle dépasse chacune de ses sommes de Taylor. En $x=1$, cela donne une suite croissante qui minore $e$. La feuille lui associe une suite décroissante qui le majore. On va voir que ces deux suites permettent de calculer $e$ très vite, puis de montrer qu'il n'est pas rationnel.
+Le lemme \ref{lem:tangente} dit que $e^x\geq1+x$. On peut faire mieux : pour $x\geq0$, l'exponentielle dépasse chacune de ses sommes de Taylor. En $x=1$, cela donne une suite croissante qui minore $e$. La feuille lui associe une suite décroissante qui le majore. Ces deux suites donnent $e$ très vite, et elles suffisent à montrer qu'il n'est pas rationnel.
 
 \subsection{Deux suites adjacentes}
 
@@ -399,7 +399,7 @@ On conjecture que $\ell=e$.
 
 \subsection{La limite est \texorpdfstring{$e$}{e}}
 
-Pour démontrer la conjecture, on calcule exactement l'écart $e-u_n$. L'idée de la feuille est d'étudier la fonction $f(x)=\big(\sum_{k\leq n}\frac{x^k}{k!}\big)e^{-x}$ : sa dérivée est très simple, car les termes de la somme se compensent deux à deux.
+Pour démontrer la conjecture, on calcule exactement l'écart $e-u_n$. La feuille passe pour cela par la fonction $f(x)=\big(\sum_{k\leq n}\frac{x^k}{k!}\big)e^{-x}$, dont la dérivée est très simple : les termes de la somme se compensent deux à deux.
 
 \begin{proposition}\label{prop:reste}
 Pour tout $n\geq1$,
@@ -433,7 +433,7 @@ Pour l'encadrement, on a $1<e^t<e$ pour $t\in\,]0,1[$, et $\int_0^1(1-t)^n\dd t=
 
 \begin{remarque}
 \begin{enumerate}[nosep]
-\item La proposition \ref{prop:adjacentes} donne un majorant plus fin : $e-u_n<\frac1{n\cdot n!}$. En comparant avec le minorant $\frac1{(n+1)!}$, on obtient $e-u_n\sim\frac1{(n+1)!}$ : l'erreur commise est essentiellement le premier terme oublié. L'exercice \ref{exo:sin} précise ce point.
+\item La proposition \ref{prop:adjacentes} donne un majorant plus fin : $e-u_n<\frac1{n\cdot n!}$. En comparant avec le minorant $\frac1{(n+1)!}$, on obtient $e-u_n\sim\frac1{(n+1)!}$ : l'erreur commise est, au premier ordre, le premier terme oublié. L'exercice \ref{exo:sin} précise ce point.
 \item \emph{La convergence est très rapide.} Pour obtenir $d$ décimales, il suffit que $e/(n+1)!\leq10^{-d}$. Par Stirling, le plus petit tel $n$ vérifie $n\ln n\sim d\ln10$. Par exemple, $n=17$ suffit pour $15$ décimales, car $e/18!\approx4{,}2\cdot10^{-16}$. Comparer avec $\big(1+\frac1n\big)^n$, dont l'erreur est de l'ordre de $\frac e{2n}$ (exercice \ref{exo:dl}).
 \item La même méthode, en $x=-1$, donne la série alternée
 \[
@@ -445,7 +445,7 @@ C'est le développement de Pierce de $1/e$, de chiffres $q_i=i+1$. Il ne s'arrê
 
 \subsection{\texorpdfstring{$e$}{e} n'est pas une fraction}
 
-On revient à la dernière question de la feuille. L'idée est de comparer deux précisions. Si $e$ était une fraction $p/q$, alors $q!\,e$ serait un entier. Mais $q!\,u_q$ est aussi un entier, et l'écart $q!\,(e-u_q)$ est strictement compris entre $0$ et $1$, par la proposition \ref{prop:adjacentes}. Un entier ne peut pas être dans $]0,1[$.
+Reste la dernière question de la feuille, qui se règle en comparant deux précisions. Si $e$ était une fraction $p/q$, alors $q!\,e$ serait un entier. Mais $q!\,u_q$ est aussi un entier, et l'écart $q!\,(e-u_q)$ est strictement compris entre $0$ et $1$, par la proposition \ref{prop:adjacentes}. Un entier ne peut pas être dans $]0,1[$.
 
 \begin{theoreme}\label{thm:irr}
 Le nombre $e$ est irrationnel.
@@ -465,16 +465,16 @@ Or $q!\,u_q=\sum_{k=0}^q\frac{q!}{k!}$ est un entier, car $k!$ divise $q!$ pour 
 
 \begin{remarque}
 \begin{enumerate}[nosep]
-\item \emph{Pourquoi ça marche.} Les rationnels $u_q$ ont un dénominateur qui divise $q!$, et ils approchent $e$ à moins de $\frac1{q\cdot q!}$. Une fraction fixe $p/q$ ne peut pas être approchée aussi bien par des fractions de dénominateur $q!$ : l'écart entre deux telles fractions distinctes est au moins $\frac1{q!}$. C'est le même principe que dans toutes les preuves d'irrationalité par approximation.
+\item \emph{Pourquoi l'argument fonctionne.} Les rationnels $u_q$ ont un dénominateur qui divise $q!$, et ils approchent $e$ à moins de $\frac1{q\cdot q!}$. Une fraction fixe $p/q$ ne peut pas être approchée aussi bien par des fractions de dénominateur $q!$ : l'écart entre deux telles fractions distinctes est au moins $\frac1{q!}$. Toutes les preuves d'irrationalité par approximation reposent sur ce principe.
 \item La même idée, appliquée simultanément aux séries de $e$ et de $e^{-1}$, montre que $e^2$ est irrationnel, et même non quadratique (Liouville, 1840). Si $e^2=\frac pq$, on écrit $qe=pe^{-1}$ et l'on compare les deux développements. Hermite a démontré en 1873 que $e$ est transcendant. On ne démontre pas ces résultats ici.
 \end{enumerate}
 \end{remarque}
 
 % ==========================================================
-\section{Retour à la question de départ}
+\section{Une inégalité, trois réponses}
 % ==========================================================
 
-On s'était demandé ce que l'on pouvait tirer de la seule inégalité $e^x\geq1+x$. Le bilan est le suivant.
+Les trois questions de la feuille ont trouvé leur réponse dans la seule inégalité $e^x\geq1+x$, appliquée chaque fois au bon endroit.
 \begin{itemize}[nosep]
 \item \emph{Taille de $n!$.} Appliquée en $x=\frac1n$, elle encadre le rapport $u_{n+1}/u_n$ et donne $e\,(n/e)^n\leq n!$. Le facteur $(n/e)^n$ est le bon : la formule de Stirling ne fait qu'ajouter le facteur $\sqrt{2\pi n}$.
 \item \emph{Moyennes.} Appliquée sous la forme $\ln y\leq y-1$, elle donne $g\leq m$. C'est un cas de l'inégalité de Jensen : la tangente à une fonction concave est au-dessus de son graphe.
