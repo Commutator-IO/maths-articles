@@ -30,6 +30,7 @@ import katex from 'katex';
 import { FIGURES, PICTURE, pictureHash } from './tikz.mjs';
 import { cardFor, OG, OG_HEIGHT, OG_WIDTH } from './og.mjs';
 import { highlightLean, LEAN_STYLE } from './lean-highlight.mjs';
+import { highlightTex, TEX_STYLE } from './tex-highlight.mjs';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const SOURCE = resolve(ROOT, 'lecons');
@@ -884,8 +885,8 @@ document.addEventListener('DOMContentLoaded', function () {
 }
 
 function sourcePage({ text, file, rootRel, crumb, links, kind }) {
-  // Le Lean est colorié à la construction (scripts/lean-highlight.mjs) ; le
-  // LaTeX reste en texte brut.
+  // Les deux sources sont coloriées à la construction : scripts/lean-highlight.mjs
+  // et scripts/tex-highlight.mjs.
   const lean = kind === 'Lean';
   return `<!doctype html>
 <html lang="fr">
@@ -898,13 +899,13 @@ function sourcePage({ text, file, rootRel, crumb, links, kind }) {
         font: 13px/1.6 var(--mono); color: var(--ink2); }
   .ma-src-head { font-family: var(--sans); font-size: 13px; color: var(--ink3); margin: 1rem 0 1.2rem; }
   .ltx_page_main.ma-lean { max-width: 64rem; }
-${lean ? LEAN_STYLE : ''}</style>
+${lean ? LEAN_STYLE : TEX_STYLE}</style>
 </head>
 <body>
 ${nav(rootRel, crumb, links)}
 <main class="ltx_page_main${lean ? ' ma-lean' : ''}">
 <p class="ma-src-head">Source ${kind} de référence, ${escapeHtml(file)} — <a href="./${escapeAttr(file)}" download>télécharger le fichier</a></p>
-${lean ? `<pre class="lean">${highlightLean(text)}</pre>` : `<pre>${escapeHtml(text)}</pre>`}
+${lean ? `<pre class="lean">${highlightLean(text)}</pre>` : `<pre class="tex">${highlightTex(text)}</pre>`}
 </main>
 </body>
 </html>
