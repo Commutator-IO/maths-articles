@@ -303,7 +303,7 @@
     var issue = el('button', 'ma-btn ma-btn-primary', 'Ouvrir une issue sur GitHub');
     var cancel = el('button', 'ma-btn ma-btn-quiet', 'Annuler');
     [keep, issue, cancel].forEach(function (b) { b.type = 'button'; row.appendChild(b); });
-    var hint = el('p', 'ma-hint', 'La note reste dans ce navigateur. L’issue s’ouvre sur GitHub, pré-remplie : rien n’est publié avant que vous la validiez.');
+    var hint = el('p', 'ma-hint', 'La note reste dans ce navigateur. L\'issue s\'ouvre sur GitHub, déjà remplie, et rien n\'est publié tant que vous ne l\'avez pas validée.');
     panel.append(q, where, ta, row, hint);
     ta.focus();
 

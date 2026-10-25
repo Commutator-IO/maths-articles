@@ -51,7 +51,7 @@
 \maketitle
 
 \begin{abstract}
-Le problème de Dirichlet $-\Delta u+\lambda u=f$ se résout par le théorème de Lax-Milgram ; une équation différentielle $u'=F(u)$ à second membre lipschitzien, par celui de Cauchy-Lipschitz. L'équation de la chaleur $\partial_tu-\Delta u=0$ échappe aux deux : elle n'est pas stationnaire, et le laplacien n'est pas lipschitzien, ni même borné. Le théorème de Hille-Yosida la résout en combinant les deux idées. On demande à l'opérateur $A$ d'être monotone et de rendre solubles les équations stationnaires $u+\lambda Au=f$, ce que Lax-Milgram fournit en pratique ; on remplace $A$ par une famille d'opérateurs bornés qui l'approchent, ses régularisées de Yosida, auxquelles Cauchy-Lipschitz s'applique ; et des estimations d'énergie, indépendantes de l'approximation, permettent de passer à la limite. On suit le chapitre VII du livre de Brezis \cite{brezis}, en détaillant toutes les preuves, puis on applique le résultat à l'équation de la chaleur.
+Le problème de Dirichlet $-\Delta u+\lambda u=f$ se résout par le théorème de Lax-Milgram ; une équation différentielle $u'=F(u)$ à second membre lipschitzien, par celui de Cauchy-Lipschitz. L'équation de la chaleur $\partial_tu-\Delta u=0$ échappe aux deux : elle n'est pas stationnaire, et le laplacien n'est pas lipschitzien, ni même borné. Le théorème de Hille-Yosida s'en tire en empruntant à l'un et à l'autre. Il demande à l'opérateur $A$ d'être monotone et de rendre solubles les équations stationnaires $u+\lambda Au=f$, ce que Lax-Milgram fournit en pratique. Il remplace ensuite $A$ par des opérateurs bornés qui l'approchent, ses régularisées de Yosida, auxquelles Cauchy-Lipschitz s'applique, et passe à la limite grâce à des estimations d'énergie qui ne dépendent pas de l'approximation. On suit le chapitre VII du livre de Brezis \cite{brezis}, en détaillant toutes les preuves, puis on applique le résultat à l'équation de la chaleur.
 \end{abstract}
 
 \paragraph{Leçons concernées.} 222 (Exemples d'équations aux dérivées partielles linéaires), 213 (Espaces de Hilbert. Exemples d'applications), 205 (Espaces complets. Exemples et applications), 208 (Espaces vectoriels normés, applications linéaires continues), 220 (Équations différentielles ordinaires).
@@ -93,7 +93,7 @@ On peut aussi voir l'équation comme une équation différentielle ordinaire $u'
 \end{equation}
 l'équation de la chaleur correspondant à $H=L^2(\Omega)$ et $A=-\Delta$. En dimension finie, la solution est $u(t)=e^{-tA}u_0$. Mais la série de l'exponentielle n'a aucun sens pour un opérateur non borné, puisqu'elle demande d'appliquer $A^k$ à $u_0$ pour tout $k$.
 
-Le théorème de Hille-Yosida dit quelles hypothèses sur $A$ remplacent la coercivité et le caractère lipschitzien. Elles sont de deux natures : une inégalité, la \emph{monotonie} $(Av,v)\geq0$, qui joue le rôle de la coercivité ; et la possibilité de résoudre les équations stationnaires $u+\lambda Au=f$, qui est exactement ce que Lax-Milgram sait faire. La section 2 étudie ces opérateurs, la section 3 construit leurs approximations bornées, la section 4 démontre le théorème, et la section 5 l'applique à la chaleur.
+Ses hypothèses remplacent la coercivité et le caractère lipschitzien par deux conditions sur $A$ : une inégalité, la \emph{monotonie} $(Av,v)\geq0$, qui tient lieu de coercivité, et la possibilité de résoudre les équations stationnaires $u+\lambda Au=f$, précisément ce que Lax-Milgram sait faire. On étudie d'abord ces opérateurs, puis on les approche par des opérateurs bornés ; le théorème s'en déduit, et la chaleur en est la première application.
 
 % ==========================================================
 \section{Opérateurs maximaux monotones}
@@ -140,7 +140,7 @@ Le membre de droite est une application de $H$ dans $H$, lipschitzienne de const
 \end{proof}
 
 \begin{remarque}
-Le point 4 est le seul endroit où intervient la complétude de $H$, à travers le point fixe de Banach. C'est aussi lui qui rend la définition commode : il suffit de résoudre une seule équation stationnaire, $u+Au=f$, pour savoir résoudre toutes les équations $u+\lambda Au=f$.
+Le point 4 est le seul endroit où intervient la complétude de $H$, à travers le point fixe de Banach. Il rend aussi la définition commode : il suffit de résoudre une seule équation stationnaire, $u+Au=f$, pour savoir résoudre toutes les équations $u+\lambda Au=f$.
 \end{remarque}
 
 \begin{exemple}\label{ex:diag}
@@ -235,7 +235,7 @@ Avec $F=-A_\lambda$, linéaire et de norme au plus $\frac1\lambda$, on obtient p
 \begin{equation}\label{eq:approche}
   \frac{\mathrm{d}u_\lambda}{\mathrm{d}t}+A_\lambda u_\lambda=0,\qquad u_\lambda(0)=u_0 .
 \end{equation}
-Comme $A_\lambda$ est borné, c'est simplement $u_\lambda(t)=e^{-tA_\lambda}u_0$. Il reste à faire tendre $\lambda$ vers $0$, et tout le travail consiste à obtenir des estimations qui ne dépendent pas de $\lambda$.
+Comme $A_\lambda$ est borné, c'est l'exponentielle $u_\lambda(t)=e^{-tA_\lambda}u_0$. Reste à faire tendre $\lambda$ vers $0$ ; la difficulté est d'obtenir des estimations qui ne dépendent pas de $\lambda$.
 
 % ==========================================================
 \section{Le théorème de Hille-Yosida}
@@ -292,7 +292,7 @@ Pour tous $\lambda,\mu>0$ et $t\geq0$,
 \]
 \end{proposition}
 
-L'idée est d'écrire l'équation vérifiée par $u_\lambda-u_\mu$ et d'estimer sa norme comme à l'étape 1. Le terme $(A_\lambda u_\lambda-A_\mu u_\mu,u_\lambda-u_\mu)$ n'a plus de signe, puisque deux opérateurs différents interviennent ; mais on peut le ramener à $A$, qui est le même pour les deux, à une erreur près de taille $\lambda+\mu$.
+On écrit l'équation vérifiée par $u_\lambda-u_\mu$ et l'on estime sa norme comme à l'étape 1. Le terme $(A_\lambda u_\lambda-A_\mu u_\mu,u_\lambda-u_\mu)$ n'a plus de signe, puisque deux opérateurs différents interviennent ; mais on peut le ramener à $A$, qui est le même pour les deux, à une erreur près de taille $\lambda+\mu$.
 
 \begin{proof}
 On soustrait les deux équations et l'on prend le produit scalaire avec $u_\lambda-u_\mu$ :
@@ -349,7 +349,7 @@ Pour $t\geq0$, notons $S(t)u_0=u(t)$ la solution issue de $u_0\in D(A)$. L'appli
 \end{remarque}
 
 \begin{remarque}[effet régularisant]\label{rem:regularisant}
-Si $A$ est de plus autoadjoint, la situation est bien meilleure : pour tout $u_0\in H$, la solution généralisée vérifie
+Si $A$ est de plus autoadjoint, on gagne beaucoup : pour tout $u_0\in H$, la solution généralisée vérifie
 \[
   u\in C([0,+\infty[;H)\cap C^1(]0,+\infty[;H)\cap C(]0,+\infty[;D(A)) ,
 \]
@@ -376,7 +376,7 @@ L'opérateur $A=-\Delta$ de domaine $H^2(\Omega)\cap H^1_0(\Omega)$ est maximal 
 \emph{Maximalité.} Soit $f\in L^2(\Omega)$. On résout $u-\Delta u=f$ en deux temps. D'abord, par le théorème de Lax-Milgram dans $V=H^1_0(\Omega)$ avec $a(u,v)=\int\nabla u\cdot\nabla v+\int uv$, qui est coercive de constante $1$ pour la norme de $H^1$, il existe un unique $u\in H^1_0(\Omega)$ solution faible. Ensuite, le théorème de régularité elliptique (Brezis, théorème IX.25, que nous admettons) montre que $u\in H^2(\Omega)$, et l'équation $u-\Delta u=f$ a alors lieu presque partout. Donc $u\in D(A)$ et $u+Au=f$.
 \end{proof}
 
-On voit sur cette preuve le rôle de chaque théorème. La maximalité de $A$ est exactement le problème de Dirichlet de la section 1, avec $\lambda=1$, et c'est Lax-Milgram qui la fournit ; la coercivité ne demande même pas l'inégalité de Poincaré, puisque le terme $\int uv$ est présent.
+Chaque théorème a ici son rôle. La maximalité de $A$ n'est autre que le problème de Dirichlet de la section 1, avec $\lambda=1$, et c'est Lax-Milgram qui la fournit ; la coercivité ne demande même pas l'inégalité de Poincaré, puisque le terme $\int uv$ est présent.
 
 \begin{theoreme}\label{thm:chaleur}
 Pour tout $u_0\in H^2(\Omega)\cap H^1_0(\Omega)$, il existe une unique fonction
@@ -417,14 +417,14 @@ Chaque mode décroît d'autant plus vite que sa fréquence est grande : les osci
 \end{figure}
 
 \begin{remarque}[l'équation de la chaleur rétrograde]
-Le signe de $A$ n'est pas un détail. Pour $\partial_tu+\Delta u=0$, c'est-à-dire $A=\Delta$, qui n'est pas monotone, la donnée $u_0=\frac1k\sin(kx)$ donne la solution $u(t,x)=\frac1ke^{k^2t}\sin(kx)$. Quand $k\to\infty$, la donnée tend vers $0$ dans $L^2$, mais pour tout $t>0$ fixé, $\|u(t)\|_{L^2}\to\infty$ : la solution ne dépend pas continûment de la donnée. Le problème est mal posé au sens d'Hadamard, et aucun théorème du type Hille-Yosida ne peut le résoudre.
+Il suffit de changer le signe de $A$ pour tout perdre. Pour $\partial_tu+\Delta u=0$, c'est-à-dire $A=\Delta$, qui n'est pas monotone, la donnée $u_0=\frac1k\sin(kx)$ donne la solution $u(t,x)=\frac1ke^{k^2t}\sin(kx)$. Quand $k\to\infty$, la donnée tend vers $0$ dans $L^2$, mais pour tout $t>0$ fixé, $\|u(t)\|_{L^2}\to\infty$ : la solution ne dépend pas continûment de la donnée. Le problème est mal posé au sens d'Hadamard, et aucun théorème du type Hille-Yosida ne peut le résoudre.
 \end{remarque}
 
 % ==========================================================
 \section{Bilan}
 % ==========================================================
 
-L'équation de la chaleur échappait à Lax-Milgram, faute d'être stationnaire, et à Cauchy-Lipschitz, faute de second membre borné. Le théorème de Hille-Yosida prend à chacun ce dont il a besoin.
+L'équation de la chaleur échappait à Lax-Milgram, faute d'être stationnaire, et à Cauchy-Lipschitz, faute de second membre borné. Le tableau dit ce que Hille-Yosida retient de chacun.
 
 \begin{center}
 \renewcommand{\arraystretch}{1.25}

@@ -809,7 +809,7 @@ function readingPage({ title, html, macros, rootRel, crumb, links, lecon, source
 <body>
 ${nav(rootRel, crumb, links)}
 <main class="ltx_page_main">
-<p class="ma-tip">Sélectionnez un passage pour le commenter ou en faire une issue GitHub.</p>
+<p class="ma-tip">Une erreur, une question ? Sélectionnez le passage pour le commenter ou ouvrir une issue GitHub.</p>
 <article class="ltx_document">
 ${html}
 </article>
@@ -937,12 +937,12 @@ function indexPage({ lecons, folders, missing }) {
 <body>
 <main class="ix-main">
 <h1>Leçons d'agrégation</h1>
-<p class="ix-lede">Articles, exercices commentés et développements, rangés par leçon de l'oral de l'agrégation externe de mathématiques. Chaque document se lit ici, composé depuis sa source LaTeX ; le PDF et la source sont à côté.</p>
+<p class="ix-lede">Des fiches pour préparer l'oral de l'agrégation externe de mathématiques, rangées par leçon. La plupart reprennent, au niveau du concours, des feuilles d'exercices de terminale S de 2003 ou des notes d'étudiant ; plusieurs ont leurs énoncés vérifiés en Lean. Chaque fiche se lit ici, composée depuis sa source LaTeX, avec le PDF et la source à côté.</p>
 ${alg.length ? `<p class="ix-epreuve">Algèbre et géométrie</p>${alg.map(card).join('')}` : ''}
 ${ana.length ? `<p class="ix-epreuve">Analyse et probabilités</p>${ana.map(card).join('')}` : ''}
-${others ? `<p class="ix-epreuve">Autres leçons servies</p><ul class="ix-others">${others}</ul>` : ''}
+${others ? `<p class="ix-epreuve">Les mêmes fiches servent aussi pour</p><ul class="ix-others">${others}</ul>` : ''}
 ${missing.length ? `<p class="ix-note">Non rendus : ${missing.map(escapeHtml).join(', ')}.</p>` : ''}
-<p class="ix-note">Numérotation de la liste officielle des leçons, publiée chaque année : à vérifier pour la session préparée.</p>
+<p class="ix-note">Les numéros suivent la liste officielle des leçons, qui change chaque année : vérifiez-les pour votre session.</p>
 </main>
 </body>
 </html>

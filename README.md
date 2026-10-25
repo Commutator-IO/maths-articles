@@ -2,11 +2,11 @@
 
 → **[agreg.commutator.io](https://agreg.commutator.io)**
 
-Notes et fiches de niveau agrégation externe de mathématiques, rangées par leçon d'oral. Chaque dossier `lecons/<numéro>-<intitulé>/` contient les documents rattachés à cette leçon : articles, exercices commentés, développements, et éventuellement une formalisation Lean 4.
+Des fiches pour préparer l'oral de l'agrégation externe de mathématiques, rangées par leçon : articles, exercices commentés, développements, parfois une formalisation Lean 4. Chaque dossier `lecons/<numéro>-<intitulé>/` regroupe les documents d'une leçon.
 
 La numérotation suit la liste des leçons de l'agrégation externe. Cette liste est publiée chaque année et peut changer : vérifiez les numéros sur la liste de la session préparée.
 
-Ces fiches servent de matériau pour écrire les plans de leçon et préparer les développements. Elles ne remplacent pas les plans.
+Ce sont des matériaux pour écrire ses plans et préparer ses développements, pas des plans tout faits.
 
 ## Index par leçon
 
@@ -66,4 +66,4 @@ Le site est publié sur **[agreg.commutator.io](https://agreg.commutator.io)**. 
 
 ## Origine des fiches
 
-Les fiches 126, 142, 224, 228 et 236 sont des réécritures, au niveau agrégation, de feuilles d’exercices de terminale S (2003), tirées des manuels *Hyperbole*, *Bréal*, *Terracher* et *Method'S*. Les énoncés faux de ces feuilles y sont signalés et corrigés. La fiche 222 reprend une note sur le théorème de Hille-Yosida écrite en décembre 2009, d'après le chapitre VII de Brezis : elle complète la preuve, que la note laissait en plan, et corrige son énoncé.
+Les fiches 126, 142, 224, 228 et 236 sont des réécritures, au niveau agrégation, de feuilles d'exercices de terminale S (2003), tirées des manuels *Hyperbole*, *Bréal*, *Terracher* et *Method'S*. Les énoncés faux de ces feuilles y sont signalés et corrigés. La fiche 222 reprend une note sur le théorème de Hille-Yosida écrite en décembre 2009, d'après le chapitre VII de Brezis : elle complète la preuve, que la note laissait en plan, et corrige son énoncé.
