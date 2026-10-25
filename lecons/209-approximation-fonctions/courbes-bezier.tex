@@ -1,0 +1,494 @@
+% Courbes de Bézier et polynômes de Bernstein
+% Compile avec pdflatex, xelatex ou lualatex.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+  \IfFileExists{lmodern.sty}{\usepackage{lmodern}}{}
+  \usepackage[french]{babel}
+\else
+  \usepackage{fontspec}
+  \usepackage{polyglossia}
+  \setdefaultlanguage{french}
+\fi
+\usepackage[margin=2.6cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{tikz}
+\input{../figures/tikz-setup.tex}
+\usepackage[hidelinks]{hyperref}
+\emergencystretch=1.5em
+
+% ---------- Environnements ----------
+\theoremstyle{plain}
+\newtheorem{theoreme}{Théorème}[section]
+\newtheorem{proposition}[theoreme]{Proposition}
+\newtheorem{lemme}[theoreme]{Lemme}
+\newtheorem{corollaire}[theoreme]{Corollaire}
+\theoremstyle{definition}
+\newtheorem{definition}[theoreme]{Définition}
+\newtheorem{exemple}[theoreme]{Exemple}
+\newtheorem{exercice}{Exercice}
+\theoremstyle{remark}
+\newtheorem{remarque}[theoreme]{Remarque}
+
+% ---------- Notations ----------
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathcal{C}}
+
+\title{Courbes de Bézier et polynômes de Bernstein\\[2pt]
+\large Dessiner avec des points de contrôle, approcher avec des barycentres}
+\author{Michel Hua, d'après un TIPE de classes préparatoires (juin 2006)}
+\date{Octobre 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Au début des années 1960, Pierre Bézier chez Renault et Paul de Casteljau chez Citroën cherchent à décrire des carrosseries par des données qu'une machine sache manipuler. Leur réponse commune est de définir une courbe non par des points qu'elle traverse, mais par un polygone qu'elle suit : la courbe est une moyenne pondérée des sommets, avec pour poids les polynômes de Bernstein. Ce choix de poids, positifs et de somme $1$, donne presque toutes les propriétés de la courbe. Elle reste dans l'enveloppe convexe du polygone et se transforme comme lui ; surtout, elle ne coupe jamais une droite plus souvent que lui. Les mêmes polynômes fournissent la démonstration de Bernstein du théorème de Weierstrass, et la comparaison avec l'interpolation de Lagrange (phénomène de Runge) explique pourquoi on préfère, en conception assistée par ordinateur, suivre un polygone plutôt que passer par des points.
+\end{abstract}
+
+\paragraph{Leçons concernées.} 209 (Approximation d'une fonction par des fonctions régulières. Exemples d'application), et en partie les leçons 181 (Convexité dans $\R^n$. Applications en algèbre et en géométrie) et 191 (Exemples d'utilisation de techniques d'algèbre en géométrie).
+
+\paragraph{Développements possibles.} Le théorème de Weierstrass par les polynômes de Bernstein, avec la vitesse $\omega(f,n^{-1/2})$ (théorème \ref{thm:weierstrass}) ; la diminution de la variation, par la règle des signes de Descartes (théorème \ref{thm:variation}) ; l'algorithme de de Casteljau et la subdivision (théorèmes \ref{thm:casteljau} et \ref{thm:subdivision}).
+
+\paragraph{Prérequis.} Barycentres et applications affines, base canonique de $\R_n[X]$, théorème de Rolle, continuité uniforme (théorème de Heine).
+
+\paragraph{Notations.} Les points du plan sont identifiés à des vecteurs de $\R^2$, ce qui donne un sens aux combinaisons $\sum\lambda_ia_i$ ; quand $\sum\lambda_i=1$, c'est le barycentre des $a_i$, qui ne dépend pas de l'origine choisie. Pour une suite finie de points, $\Delta a_i=a_{i+1}-a_i$ et $\Delta^ja_i=\Delta^{j-1}a_{i+1}-\Delta^{j-1}a_i$. On convient que $\binom nk=0$ si $k<0$ ou $k>n$.
+
+\tableofcontents
+
+% ==========================================================
+\section{Passer par des points, ou suivre un polygone}
+% ==========================================================
+
+Pour faire dessiner une courbe à une machine, l'idée la plus naturelle est d'en donner quelques points et de chercher le polynôme de plus bas degré qui passe par eux : c'est l'interpolation de Lagrange. Elle se comporte mal. Runge a montré en 1901 que, pour $f(x)=1/(1+25x^2)$ sur $[-1,1]$ et des points équidistants, l'écart maximal entre $f$ et son polynôme d'interpolation $P_n$ tend vers l'infini avec $n$ :
+
+\begin{center}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+$n$ & $5$ & $10$ & $20$ \\
+\midrule
+$\max_{[-1,1]}|f-P_n|$ & $0{,}43$ & $1{,}92$ & $59{,}8$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Ajouter des points dégrade le résultat, et déplacer un seul point fait bouger toute la courbe, parfois très loin de lui. Pour un dessinateur, c'est rédhibitoire.
+
+Bézier renverse le problème. On ne demande plus à la courbe de passer par les points donnés, seulement de les suivre de loin, comme une moyenne pondérée : en $t\in[0,1]$, la courbe est le barycentre des points $a_0,\dots,a_n$ affectés de poids qui varient avec $t$. Au départ, tout le poids est sur $a_0$ ; à l'arrivée, tout est sur $a_n$ ; entre les deux, il glisse d'un point au suivant. Les poids qui réalisent ce glissement de la façon la plus régulière sont les termes du binôme $\big((1-t)+t\big)^n$.
+
+% ==========================================================
+\section{Les polynômes de Bernstein}
+% ==========================================================
+
+\begin{definition}
+Pour $n\in\mathbb N$ et $0\leq i\leq n$, le $i$-ème \emph{polynôme de Bernstein} de degré $n$ est
+\[
+  B_{i,n}(t)=\binom ni\,t^i(1-t)^{n-i} .
+\]
+On pose $B_{i,n}=0$ si $i<0$ ou $i>n$.
+\end{definition}
+
+\begin{proposition}\label{prop:bernstein}
+\begin{enumerate}[nosep]
+\item \emph{Partition de l'unité.} $\sum_{i=0}^nB_{i,n}(t)=1$ pour tout $t$, et $B_{i,n}(t)\geq0$ pour $t\in[0,1]$.
+\item \emph{Symétrie.} $B_{i,n}(1-t)=B_{n-i,n}(t)$.
+\item \emph{Récurrence.} $B_{i,n}(t)=(1-t)\,B_{i,n-1}(t)+t\,B_{i-1,n-1}(t)$ pour $n\geq1$.
+\item \emph{Dérivée.} $B_{i,n}'(t)=n\big(B_{i-1,n-1}(t)-B_{i,n-1}(t)\big)$ pour $n\geq1$.
+\item \emph{Base.} $(B_{0,n},\dots,B_{n,n})$ est une base de $\R_n[X]$, et $t^j=\sum_{i=j}^n\frac{\binom ij}{\binom nj}B_{i,n}(t)$.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+1. C'est la formule du binôme pour $\big((1-t)+t\big)^n=1$ ; la positivité est claire.
+
+2. Il suffit d'échanger $t$ et $1-t$, avec $\binom ni=\binom n{n-i}$.
+
+3. La formule de Pascal $\binom ni=\binom{n-1}i+\binom{n-1}{i-1}$, multipliée par $t^i(1-t)^{n-i}$, donne exactement $B_{i,n}=(1-t)B_{i,n-1}+tB_{i-1,n-1}$. Les conventions aux bords ($i=0$ et $i=n$) sont compatibles.
+
+4. En dérivant le produit, $B_{i,n}'(t)=\binom ni\big(i\,t^{i-1}(1-t)^{n-i}-(n-i)\,t^i(1-t)^{n-i-1}\big)$, et l'on utilise $i\binom ni=n\binom{n-1}{i-1}$ et $(n-i)\binom ni=n\binom{n-1}i$.
+
+5. On écrit $t^j=t^j\big(t+(1-t)\big)^{n-j}=\sum_{k=0}^{n-j}\binom{n-j}k\,t^{j+k}(1-t)^{n-j-k}$ et l'on pose $i=j+k$. Comme $\binom{n-j}{i-j}\binom nj=\frac{n!}{j!\,(i-j)!\,(n-i)!}=\binom ni\binom ij$, le coefficient de $t^i(1-t)^{n-i}$ vaut $\binom ij\binom ni/\binom nj$, ce qui donne la formule. Les $n+1$ polynômes $B_{i,n}$ engendrent donc les $t^j$, c'est-à-dire tout $\R_n[X]$, qui est de dimension $n+1$ : ils en forment une base.
+\end{proof}
+
+% ==========================================================
+\section{Courbes de Bézier}
+% ==========================================================
+
+\begin{definition}
+La \emph{courbe de Bézier} de \emph{points de contrôle} $a_0,\dots,a_n\in\R^2$ est l'application
+\[
+  \C:[0,1]\to\R^2,\qquad \C(t)=\sum_{i=0}^na_i\,B_{i,n}(t) .
+\]
+La ligne brisée $a_0a_1\cdots a_n$ est son \emph{polygone de contrôle}, et $n$ est son \emph{degré}.
+\end{definition}
+
+D'après la proposition \ref{prop:bernstein}, $\C(t)$ est un barycentre à coefficients positifs des $a_i$. Pour $n=1$, on retrouve le segment $\C(t)=(1-t)a_0+ta_1$.
+
+\begin{exemple}\label{ex:quadratique}
+Pour $a_0=(1,2)$, $a_1=(4,-1)$, $a_2=(8,6)$, on obtient $\C(t)=(1-t)^2a_0+2t(1-t)a_1+t^2a_2$, soit
+\[
+  x(t)=1+6t+t^2,\qquad y(t)=2-6t+10t^2 .
+\]
+C'est un arc de parabole : toute courbe de Bézier de degré $2$ non dégénérée en est un.
+\end{exemple}
+
+\begin{proposition}\label{prop:proprietes}
+Soit $\C$ la courbe de Bézier de points de contrôle $a_0,\dots,a_n$.
+\begin{enumerate}[nosep]
+\item \emph{Enveloppe convexe.} $\C([0,1])$ est contenue dans l'enveloppe convexe de $\{a_0,\dots,a_n\}$.
+\item \emph{Extrémités.} $\C(0)=a_0$ et $\C(1)=a_n$.
+\item \emph{Invariance affine.} Pour toute application affine $\varphi:\R^2\to\R^2$, la courbe $\varphi\circ\C$ est la courbe de Bézier de points de contrôle $\varphi(a_0),\dots,\varphi(a_n)$.
+\item \emph{Dérivée.} $\C'(t)=n\sum_{i=0}^{n-1}\Delta a_i\,B_{i,n-1}(t)$. En particulier $\C'(0)=n(a_1-a_0)$ et $\C'(1)=n(a_n-a_{n-1})$ : la courbe est tangente à son polygone aux deux extrémités.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+1. et 2. viennent de la partition de l'unité, et de $B_{i,n}(0)=\delta_{i0}$, $B_{i,n}(1)=\delta_{in}$.
+
+3. Écrivons $\varphi(x)=Lx+b$ avec $L$ linéaire. Comme $\sum_iB_{i,n}(t)=1$,
+\[
+  \varphi(\C(t))=\sum_iB_{i,n}(t)\,La_i+\Big(\sum_iB_{i,n}(t)\Big)b=\sum_i\varphi(a_i)\,B_{i,n}(t) .
+\]
+Sans la condition $\sum B_{i,n}=1$, la translation $b$ ne passerait pas : c'est elle qui rend la construction indépendante du repère.
+
+4. D'après la proposition \ref{prop:bernstein},
+\[
+  \C'(t)=n\sum_{i=0}^na_i\big(B_{i-1,n-1}(t)-B_{i,n-1}(t)\big)=n\sum_{i=0}^{n-1}a_{i+1}B_{i,n-1}(t)-n\sum_{i=0}^{n-1}a_iB_{i,n-1}(t),
+\]
+en décalant l'indice dans la première somme et en utilisant $B_{-1,n-1}=B_{n,n-1}=0$.
+\end{proof}
+
+\begin{remarque}
+L'invariance affine a une conséquence pratique : pour tourner, agrandir ou translater une courbe, il suffit de transformer ses $n+1$ points de contrôle, et non chacun des points calculés pour le tracé. Elle ne s'étend pas aux projections centrales (perspective) : pour celles-ci, il faut les courbes de Bézier rationnelles de l'exercice \ref{exo:cercle}.
+\end{remarque}
+
+\paragraph{Changement de base.} Toute courbe polynomiale de degré au plus $n$ est une courbe de Bézier. Si $\C(t)=\sum_jb_jt^j$, la proposition \ref{prop:bernstein} donne ses points de contrôle :
+\[
+  a_i=\sum_{j=0}^i\frac{\binom ij}{\binom nj}\,b_j .
+\]
+Inversement, en développant $(1-t)^{n-i}$ dans $B_{i,n}$ et en utilisant à nouveau $\binom ni\binom{n-i}{j-i}=\binom nj\binom ji$,
+\[
+  b_j=\binom nj\sum_{i=0}^j(-1)^{j-i}\binom ji\,a_i=\binom nj\,\Delta^ja_0 .
+\]
+On retrouve $\C'(0)=b_1=n\,\Delta a_0$, et plus généralement $\C^{(j)}(0)=\frac{n!}{(n-j)!}\Delta^ja_0$.
+
+\begin{remarque}
+Le TIPE donnait $b_i=\sum_j(-1)^{i+j}\binom ni/\binom ij\,a_j$, et une matrice de passage dont le premier coefficient valait $\binom n1$ au lieu de $1$. La formule correcte multiplie par $\binom ji$ au lieu de diviser ; pour $n=2$ et $j=2$, elle donne $b_2=a_0-2a_1+a_2$, ce que l'on vérifie sur l'exemple \ref{ex:quadratique} : $(1,2)-2(4,-1)+(8,6)=(1,10)$, le coefficient de $t^2$.
+\end{remarque}
+
+% ==========================================================
+\section{L'algorithme de de Casteljau}
+% ==========================================================
+
+Calculer $\C(t)$ par la définition demande les coefficients binomiaux et les puissances de $t$ et $1-t$. Paul de Casteljau a trouvé une construction purement géométrique, qui n'utilise que des milieux généralisés.
+
+\begin{theoreme}[de Casteljau]\label{thm:casteljau}
+Soit $t\in[0,1]$. On pose $a_i^0=a_i$ pour $0\leq i\leq n$, puis, pour $1\leq j\leq n$ et $0\leq i\leq n-j$,
+\[
+  a_i^j=(1-t)\,a_i^{j-1}+t\,a_{i+1}^{j-1} .
+\]
+Alors $a_i^j=\sum_{k=0}^ja_{i+k}B_{k,j}(t)$ pour tous $i,j$, et en particulier $\C(t)=a_0^n$.
+\end{theoreme}
+
+\begin{proof}
+Par récurrence sur $j$ ; le cas $j=0$ est la définition. Si la formule est vraie au rang $j-1$,
+\[
+  a_i^j=(1-t)\sum_{k=0}^{j-1}a_{i+k}B_{k,j-1}(t)+t\sum_{k=1}^{j}a_{i+k}B_{k-1,j-1}(t)
+  =\sum_{k=0}^ja_{i+k}\big((1-t)B_{k,j-1}(t)+tB_{k-1,j-1}(t)\big),
+\]
+avec les conventions $B_{j,j-1}=B_{-1,j-1}=0$, et la récurrence de la proposition \ref{prop:bernstein} conclut. Pour $i=0$ et $j=n$, on trouve $\C(t)$.
+\end{proof}
+
+Chaque étape remplace un polygone à $m$ sommets par le polygone à $m-1$ sommets obtenu en coupant chaque côté dans le rapport $t:(1-t)$ ; au bout de $n$ étapes, il reste un point, qui est sur la courbe (figure \ref{fig:casteljau}). Le calcul ne fait que des barycentres à coefficients dans $[0,1]$ : aucune soustraction de grands nombres voisins, donc une grande stabilité numérique.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=1.8,
+  pt/.style={circle,fill,inner sep=1.3pt},every label/.style={font=\small}]
+  \coordinate (a0) at (0,0);
+  \coordinate (a1) at (1,2.6);
+  \coordinate (a2) at (3.8,2.8);
+  \coordinate (a3) at (5,0.2);
+  \coordinate (b0) at ($(a0)!0.4!(a1)$);
+  \coordinate (b1) at ($(a1)!0.4!(a2)$);
+  \coordinate (b2) at ($(a2)!0.4!(a3)$);
+  \coordinate (c0) at ($(b0)!0.4!(b1)$);
+  \coordinate (c1) at ($(b1)!0.4!(b2)$);
+  \coordinate (d0) at ($(c0)!0.4!(c1)$);
+  \draw[gray,dashed] (a0) -- (a1) -- (a2) -- (a3);
+  \draw[gray] (b0) -- (b1) -- (b2);
+  \draw[gray] (c0) -- (c1);
+  \draw[very thick] (a0) .. controls (a1) and (a2) .. (a3);
+  \draw[accent2,very thick,densely dotted] (a0) -- (b0) -- (c0) -- (d0);
+  \foreach \p/\l/\pos in {a0/a_0/below left,a1/a_1/above left,a2/a_2/above right,a3/a_3/below right} \node[pt,label={\pos:$\l$}] at (\p) {};
+  \foreach \p/\l/\pos in {b0/a_0^1/left,b1/a_1^1/above,b2/a_2^1/right} \node[pt,gray,label={[gray]\pos:$\l$}] at (\p) {};
+  \foreach \p/\l/\pos in {c0/a_0^2/left,c1/a_1^2/above right} \node[pt,gray,label={[gray]\pos:$\l$}] at (\p) {};
+  \node[pt,accent,label={[accent,label distance=6pt]below right:$a_0^3=\mathcal{C}(0{,}4)$}] at (d0) {};
+\end{tikzpicture}
+\caption{L'algorithme de de Casteljau pour une courbe de degré $3$ et $t=0{,}4$. En pointillés : $a_0,a_0^1,a_0^2,a_0^3$, polygone de contrôle de la portion de courbe parcourue pour $t\in[0;0{,}4]$ (théorème \ref{thm:subdivision}).}\label{fig:casteljau}
+\end{figure}
+
+\begin{exemple}
+Pour la courbe de l'exemple \ref{ex:quadratique} et $t=\frac12$ : $a_0^1=(2{,}5\,;\,0{,}5)$, $a_1^1=(6\,;\,2{,}5)$, puis $a_0^2=(4{,}25\,;\,1{,}5)$, qui est bien $(x(\frac12),y(\frac12))$.
+\end{exemple}
+
+\begin{remarque}[coût]
+Le schéma de de Casteljau fait $n(n+1)/2$ combinaisons par point calculé, soit un coût quadratique en le degré. Le TIPE mesurait sous Maple un temps quadratique pour de Casteljau et linéaire pour l'évaluation par la formule, et en concluait que le calcul sur les polynômes se fait en temps linéaire. La conclusion est à nuancer : calculer les $B_{i,n}(t)$ par la récurrence de Pascal coûte aussi de l'ordre de $n^2$ opérations ; une évaluation en $O(n)$ existe, par un schéma de Horner adapté à la base de Bernstein, mais les écarts mesurés tenaient surtout au coût du calcul formel. En pratique, les degrés utilisés sont petits ($2$ ou $3$), et l'on choisit de Casteljau pour sa stabilité et pour la subdivision qui suit.
+\end{remarque}
+
+\begin{theoreme}[subdivision]\label{thm:subdivision}
+Soit $\alpha\in\,]0,1[$ et $a_i^j$ les points de l'algorithme de de Casteljau pour $t=\alpha$. Les deux portions de $\C$,
+\[
+  \C_g(s)=\C(\alpha s)\quad\text{et}\quad\C_d(s)=\C\big(\alpha+(1-\alpha)s\big),\qquad s\in[0,1],
+\]
+sont les courbes de Bézier de points de contrôle respectifs $a_0^0,a_0^1,\dots,a_0^n$ et $a_0^n,a_1^{n-1},\dots,a_n^0$.
+\end{theoreme}
+
+\begin{proof}
+Montrons d'abord l'identité
+\[
+  B_{i,n}(\alpha s)=\sum_{j=i}^nB_{i,j}(\alpha)\,B_{j,n}(s) .
+\]
+On écrit $1-\alpha s=(1-s)+s(1-\alpha)$ et l'on développe :
+\[
+  B_{i,n}(\alpha s)=\binom ni\alpha^is^i\sum_{m=0}^{n-i}\binom{n-i}m(1-\alpha)^ms^m(1-s)^{n-i-m} .
+\]
+Avec $j=i+m$ et $\binom ni\binom{n-i}{j-i}=\binom nj\binom ji$, le terme général vaut $\binom ji\alpha^i(1-\alpha)^{j-i}\cdot\binom njs^j(1-s)^{n-j}=B_{i,j}(\alpha)B_{j,n}(s)$.
+
+On en déduit
+\[
+  \C_g(s)=\sum_{i=0}^na_i\sum_{j=i}^nB_{i,j}(\alpha)B_{j,n}(s)=\sum_{j=0}^n\Big(\sum_{i=0}^ja_iB_{i,j}(\alpha)\Big)B_{j,n}(s)=\sum_{j=0}^na_0^j\,B_{j,n}(s),
+\]
+la dernière égalité étant le théorème \ref{thm:casteljau} pour $i=0$. Pour $\C_d$, on applique ce résultat à la courbe parcourue en sens inverse, $s\mapsto\C(1-s)$, qui est la courbe de Bézier de points $a_n,\dots,a_0$ (symétrie des $B_{i,n}$), au paramètre $1-\alpha$ : les points de de Casteljau correspondants sont les $a_{n-j}^j$ lus dans l'autre sens.
+\end{proof}
+
+La subdivision rend la courbe découpable sans changer de nature, et elle donne un tracé récursif : on coupe en $\alpha=\frac12$ jusqu'à ce que chaque polygone de contrôle soit presque plat, puis on trace les polygones. Comme ces polygones convergent vers la courbe, c'est l'algorithme de tracé le plus utilisé.
+
+% ==========================================================
+\section{La courbe ne zigzague pas plus que son polygone}
+% ==========================================================
+
+Le TIPE admettait la propriété suivante ; elle se démontre avec un outil classique, la règle des signes de Descartes.
+
+\begin{lemme}[règle des signes de Descartes]\label{lem:descartes}
+Soit $p(u)=\sum_{i=0}^dc_iu^i$ un polynôme réel non nul. Le nombre $Z(p)$ de ses racines dans $]0,+\infty[$, comptées avec multiplicité, est au plus le nombre $V(c)$ de changements de signe de la suite $(c_0,\dots,c_d)$, les termes nuls étant ignorés.
+\end{lemme}
+
+\begin{proof}
+On peut supposer $c_0\neq0$ et $c_d\neq0$ : diviser par une puissance de $u$ ne change ni $Z$ ni $V$. Commençons par une remarque de parité. Le signe de $p$ en $0^+$ est celui de $c_0$, et en $+\infty$ celui de $c_d$ ; chaque racine positive de multiplicité impaire fait changer le signe de $p$, donc $Z(p)$ est pair si et seulement si $c_0$ et $c_d$ ont le même signe, c'est-à-dire si et seulement si $V(c)$ est pair. Ainsi $Z(p)\equiv V(c)\pmod2$.
+
+On raisonne alors par récurrence sur $d$ ; pour $d=0$, $Z=V=0$. Si $d\geq1$, le polynôme $p'$ a pour coefficients $(c_1,2c_2,\dots,dc_d)$, de mêmes signes que $(c_1,\dots,c_d)$ : on a perdu au plus un changement de signe, donc $V(p')\leq V(c)$. D'autre part, une racine de multiplicité $m$ de $p$ est racine de multiplicité $m-1$ de $p'$, et le théorème de Rolle fournit une racine de $p'$ strictement entre deux racines positives consécutives de $p$ ; d'où $Z(p')\geq Z(p)-1$. Avec l'hypothèse de récurrence,
+\[
+  Z(p)\leq Z(p')+1\leq V(p')+1\leq V(c)+1,
+\]
+et la parité exclut $Z(p)=V(c)+1$.
+\end{proof}
+
+\begin{theoreme}[diminution de la variation]\label{thm:variation}
+Soit $\C$ une courbe de Bézier de points de contrôle $a_0,\dots,a_n$, et $D$ une droite qui ne contient pas $\C$. Le nombre de paramètres $t\in\,]0,1[$ tels que $\C(t)\in D$, comptés avec multiplicité, est au plus le nombre de points communs à $D$ et au polygone de contrôle.
+\end{theoreme}
+
+\begin{proof}
+Soit $\ell$ une forme affine telle que $D=\{\ell=0\}$. Par invariance affine (le même calcul qu'à la proposition \ref{prop:proprietes}, avec une forme affine à la place de $\varphi$), $q(t)=\ell(\C(t))=\sum_ic_iB_{i,n}(t)$ avec $c_i=\ell(a_i)$, et $q\neq0$. Pour $t\in\,]0,1[$, posons $u=t/(1-t)\in\,]0,+\infty[$ ; alors
+\[
+  q(t)=(1-t)^n\sum_{i=0}^nc_i\binom ni u^i .
+\]
+Les zéros de $q$ dans $]0,1[$ correspondent, avec leurs multiplicités, aux racines positives du polynôme en $u$, dont les coefficients $c_i\binom ni$ ont les signes des $c_i$. Le lemme \ref{lem:descartes} les majore par le nombre de changements de signe de $(c_0,\dots,c_n)$, Enfin, si $c_i$ et $c_k$ sont deux valeurs non nulles de signes opposés, consécutives parmi les valeurs non nulles, la ligne $a_i\cdots a_k$ passe d'un côté de $D$ à l'autre et la rencontre donc en au moins un point ; ces lignes n'ont en commun que des sommets hors de $D$, si bien que le polygone a au moins autant de points communs avec $D$ que la suite $(c_i)$ a de changements de signe.
+\end{proof}
+
+En particulier, une courbe dont le polygone de contrôle est convexe ne coupe une droite qu'en deux points au plus : elle est elle-même convexe, au sens où aucune droite ne la coupe en plus de deux points. On peut dessiner une courbe sage en dessinant un polygone sage, et c'est ce qui rend la méthode utilisable par quelqu'un qui n'a jamais entendu parler de polynômes.
+
+% ==========================================================
+\section{Approcher une fonction : Bernstein et Weierstrass}
+% ==========================================================
+
+Plaçons les points de contrôle sur le graphe d'une fonction $f:[0,1]\to\R$, aux abscisses régulières : $a_k=\big(\frac kn,f(\frac kn)\big)$. La première coordonnée de la courbe de Bézier vaut $\sum_k\frac knB_{k,n}(t)=t$ (lemme ci-dessous), si bien que la courbe est le graphe du polynôme
+\[
+  B_nf(t)=\sum_{k=0}^nf\Big(\frac kn\Big)B_{k,n}(t) .
+\]
+C'est le \emph{polynôme de Bernstein} de $f$. Bernstein l'a introduit en 1912, avec une lecture probabiliste : si $S_n$ suit la loi binomiale de paramètres $n$ et $t$, alors $B_nf(t)=\mathbb E\big[f(S_n/n)\big]$, et la loi des grands nombres suggère que cette espérance tend vers $f(t)$.
+
+\begin{lemme}\label{lem:moments}
+Pour tout $t$, $\sum_k\frac knB_{k,n}(t)=t$ et $\sum_k\big(t-\frac kn\big)^2B_{k,n}(t)=\frac{t(1-t)}n$.
+\end{lemme}
+
+\begin{proof}
+D'après la proposition \ref{prop:bernstein} (formule de changement de base), $t=\sum_k\frac{\binom k1}{\binom n1}B_{k,n}=\sum_k\frac knB_{k,n}$ et $t^2=\sum_k\frac{k(k-1)}{n(n-1)}B_{k,n}$ pour $n\geq2$. Donc $\sum_k\frac{k^2}{n^2}B_{k,n}=\frac{n-1}nt^2+\frac tn$, et en développant le carré, $\sum_k(t-\frac kn)^2B_{k,n}=t^2-2t^2+\frac{n-1}nt^2+\frac tn=\frac{t(1-t)}n$. Le cas $n=1$ se vérifie directement.
+\end{proof}
+
+\begin{theoreme}[Weierstrass, preuve de Bernstein]\label{thm:weierstrass}
+Pour toute $f$ continue sur $[0,1]$, $B_nf$ converge uniformément vers $f$. Plus précisément, si $\omega$ est le module de continuité de $f$,
+\[
+  \|B_nf-f\|_\infty\leq\frac54\,\omega\big(n^{-1/2}\big) .
+\]
+\end{theoreme}
+
+\begin{proof}
+Fixons $t$ et $\delta>0$. Montrons d'abord que $|f(x)-f(y)|\leq\omega(\delta)\big(1+(x-y)^2/\delta^2\big)$. Si $|x-y|\leq\delta$, c'est la définition de $\omega$. Sinon, $|x-y|=\lambda\delta$ avec $\lambda>1$ ; en découpant $[x,y]$ en $\lceil\lambda\rceil$ morceaux de longueur au plus $\delta$, on obtient $|f(x)-f(y)|\leq\lceil\lambda\rceil\,\omega(\delta)\leq(1+\lambda)\,\omega(\delta)\leq(1+\lambda^2)\,\omega(\delta)$.
+
+Par la partition de l'unité, $B_nf(t)-f(t)=\sum_k\big(f(\frac kn)-f(t)\big)B_{k,n}(t)$, et le lemme \ref{lem:moments} donne
+\[
+  |B_nf(t)-f(t)|\leq\omega(\delta)\sum_k\Big(1+\frac{(t-k/n)^2}{\delta^2}\Big)B_{k,n}(t)=\omega(\delta)\Big(1+\frac{t(1-t)}{n\delta^2}\Big)\leq\omega(\delta)\Big(1+\frac1{4n\delta^2}\Big) .
+\]
+Le choix $\delta=n^{-1/2}$ donne la borne annoncée. Comme $f$ est uniformément continue (théorème de Heine), $\omega(\delta)\to0$ quand $\delta\to0$, d'où la convergence uniforme.
+\end{proof}
+
+\begin{remarque}
+La convergence est lente : pour $f(t)=t^2$, on trouve $B_nf(t)=t^2+\frac{t(1-t)}n$ (exercice \ref{exo:carre}), donc une erreur exactement égale à $\frac1{4n}$ en $t=\frac12$, alors que l'interpolation de Lagrange reproduit $t^2$ exactement dès trois points. La méthode de Bernstein échange la précision contre la robustesse : elle converge pour toute fonction continue, et l'opérateur $f\mapsto B_nf$ est positif et préserve la monotonie et la convexité, ce que l'interpolation ne fait pas.
+\end{remarque}
+
+\begin{exemple}\label{ex:runge}
+Pour la fonction de Runge $f(x)=1/(1+25x^2)$, ramenée de $[-1,1]$ à $[0,1]$ par le changement de variable affine, l'erreur de Bernstein décroît, lentement mais sûrement, quand celle de Lagrange explose (figure \ref{fig:runge}) :
+
+\begin{center}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+$n$ & $5$ & $10$ & $20$ & $40$ & $80$ & $160$ \\
+\midrule
+$\max|f-B_nf|$ & $0{,}65$ & $0{,}49$ & $0{,}38$ & $0{,}27$ & $0{,}18$ & $0{,}11$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+L'erreur est atteinte en $0$, où $f$ a sa courbure la plus forte ; elle se comporte en $O(1/n)$, comme pour $t^2$.
+\end{exemple}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[xscale=3.2,yscale=1.6]
+  \draw[->,gray] (-1.1,0) -- (1.15,0) node[right] {$x$};
+  \draw[->,gray] (0,-0.4) -- (0,2.1);
+  \foreach \x in {-1,1} \node[below,font=\small] at (\x,0) {$\x$};
+  \node[left,font=\small] at (-0.06,1) {$1$};
+  \draw[gray!40] (-0.03,1) -- (0.03,1);
+  \draw[accent2,thick] plot coordinates {(-1.00,0.038) (-0.96,1.804) (-0.92,1.846) (-0.88,1.240) (-0.84,0.560) (-0.80,0.059) (-0.76,-0.201) (-0.72,-0.255) (-0.68,-0.174) (-0.64,-0.036) (-0.60,0.100) (-0.56,0.199) (-0.52,0.247) (-0.48,0.251) (-0.44,0.228) (-0.40,0.200) (-0.36,0.189) (-0.32,0.210) (-0.28,0.271) (-0.24,0.371) (-0.20,0.500) (-0.16,0.643) (-0.12,0.782) (-0.08,0.897) (-0.04,0.973) (0.00,1.000) (0.04,0.973) (0.08,0.897) (0.12,0.782) (0.16,0.643) (0.20,0.500) (0.24,0.371) (0.28,0.271) (0.32,0.210) (0.36,0.189) (0.40,0.200) (0.44,0.228) (0.48,0.251) (0.52,0.247) (0.56,0.199) (0.60,0.100) (0.64,-0.036) (0.68,-0.174) (0.72,-0.255) (0.76,-0.201) (0.80,0.059) (0.84,0.560) (0.88,1.240) (0.92,1.846) (0.96,1.804) (1.00,0.038)};
+  \draw[accent,thick] plot coordinates {(-1.00,0.038) (-0.96,0.043) (-0.92,0.048) (-0.88,0.055) (-0.84,0.064) (-0.80,0.074) (-0.76,0.087) (-0.72,0.102) (-0.68,0.120) (-0.64,0.141) (-0.60,0.164) (-0.56,0.189) (-0.52,0.217) (-0.48,0.246) (-0.44,0.277) (-0.40,0.308) (-0.36,0.339) (-0.32,0.370) (-0.28,0.399) (-0.24,0.425) (-0.20,0.449) (-0.16,0.470) (-0.12,0.486) (-0.08,0.498) (-0.04,0.506) (0.00,0.508) (0.04,0.506) (0.08,0.498) (0.12,0.486) (0.16,0.470) (0.20,0.449) (0.24,0.425) (0.28,0.399) (0.32,0.370) (0.36,0.339) (0.40,0.308) (0.44,0.277) (0.48,0.246) (0.52,0.217) (0.56,0.189) (0.60,0.164) (0.64,0.141) (0.68,0.120) (0.72,0.102) (0.76,0.087) (0.80,0.074) (0.84,0.064) (0.88,0.055) (0.92,0.048) (0.96,0.043) (1.00,0.038)};
+  \draw[very thick] plot coordinates {(-1.00,0.038) (-0.96,0.042) (-0.92,0.045) (-0.88,0.049) (-0.84,0.054) (-0.80,0.059) (-0.76,0.065) (-0.72,0.072) (-0.68,0.080) (-0.64,0.089) (-0.60,0.100) (-0.56,0.113) (-0.52,0.129) (-0.48,0.148) (-0.44,0.171) (-0.40,0.200) (-0.36,0.236) (-0.32,0.281) (-0.28,0.338) (-0.24,0.410) (-0.20,0.500) (-0.16,0.610) (-0.12,0.735) (-0.08,0.862) (-0.04,0.962) (0.00,1.000) (0.04,0.962) (0.08,0.862) (0.12,0.735) (0.16,0.610) (0.20,0.500) (0.24,0.410) (0.28,0.338) (0.32,0.281) (0.36,0.236) (0.40,0.200) (0.44,0.171) (0.48,0.148) (0.52,0.129) (0.56,0.113) (0.60,0.100) (0.64,0.089) (0.68,0.080) (0.72,0.072) (0.76,0.065) (0.80,0.059) (0.84,0.054) (0.88,0.049) (0.92,0.045) (0.96,0.042) (1.00,0.038)};
+  \foreach \p in {(-1.0,0.038),(-0.8,0.059),(-0.6,0.100),(-0.4,0.200),(-0.2,0.500),(0.0,1.000),(0.2,0.500),(0.4,0.200),(0.6,0.100),(0.8,0.059),(1.0,0.038)} \fill \p circle (0.6pt);
+  \node[right,font=\small] at (0.2,0.62) {$f$};
+  \node[accent2,font=\small] at (0.72,1.75) {Lagrange $P_{10}$};
+  \node[accent,font=\small] at (-0.55,0.5) {Bernstein $B_{10}f$};
+\end{tikzpicture}
+\caption{La fonction de Runge, son polynôme d'interpolation de Lagrange aux $11$ points équidistants marqués, et son polynôme de Bernstein de degré $10$ construit sur les mêmes valeurs.}\label{fig:runge}
+\end{figure}
+
+% ==========================================================
+\section{Raccorder des morceaux}
+% ==========================================================
+
+Les courbes de degré élevé suivent leur polygone de plus en plus mollement, et chaque point de contrôle agit sur toute la courbe. En pratique, on raccorde des courbes de petit degré, souvent $3$. Soit $t_0<t_1<\dots<t_r$ et, pour chaque $j$, une courbe de Bézier de degré $n$ reparamétrée sur $[t_j,t_{j+1}]$, de longueur $h_j=t_{j+1}-t_j$ :
+\[
+  \C_j(t)=\sum_{i=0}^na_i^{(j)}B_{i,n}\Big(\frac{t-t_j}{h_j}\Big) .
+\]
+
+\begin{proposition}\label{prop:raccord}
+La courbe obtenue en mettant bout à bout les $\C_j$ est continue en $t_{j+1}$ si et seulement si $a_n^{(j)}=a_0^{(j+1)}$, et de classe $C^1$ en $t_{j+1}$ si et seulement si, de plus,
+\[
+  \frac{a_n^{(j)}-a_{n-1}^{(j)}}{h_j}=\frac{a_1^{(j+1)}-a_0^{(j+1)}}{h_{j+1}} .
+\]
+Si $h_j=h_{j+1}$, cette condition s'écrit $a_1^{(j+1)}=2a_n^{(j)}-a_{n-1}^{(j)}$ : le point de jonction est le milieu de $a_{n-1}^{(j)}$ et $a_1^{(j+1)}$.
+\end{proposition}
+
+\begin{proof}
+Les extrémités sont données par la proposition \ref{prop:proprietes}, et la dérivée de $\C_j$ en $t_{j+1}$ vaut $\frac n{h_j}\big(a_n^{(j)}-a_{n-1}^{(j)}\big)$, celle de $\C_{j+1}$ en $t_{j+1}$ vaut $\frac n{h_{j+1}}\big(a_1^{(j+1)}-a_0^{(j+1)}\big)$, par dérivation composée.
+\end{proof}
+
+\begin{remarque}
+Le TIPE énonçait la condition $a_1^{(j+1)}=2a_n^{(j)}-a_{n-1}^{(j)}$ sans dire qu'elle suppose des intervalles de même longueur. Pour le dessin, on se contente souvent de la continuité de la tangente (raccord $G^1$) : les trois points $a_{n-1}^{(j)}$, $a_n^{(j)}=a_0^{(j+1)}$, $a_1^{(j+1)}$ alignés dans cet ordre, sans condition sur les longueurs. C'est ainsi que sont décrits les caractères des polices PostScript (morceaux de degré $3$) et TrueType (degré $2$), et c'est ce que faisait le TIPE en dessinant à la main un caractère d'imprimerie avec une vingtaine de morceaux de degré $1$ et $2$.
+\end{remarque}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=1.1,pt/.style={circle,fill,inner sep=1.3pt}]
+  \coordinate (a0) at (0,0);
+  \coordinate (a1) at (0.8,1.8);
+  \coordinate (a2) at (2.4,2.0);
+  \coordinate (a3) at (3.4,1.2);
+  \coordinate (b1) at (4.4,0.4);
+  \coordinate (b2) at (5.6,-0.4);
+  \coordinate (b3) at (6.8,0.8);
+  \draw[gray,dashed] (a0) -- (a1) -- (a2);
+  \draw[gray,dashed] (b1) -- (b2) -- (b3);
+  \draw[accent2,thick] (a2) -- (b1);
+  \draw[very thick] (a0) .. controls (a1) and (a2) .. (a3);
+  \draw[very thick,accent] (a3) .. controls (b1) and (b2) .. (b3);
+  \foreach \p/\l/\pos in {a0/a_0^{(0)}/below,a1/a_1^{(0)}/above left,a2/a_2^{(0)}/above,b2/a_2^{(1)}/below,b3/a_3^{(1)}/below right} \node[pt,label={\pos:$\l$}] at (\p) {};
+  \node[pt,label={above right:$a_3^{(0)}=a_0^{(1)}$}] at (a3) {};
+  \node[pt,label={below left:$a_1^{(1)}$}] at (b1) {};
+\end{tikzpicture}
+\caption{Raccord $C^1$ de deux courbes de degré $3$ sur des intervalles de même longueur : $a_3^{(0)}$ est le milieu de $a_2^{(0)}$ et $a_1^{(1)}$.}\label{fig:raccord}
+\end{figure}
+
+\paragraph{Une limite : le cercle.} Aucun arc de cercle non réduit à un point n'est une courbe de Bézier. Supposons en effet $x(t)^2+y(t)^2=1$ sur un intervalle, avec $x,y$ polynomiales ; c'est alors une identité entre polynômes. Si $d=\max(\deg x,\deg y)\geq1$ et si $\alpha,\beta$ sont les coefficients de $t^d$ dans $x$ et $y$, non tous deux nuls, le coefficient de $t^{2d}$ dans $x^2+y^2$ vaut $\alpha^2+\beta^2>0$ : contradiction. Les coniques demandent des poids, c'est-à-dire des courbes de Bézier rationnelles (exercice \ref{exo:cercle}), qui mènent aux B-splines rationnelles (NURBS) des logiciels actuels.
+
+% ==========================================================
+\section{Exercices}
+% ==========================================================
+
+\begin{exercice}\label{exo:carre}
+Calculer $B_nf$ pour $f(t)=t^2$ et pour $f(t)=t^3$. En déduire que $\|B_nf-f\|_\infty=\frac1{4n}$ pour $f(t)=t^2$.
+\end{exercice}
+
+\begin{exercice}\label{exo:elevation}
+\emph{Élévation du degré.} Montrer qu'une courbe de Bézier de degré $n$ et de points $a_0,\dots,a_n$ est aussi la courbe de Bézier de degré $n+1$ de points
+\[
+  a'_i=\frac i{n+1}\,a_{i-1}+\Big(1-\frac i{n+1}\Big)a_i,\qquad0\leq i\leq n+1 .
+\]
+\end{exercice}
+
+\begin{exercice}\label{exo:cercle}
+\emph{Un quart de cercle rationnel.} Soit $a_0=(1,0)$, $a_1=(1,1)$, $a_2=(0,1)$ et des poids $w_0=w_2=1$, $w_1=\frac{\sqrt2}2$. Montrer que
+\[
+  R(t)=\frac{\sum_iw_ia_iB_{i,2}(t)}{\sum_iw_iB_{i,2}(t)}
+\]
+parcourt le quart de cercle unité de $(1,0)$ à $(0,1)$ quand $t$ décrit $[0,1]$.
+\end{exercice}
+
+\begin{exercice}\label{exo:monotonie}
+Montrer que si $f$ est croissante sur $[0,1]$, alors $B_nf$ l'est aussi. \emph{Indication :} utiliser la formule de la dérivée de la proposition \ref{prop:bernstein}.
+\end{exercice}
+
+% ==========================================================
+\section{Corrigés}
+% ==========================================================
+
+\paragraph{Exercice 1.} Le lemme \ref{lem:moments} donne $\sum_k\frac{k^2}{n^2}B_{k,n}(t)=t^2+\frac{t(1-t)}n$. Pour $t^3$, la formule de changement de base donne $t^3=\sum_k\frac{k(k-1)(k-2)}{n(n-1)(n-2)}B_{k,n}$, et en écrivant $k^3=k(k-1)(k-2)+3k(k-1)+k$,
+\[
+  B_n(t^3)=\frac{(n-1)(n-2)}{n^2}t^3+\frac{3(n-1)}{n^2}t^2+\frac t{n^2} .
+\]
+Pour $f(t)=t^2$, l'erreur $\frac{t(1-t)}n$ est maximale en $t=\frac12$, où elle vaut $\frac1{4n}$.
+
+\paragraph{Exercice 2.} On multiplie $\C(t)$ par $1=(1-t)+t$. Comme $(1-t)B_{i,n}(t)=\frac{n+1-i}{n+1}B_{i,n+1}(t)$ et $tB_{i,n}(t)=\frac{i+1}{n+1}B_{i+1,n+1}(t)$,
+\[
+  \C(t)=\sum_{i=0}^na_i\Big(\frac{n+1-i}{n+1}B_{i,n+1}+\frac{i+1}{n+1}B_{i+1,n+1}\Big)=\sum_{i=0}^{n+1}\Big(\frac{n+1-i}{n+1}a_i+\frac i{n+1}a_{i-1}\Big)B_{i,n+1},
+\]
+avec $a_{-1}=a_{n+1}=0$ (leurs coefficients sont nuls). Les nouveaux points sont sur les côtés de l'ancien polygone ; en répétant l'opération, les polygones convergent vers la courbe.
+
+\paragraph{Exercice 3.} Posons $s=t(1-t)$, $A=(1-t)^2$, $B=t^2$. Le numérateur vaut $(x,y)=(A+\sqrt2\,s,\ B+\sqrt2\,s)$ et le dénominateur $D=A+B+\sqrt2\,s$. Alors
+\[
+  x^2+y^2-D^2=2s^2-2AB=2t^2(1-t)^2-2t^2(1-t)^2=0,
+\]
+donc $R(t)$ est sur le cercle unité. Ses coordonnées sont positives, $R(0)=(1,0)$, $R(1)=(0,1)$, et $R$ est continue : par le théorème des valeurs intermédiaires appliqué à l'angle polaire, $R$ parcourt tout le quart de cercle.
+
+\paragraph{Exercice 4.} Par la proposition \ref{prop:bernstein},
+\[
+  (B_nf)'(t)=n\sum_{k=0}^{n-1}\Big(f\Big(\frac{k+1}n\Big)-f\Big(\frac kn\Big)\Big)B_{k,n-1}(t),
+\]
+somme de termes positifs sur $[0,1]$ si $f$ est croissante. Le même calcul à l'ordre $2$ montre que $B_nf$ est convexe si $f$ l'est.
+
+\begin{thebibliography}{9}
+\bibitem{rabut} C. Rabut, \emph{Petite histoire d'une idée bizarre : les courbes et les surfaces de Bézier}, actes de la journée en hommage à Pierre Bézier, ENSAM, 2000.
+\bibitem{marsh} D. Marsh, \emph{Applied Geometry for Computer Graphics and CAD}, Springer, 2005, chapitres 6 et 7.
+\bibitem{farin} G. Farin, \emph{Curves and Surfaces for CAGD: A Practical Guide}, cinquième édition, Morgan Kaufmann, 2002.
+\bibitem{bernstein} S. Bernstein, \emph{Démonstration du théorème de Weierstrass fondée sur le calcul des probabilités}, Communications de la Société mathématique de Kharkov 13 (1912), pp. 1-2.
+\bibitem{lorentz} G. G. Lorentz, \emph{Bernstein Polynomials}, deuxième édition, Chelsea, 1986.
+\end{thebibliography}
+
+\paragraph{Source.} TIPE « Les courbes de Bézier », classes préparatoires, juin 2006, avec ses procédures Maple de tracé. Les exemples ont été recalculés. La fiche démontre la diminution de la variation, que le TIPE admettait, ajoute le théorème de Weierstrass par les polynômes de Bernstein, et corrige la formule de passage de la base canonique à la base de Bernstein, la condition de raccord $C^1$ (qui suppose des intervalles de même longueur) et l'analyse du coût des algorithmes de tracé.
+
+\end{document}

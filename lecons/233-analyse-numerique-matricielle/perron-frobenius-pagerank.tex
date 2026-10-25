@@ -50,12 +50,12 @@
 \maketitle
 
 \begin{abstract}
-Un moteur de recherche trouve des milliers de pages pour une requête ; il faut encore les ranger. L'idée de Brin et Page (1998) est de lire l'importance d'une page dans la structure des liens : une page importante est une page vers laquelle pointent des pages importantes. Cette définition circulaire est une équation aux valeurs propres, $G^\top\pi=\pi$, pour une matrice stochastique $G$ construite à partir du graphe du Web. Le théorème de Perron-Frobenius dit quand elle a une solution unique et positive ; une analyse du spectre de $G$ dit à quelle vitesse la méthode de la puissance la calcule. On démontre ces deux résultats, on recalcule les exemples du TER dont cette fiche est issue, et l'on explique une observation qu'il laissait sans réponse : la méthode converge souvent bien plus vite que la borne théorique.
+Un moteur de recherche trouve des milliers de pages pour une requête ; il faut encore les ranger. L'idée de Brin et Page (1998) est de lire l'importance d'une page dans la structure des liens : une page importante est une page vers laquelle pointent des pages importantes. Cette définition circulaire est une équation aux valeurs propres, $G^\top\pi=\pi$, pour une matrice stochastique $G$ construite à partir du graphe du Web. Le théorème de Perron-Frobenius dit quand elle a une solution unique et positive ; une analyse du spectre de $G$ dit à quelle vitesse la méthode de la puissance la calcule. On démontre ces deux résultats sur les exemples, recalculés, du TER dont la fiche est issue. Ils expliquent au passage une observation que le TER laissait sans réponse : la méthode converge souvent bien plus vite que la borne théorique.
 \end{abstract}
 
 \paragraph{Leçons concernées.} 233 (Analyse numérique matricielle : résolution approchée de systèmes linéaires, recherche d'éléments propres, exemples), 226 (Suites vectorielles et réelles définies par une relation de récurrence $u_{n+1}=f(u_n)$), 223 (Suites numériques), ainsi que les leçons d'algèbre sur la réduction des endomorphismes et les matrices à coefficients positifs.
 
-\paragraph{Développements possibles.} Le théorème de Perron \ref{thm:perron}, avec sa preuve complète ; le spectre de la matrice Google (théorème \ref{thm:spectre}) et la vitesse de la méthode de la puissance (théorème \ref{thm:puissance}).
+\paragraph{Développements possibles.} Le théorème de Perron \ref{thm:perron}, avec sa preuve complète ; le spectre de la matrice Google (théorème \ref{thm:spectre}) et la vitesse de la méthode de la puissance (théorème \ref{thm:puissance}). Le fichier \texttt{PerronFrobeniusPageRank.lean} vérifie avec Mathlib la stochasticité de $P_1$ et de $G$, la proposition \ref{prop:google} (existence et unicité du vecteur PageRank, par le point fixe, et système linéaire), le théorème \ref{thm:puissance} (les deux bornes), le théorème \ref{thm:spectre} en partie (les valeurs propres $c\mu$ et la borne $|\lambda|\leq c$ pour $\lambda$ réelle), le tableau des nombres d'itérations, l'exemple \ref{ex:quatre} avec la valeur exacte $\pi=(3080,4389,1380,3080)/11929$, et les exercices \ref{exo:periodique} et \ref{exo:monotonie} (l'inégalité).
 
 \paragraph{Prérequis.} Réduction des matrices (valeurs propres, multiplicités, forme de Jordan), rayon spectral et formule de Gelfand $\rho(A)=\lim\|A^k\|^{1/k}$, graphes orientés.
 
@@ -77,12 +77,7 @@ où $d_i$ est le nombre de liens sortants de $i$. Avec la matrice $P$ de coeffic
 
 Cette équation a une lecture probabiliste. Un internaute se promène au hasard : depuis la page $i$, il suit l'un des $d_i$ liens, choisi uniformément. Si $\pi^{(k)}_i$ est la probabilité qu'il soit sur la page $i$ après $k$ clics, alors $\pi^{(k+1)}=P^\top\pi^{(k)}$, et une solution de $P^\top\pi=\pi$ est une répartition qui ne change plus : une \emph{distribution stationnaire}. La note d'une page est la fraction du temps que l'internaute y passe à long terme.
 
-Trois questions se posent alors, et elles organisent la fiche.
-\begin{enumerate}[nosep]
-\item L'équation $P^\top\pi=\pi$ a-t-elle une solution positive, et une seule ? C'est l'objet du théorème de Perron-Frobenius (sections 2 et 3).
-\item Que faire quand elle n'en a pas, ou en a plusieurs ? On modifie $P$ (section 4).
-\item Comment calculer $\pi$ quand $n$ vaut plusieurs milliards ? Par la méthode de la puissance, dont on étudie la vitesse (section 5).
-\end{enumerate}
+Reste à savoir si l'équation $P^\top\pi=\pi$ a une solution positive, et une seule : c'est le théorème de Perron-Frobenius (sections 2 et 3). Quand elle n'en a pas, ou en a plusieurs, on modifie $P$ (section 4). Il faut enfin calculer $\pi$ alors que $n$ se compte en milliards ; la méthode de la puissance s'en charge, et la section 5 mesure sa vitesse.
 
 % ==========================================================
 \section{Le théorème de Perron : matrices strictement positives}
@@ -113,7 +108,7 @@ Soit $A>0$ et $\rho=\rho(A)$. Alors :
 On appelle $\rho$ la \emph{racine de Perron} et $p$, normalisé par $\|p\|_1=1$, le \emph{vecteur de Perron} de $A$.
 \end{theoreme}
 
-La preuve suit un fil simple : on part d'un vecteur propre $x$ pour une valeur propre de module maximal, et l'on montre que l'inégalité triangulaire $|Ax|\leq A|x|$ est en fait une égalité. Tout le reste en découle.
+Toute la preuve tient dans une remarque : pour un vecteur propre $x$ associé à une valeur propre de module maximal, l'inégalité triangulaire $|Ax|\leq A|x|$ est en fait une égalité.
 
 \begin{proof}
 \emph{$\rho>0$.} D'après le lemme, $A^k>0$ pour tout $k$, donc $A$ n'est pas nilpotente, et elle a une valeur propre non nulle.
@@ -128,7 +123,7 @@ La preuve suit un fil simple : on part d'un vecteur propre $x$ pour une valeur p
 \end{proof}
 
 \begin{remarque}
-La note de 2009 démontrait la multiplicité en observant que la suite $\big((A/\rho)^k\big)$ ne peut pas diverger. L'argument est juste mais demande d'expliquer pourquoi elle reste bornée ; le vecteur de Perron à gauche $q$ donne une preuve plus directe. La formule de Collatz-Wielandt, qui calcule $\rho$ par un problème d'optimisation, fait l'objet de l'exercice \ref{exo:collatz}.
+Le TER de 2009 démontrait la multiplicité en observant que la suite $\big((A/\rho)^k\big)$ ne peut pas diverger. L'argument est juste mais demande d'expliquer pourquoi elle reste bornée ; le vecteur de Perron à gauche $q$ donne une preuve plus directe. La formule de Collatz-Wielandt, qui calcule $\rho$ par un problème d'optimisation, fait l'objet de l'exercice \ref{exo:collatz}.
 \end{remarque}
 
 % ==========================================================
@@ -356,10 +351,10 @@ Pour l'exemple \ref{ex:quatre}, le polynôme caractéristique de $P_1$ est $X^4-
 \end{figure}
 
 % ==========================================================
-\section{Ce que le classement récompense}
+\section{Fermes de liens et choix de $c$}
 % ==========================================================
 
-L'équation $\pi_j=c\sum_{i\to j}\pi_i/d_i+(\dots)$ dit trois choses : une page gagne à recevoir des liens, elle dilue sa note en multipliant ses liens sortants, et un lien vaut d'autant plus qu'il vient d'une page bien notée. Elle invite aussi à la tricher. Une \emph{ferme de liens} est un ensemble de pages créées pour pointer vers une page cible.
+Dans l'équation $\pi_j=c\sum_{i\to j}\pi_i/d_i+(\dots)$, une page gagne à recevoir des liens, et un lien pèse d'autant plus que la page qui l'émet est bien notée et cite peu d'autres pages. La formule invite donc à tricher. Une \emph{ferme de liens} est un ensemble de pages créées pour pointer vers une page cible.
 
 \begin{exemple}\label{ex:ferme}
 Prenons quatre pages en cycle $A\to B\to C\to D\to A$, avec en plus $D\to T$ et $T\to A$, et ajoutons $k$ pages satellites qui ne font que pointer vers $T$ (figure \ref{fig:ferme}). Comme le nombre de pages change avec $k$, on compare la note de $T$ à la note moyenne $1/n$, c'est-à-dire $n\,\pi_T$ :
@@ -426,7 +421,7 @@ Si l'on suppose que les valeurs propres de $G$ de plus grand module, après $1$,
 \section{Bilan}
 % ==========================================================
 
-La définition « une page importante est citée par des pages importantes » est une équation aux valeurs propres. Le théorème de Perron-Frobenius lui donne une solution unique et positive, à condition de rendre la matrice irréductible et primitive ; la téléportation fait les deux d'un coup, en rendant $G$ strictement positive. Le même paramètre $c$ fixe la vitesse de calcul, par le théorème \ref{thm:spectre}, et la robustesse du classement, par l'exemple \ref{ex:ferme} : c'est le seul vrai compromis du modèle.
+La définition « une page importante est citée par des pages importantes » est une équation aux valeurs propres. Le théorème de Perron-Frobenius lui donne une solution unique et positive, à condition de rendre la matrice irréductible et primitive ; la téléportation fait les deux d'un coup, en rendant $G$ strictement positive. Le même paramètre $c$ fixe la vitesse de calcul (théorème \ref{thm:spectre}) et la résistance du classement aux fermes de liens (exemple \ref{ex:ferme}), en sens contraires : tout le réglage du modèle se ramène à ce compromis.
 
 \begin{center}
 \renewcommand{\arraystretch}{1.25}

@@ -53,7 +53,11 @@ function shortIntitule(intitule) {
 }
 
 function body({ title, subtitle, kicker, macros, picture }) {
-  const width = picture ? 11.6 : 16.6;
+  const width = picture ? 10.9 : 16.6;
+  // Un titre long passe en plus petit, pour ne pas déborder sur la figure.
+  const size = title.replace(/\\[a-zA-Z]+|[{}$]/g, '').length > 45 ? '{24}{30}' : '{30}{37}';
+  // Espace insécable devant les deux-points, à la française.
+  [title, subtitle, kicker] = [title, subtitle, kicker].map((x) => x.replace(/ :/g, '~:'));
   return `\\documentclass[border=0pt]{standalone}
 \\usepackage{amsmath,amssymb}
 \\usepackage{tikz}
@@ -68,10 +72,10 @@ ${picture ? `\\sbox0{${picture}}` : ''}
 \\useasboundingbox[fill=white] (0,0) rectangle (20,10.5);
 \\fill[accent] (0,0) rectangle (0.3,10.5);
 \\node[anchor=north west,inner sep=0,font=\\sffamily\\large,text=accent] (k) at (1.3,9.5) {${kicker}};
-\\node[anchor=north west,inner sep=0,text width=${width}cm,align=left,font=\\fontsize{30}{37}\\selectfont\\bfseries] (t) at ([yshift=-0.7cm]k.south west) {${title}};
+\\node[anchor=north west,inner sep=0,text width=${width}cm,align=left,font=\\fontsize${size}\\selectfont\\bfseries] (t) at ([yshift=-0.7cm]k.south west) {${title}};
 ${subtitle ? `\\node[anchor=north west,inner sep=0,text width=${width}cm,align=left,font=\\fontsize{17}{22}\\selectfont,text=black!65] at ([yshift=-0.55cm]t.south west) {${subtitle}};` : ''}
 \\node[anchor=south west,inner sep=0,font=\\sffamily,text=black!60] at (1.3,0.9) {Michel Hua\\quad·\\quad agreg.commutator.io};
-${picture ? '\\node at (15.9,5.25) {\\adjustbox{max width=6.6cm,max height=7.6cm}{\\usebox0}};' : ''}
+${picture ? '\\node at (16.1,5.25) {\\adjustbox{max width=6.2cm,max height=7.4cm}{\\usebox0}};' : ''}
 \\end{tikzpicture}
 \\end{document}
 `;
@@ -94,7 +98,11 @@ export function cardFor({ tex, numero, intitule } = {}) {
   } else {
     const pre = tex.slice(0, tex.indexOf('\\begin{document}')).replace(/(?<!\\)%.*$/gm, '');
     const raw = group(pre, pre.indexOf('\\title') + '\\title'.length) ?? '';
-    const [title, subtitle = ''] = raw.split(/\\\\(?:\[[^\]]*\])?/);
+    // Le sous-titre est la dernière ligne s'il est composé en \large ; les autres sont le titre.
+    const parts = raw.split(/\\\\(?:\[[^\]]*\])?/);
+    const hasSub = parts.length > 1 && /\\(large|Large)\b/.test(parts.at(-1));
+    const title = (hasSub ? parts.slice(0, -1) : parts).join(' ');
+    const subtitle = hasSub ? parts.at(-1) : '';
     const macros = pre.split('\n')
       .filter((l) => /^\s*\\(newcommand|DeclareMathOperator)/.test(l)).join('\n');
     const picture = tex.slice(tex.indexOf('\\begin{document}')).match(PICTURE)?.[0] ?? null;
