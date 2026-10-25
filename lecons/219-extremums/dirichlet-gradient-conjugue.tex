@@ -1,0 +1,559 @@
+% Principe de Dirichlet discret et gradient conjugué
+% Compile avec pdflatex, xelatex ou lualatex.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+  \IfFileExists{lmodern.sty}{\usepackage{lmodern}}{}
+  \usepackage[french]{babel}
+\else
+  \usepackage{fontspec}
+  \usepackage{polyglossia}
+  \setdefaultlanguage{french}
+\fi
+\usepackage[margin=2.6cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{tikz}
+\input{../figures/tikz-setup.tex}
+\usepackage[hidelinks]{hyperref}
+
+% ---------- Environnements ----------
+\theoremstyle{plain}
+\newtheorem{theoreme}{Théorème}[section]
+\newtheorem{proposition}[theoreme]{Proposition}
+\newtheorem{lemme}[theoreme]{Lemme}
+\newtheorem{corollaire}[theoreme]{Corollaire}
+\theoremstyle{definition}
+\newtheorem{definition}[theoreme]{Définition}
+\newtheorem{exemple}[theoreme]{Exemple}
+\newtheorem{exercice}{Exercice}
+\theoremstyle{remark}
+\newtheorem{remarque}[theoreme]{Remarque}
+
+% ---------- Notations ----------
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\E}{\mathcal{E}}
+\newcommand{\K}{\mathcal{K}}
+\newcommand{\ps}[2]{\langle #1,#2\rangle}
+
+\title{Principe de Dirichlet discret et gradient conjugué\\[2pt]
+\large Calculer la conductivité d'un composite aléatoire}
+\author{Michel Hua, d'après un rapport de stage à l'INRIA Lille-Nord Europe (été 2009)}
+\date{Octobre 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+On mélange au hasard deux matériaux de conductivités thermiques $1$ et $9$. Quelle est la conductivité du mélange ? Sur une grille, la réponse s'écrit comme le minimum d'une énergie quadratique : c'est le principe de Dirichlet discret. Ce point de vue donne tout de suite des encadrements (la moyenne harmonique et la moyenne arithmétique), puis une méthode de calcul : chercher le minimum par une méthode de descente. Le gradient à pas optimal demande un nombre d'itérations proportionnel au conditionnement $\kappa$ de la matrice, le gradient conjugué seulement à $\sqrt\kappa$ ; pour une grille de $N\times N$ points, cela fait $N^2$ contre $N$. On démontre ces résultats, on recalcule les simulations du stage dont la fiche est issue, et l'on corrige au passage plusieurs affirmations du rapport original.
+\end{abstract}
+
+\paragraph{Leçons concernées.} 219 (Extremums : existence, caractérisation, recherche. Exemples et applications), 233 (Analyse numérique matricielle : résolution approchée de systèmes linéaires), 158 (Matrices symétriques réelles), 229 (Fonctions convexes), 222 (Exemples d'équations aux dérivées partielles linéaires).
+
+\paragraph{Développements possibles.} Le principe de Dirichlet discret et l'encadrement de Wiener (proposition \ref{prop:dirichlet} et théorème \ref{thm:wiener}) ; la construction du gradient conjugué et sa vitesse de convergence par les polynômes de Tchebychev (théorèmes \ref{thm:gc} et \ref{thm:tcheb}).
+
+\paragraph{Prérequis.} Matrices symétriques définies positives, théorème spectral, quotient de Rayleigh ; polynômes de Tchebychev ; loi forte des grands nombres, pour la section 3.
+
+\paragraph{Notations.} On note $\ps{x}{y}$ le produit scalaire usuel de $\R^n$. Pour une matrice $R$ symétrique définie positive, de valeurs propres $0<\lambda_{\min}\leq\dots\leq\lambda_{\max}$, on note $\|x\|_R=\ps{Rx}{x}^{1/2}$ la norme associée et $\kappa(R)=\lambda_{\max}/\lambda_{\min}$ son conditionnement. On note $(e_1,e_2)$ la base canonique de $\R^2$.
+
+\tableofcontents
+
+% ==========================================================
+\section{Un composite sur une grille}
+% ==========================================================
+
+\subsection{Le modèle}
+
+Un matériau composite est fait de constituants dont la taille est petite devant celle de la pièce. Les mesures utiles à l'ingénieur sont macroscopiques : on veut savoir quelle conductivité thermique la pièce semble avoir, vue de loin. La théorie de l'homogénéisation, née dans les années 1970, dit quand une telle conductivité effective existe et comment la calculer. On en étudie ici le modèle le plus simple, discret, qui était le sujet du stage.
+
+Les points de $\Z^2$ sont reliés à leurs quatre voisins par des arêtes. Chaque arête $e$ porte une conductance $a(e)>0$, tirée à pile ou face dans $\{\alpha,\beta\}$, indépendamment d'une arête à l'autre ; on prendra $\alpha=1$ et $\beta=9$. On impose une différence de température moyenne dans la direction $e_1$ et l'on regarde comment la chaleur s'écoule.
+
+On travaille sur une boîte finie. Soit $Q_N=\{1,\dots,N\}^2$ ; son \emph{cadre} est formé des points de $\{0,\dots,N+1\}^2$ qui ne sont pas dans $Q_N$. On retient les arêtes qui touchent $Q_N$ :
+\[
+  \begin{aligned}
+  \E^h_N&=\big\{[x,x+e_1] : x\in\{0,\dots,N\}\times\{1,\dots,N\}\big\},\\
+  \E^v_N&=\big\{[x,x+e_2] : x\in\{1,\dots,N\}\times\{0,\dots,N\}\big\}.
+  \end{aligned}
+\]
+Il y a $m=N(N+1)$ arêtes horizontales et autant de verticales (figure \ref{fig:grille}). Les inconnues sont les fonctions $\varphi:\Z^2\to\R$ nulles hors de $Q_N$ ; leur ensemble $V_N$ s'identifie à $\R^{Q_N}$, de dimension $n=N^2$. Pour une arête $e=[x,y]$ orientée dans le sens des coordonnées croissantes, on pose $\nabla_e\varphi=\varphi(y)-\varphi(x)$.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.74]
+  \foreach \j in {1,...,5} \foreach \i in {0,...,5} \draw[gray!60] (\i,\j) -- ++(1,0);
+  \foreach \i in {1,...,5} \foreach \j in {0,...,5} \draw[gray!60] (\i,\j) -- ++(0,1);
+  \foreach \i/\j in {0/1,2/1,5/1,0/2,2/2,3/2,5/2,1/3,3/3,3/4,0/5,1/5,3/5}
+    \draw[accent,line width=2.4pt] (\i,\j) -- ++(1,0);
+  \foreach \i/\j in {1/2,1/4,2/1,2/2,2/3,2/5,3/1,3/3,3/4,5/1}
+    \draw[accent,line width=2.4pt] (\i,\j) -- ++(0,1);
+  \foreach \i in {1,...,5} \foreach \j in {1,...,5} \fill (\i,\j) circle (2.4pt);
+  \foreach \k in {1,...,5} {
+    \draw[fill=white] (\k,0) circle (2.4pt);
+    \draw[fill=white] (\k,6) circle (2.4pt);
+    \draw[fill=white] (0,\k) circle (2.4pt);
+    \draw[fill=white] (6,\k) circle (2.4pt);
+  }
+  \draw[->,accent2,very thick] (6.8,3) -- (7.9,3) node[right] {$\xi=e_1$};
+  \draw[accent,line width=2.4pt] (6.8,5.2) -- (7.5,5.2) node[right,black] {$a=9$};
+  \draw[gray!60] (6.8,4.5) -- (7.5,4.5) node[right,black] {$a=1$};
+  \node[below,font=\small] at (3,-0.3) {$\varphi=0$ sur le cadre (cercles blancs)};
+\end{tikzpicture}
+\caption{La boîte $Q_5$ et une réalisation des conductances. Les arêtes épaisses ont la conductance $9$, les fines la conductance $1$. Seuls les $N^2=25$ points noirs portent une inconnue.}\label{fig:grille}
+\end{figure}
+
+\subsection{L'énergie}
+
+La température est $u(x)=x_1+\varphi(x)$ : sur le cadre, elle vaut $x_1$, ce qui impose un gradient moyen égal à $e_1$, et $\varphi$ est la correction due à l'hétérogénéité. Le flux de chaleur à travers une arête est la conductance multipliée par la différence de température, et la puissance dissipée est la somme des $a(e)(\nabla_eu)^2$. Comme $\nabla_eu=1+\nabla_e\varphi$ sur une arête horizontale et $\nabla_eu=\nabla_e\varphi$ sur une verticale, on pose
+\[
+  \E_N(\varphi)=\frac1m\Big(\sum_{e\in\E^h_N}a(e)\,(1+\nabla_e\varphi)^2+\sum_{e\in\E^v_N}a(e)\,(\nabla_e\varphi)^2\Big),
+  \qquad
+  a_N=\inf_{\varphi\in V_N}\E_N(\varphi).
+\]
+Pourquoi un infimum ? Parce que la physique choisit, parmi toutes les températures compatibles avec le cadre, celle qui dissipe le moins : c'est le principe de Dirichlet, que l'on démontre à la section suivante dans ce cadre discret. Dans un matériau homogène de conductance $c$, le minimum est atteint en $\varphi=0$ et vaut $c$. Le nombre $a_N$ est donc la conductivité que la boîte semble avoir : c'est la quantité que le stage cherchait à calculer.
+
+% ==========================================================
+\section{Le principe de Dirichlet discret}
+% ==========================================================
+
+\subsection{L'énergie est une forme quadratique}
+
+On introduit la matrice $R$ de taille $n$ et le vecteur $F\in\R^{Q_N}$ définis par
+\[
+  \ps{R\varphi}{\varphi}=\sum_{e\in\E^h_N\cup\E^v_N}a(e)\,(\nabla_e\varphi)^2,
+  \qquad
+  F(x)=a([x,x+e_1])-a([x-e_1,x]) .
+\]
+Concrètement, $R_{xx}$ est la somme des conductances des quatre arêtes issues de $x$, $R_{xy}=-a([x,y])$ si $x$ et $y$ sont voisins dans $Q_N$, et $R_{xy}=0$ sinon. En numérotant les points ligne par ligne, $R$ est symétrique, avec au plus cinq diagonales non nulles. On note enfin $M_N=\frac1m\sum_{e\in\E^h_N}a(e)$ la moyenne arithmétique des conductances horizontales.
+
+\begin{lemme}[sommation par parties]\label{lem:ipp}
+Pour tout $\varphi\in V_N$, $\displaystyle\sum_{e\in\E^h_N}a(e)\,\nabla_e\varphi=-\ps{F}{\varphi}$.
+\end{lemme}
+
+\begin{proof}
+Fixons une ligne $j$ et notons $a_i=a([(i,j),(i+1,j)])$ et $\varphi_i=\varphi(i,j)$. Comme $\varphi_0=\varphi_{N+1}=0$,
+\[
+  \sum_{i=0}^{N}a_i(\varphi_{i+1}-\varphi_i)=\sum_{i=1}^{N}a_{i-1}\varphi_i-\sum_{i=1}^{N}a_i\varphi_i=-\sum_{i=1}^{N}(a_i-a_{i-1})\,\varphi_i .
+\]
+On somme sur $j$.
+\end{proof}
+
+C'est l'analogue discret de la formule de Green $\int a\,\partial_1\varphi=-\int\varphi\,\partial_1a$ pour une fonction nulle au bord. On peut maintenant développer les carrés dans $\E_N$.
+
+\begin{proposition}[principe de Dirichlet discret]\label{prop:dirichlet}
+\begin{enumerate}[nosep]
+\item La matrice $R$ est symétrique définie positive.
+\item Pour tout $\varphi\in V_N$, $\E_N(\varphi)=M_N+\frac1m\big(\ps{R\varphi}{\varphi}-2\ps{F}{\varphi}\big)$.
+\item L'énergie $\E_N$ admet un unique minimiseur $\varphi^*$, caractérisé par l'équation d'Euler $R\varphi^*=F$, et
+\[
+  a_N=\E_N(\varphi^*)=M_N-\frac1m\ps{R\varphi^*}{\varphi^*}.
+\]
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+1. La symétrie est visible sur les coefficients, et $\ps{R\varphi}{\varphi}\geq0$. Si $\ps{R\varphi}{\varphi}=0$, alors $\nabla_e\varphi=0$ sur toutes les arêtes de $\E^h_N$. Partant d'un point $(i,j)\in Q_N$ et marchant vers la gauche, on atteint le point $(0,j)$ du cadre sans quitter $\E^h_N$, donc $\varphi(i,j)=\varphi(0,j)=0$. Ainsi $\varphi=0$.
+
+2. On développe $(1+\nabla_e\varphi)^2=1+2\nabla_e\varphi+(\nabla_e\varphi)^2$ et l'on applique le lemme \ref{lem:ipp} au terme du milieu.
+
+3. Comme $R$ est inversible, posons $\varphi^*=R^{-1}F$. En complétant le carré,
+\[
+  \ps{R\varphi}{\varphi}-2\ps{F}{\varphi}=\ps{R(\varphi-\varphi^*)}{\varphi-\varphi^*}-\ps{R\varphi^*}{\varphi^*} .
+\]
+Le premier terme est positif, et nul seulement si $\varphi=\varphi^*$ : c'est l'existence et l'unicité du minimiseur, et la valeur du minimum. Réciproquement, un minimiseur annule le gradient de $\E_N$, qui vaut $\frac2m(R\varphi-F)$ ; c'est l'équation d'Euler.
+\end{proof}
+
+La preuve montre un fait général, que l'on réutilisera : pour $R$ symétrique définie positive, la fonction $J(x)=\frac12\ps{Rx}{x}-\ps{F}{x}$ atteint son minimum en un seul point, la solution de $Rx=F$, et
+\begin{equation}\label{eq:energie}
+  J(x)-J(x^*)=\tfrac12\,\|x-x^*\|_R^2 .
+\end{equation}
+Résoudre le système linéaire et minimiser l'énergie sont une seule et même question ; la section 4 en tirera parti pour résoudre $R\varphi=F$ par des méthodes d'optimisation.
+
+\begin{exemple}\label{ex:un}
+Pour $N=1$, il n'y a qu'une inconnue $\varphi=\varphi(1,1)$ et quatre arêtes : à gauche et à droite, de conductances $a_-$ et $a_+$, en bas et en haut, de conductances $b_-$ et $b_+$. On a $R=s:=a_-+a_++b_-+b_+$, $F=a_+-a_-$, $m=2$, et
+\[
+  a_1=\frac{a_-+a_+}2-\frac{(a_+-a_-)^2}{2s}.
+\]
+Pour $a_-=1$, $a_+=9$ et $b_-=b_+=1$, on trouve $\varphi^*=\frac23$ et $a_1=5-\frac83=\frac73$. Si l'on remplace les deux conductances verticales par $9$, on trouve $a_1=5-\frac87=\frac{27}7$. Les arêtes verticales, que la chaleur ne traverse pas en moyenne, modifient pourtant la conductivité horizontale : elles permettent au flux de contourner les arêtes mauvaises conductrices.
+\end{exemple}
+
+\begin{remarque}
+Le rapport de stage écrivait l'équation sous la forme $T^{-1}\varphi+\nabla^*\cdot(A(\nabla\varphi+\xi))=0$, avec les différences arrière $\nabla^*$. Le signe est faux : avec ces conventions, $\nabla^*\cdot\nabla$ est le laplacien discret, opérateur négatif, et la bonne équation est $T^{-1}\varphi-\nabla^*\cdot(A(\nabla\varphi+\xi))=0$. La matrice qu'il en tirait était d'ailleurs la bonne, avec la somme des conductances sur la diagonale. Son second membre, noté $\nabla^*\cdot\nabla(A\xi)$, contenait une dérivation de trop : c'est $\nabla^*\cdot(A\xi)$, au signe près, c'est-à-dire le vecteur $F$ ci-dessus, qui fait intervenir une seule différence de conductances.
+\end{remarque}
+
+% ==========================================================
+\section{Encadrer la conductivité effective}
+% ==========================================================
+
+\subsection{Les bornes de Wiener}
+
+La caractérisation par un minimum se prête aux encadrements : tout $\varphi$ particulier donne une borne supérieure, et pour une borne inférieure il suffit de minorer $\E_N(\varphi)$ uniformément en $\varphi$. Pour la ligne $j$, notons $h_j$ la moyenne harmonique de ses $N+1$ conductances horizontales, et $H_N$ la moyenne des $h_j$ :
+\[
+  h_j=\frac{N+1}{\sum_{i=0}^{N}1/a([(i,j),(i+1,j)])},\qquad H_N=\frac1N\sum_{j=1}^Nh_j .
+\]
+
+\begin{theoreme}[Wiener]\label{thm:wiener}
+On a $H_N\leq a_N\leq M_N$. De plus $H_N\geq G_N$, où
+\[
+  G_N=\frac{m}{\sum_{e\in\E^h_N}1/a(e)}
+\]
+est la moyenne harmonique de toutes les conductances horizontales.
+\end{theoreme}
+
+\begin{proof}
+\emph{Majoration.} Elle découle de la proposition \ref{prop:dirichlet}, puisque $\ps{R\varphi^*}{\varphi^*}\geq0$ ; c'est aussi la valeur de $\E_N(0)$.
+
+\emph{Minoration.} Soit $\varphi\in V_N$. Sur la ligne $j$, la somme $\sum_{i=0}^N(1+\varphi_{i+1}-\varphi_i)$ est télescopique et vaut $N+1$, puisque $\varphi$ est nulle aux deux bouts. L'inégalité de Cauchy-Schwarz, appliquée en écrivant $1+\nabla\varphi=\sqrt a\,(1+\nabla\varphi)\cdot\frac1{\sqrt a}$, donne
+\[
+  (N+1)^2\leq\Big(\sum_{i=0}^N a_i(1+\varphi_{i+1}-\varphi_i)^2\Big)\Big(\sum_{i=0}^N\frac1{a_i}\Big),
+  \quad\text{soit}\quad
+  \sum_{i=0}^N a_i(1+\varphi_{i+1}-\varphi_i)^2\geq(N+1)\,h_j .
+\]
+On somme sur $j$, on oublie les arêtes verticales, dont la contribution est positive, et l'on divise par $m=N(N+1)$ : $\E_N(\varphi)\geq H_N$.
+
+\emph{Comparaison des deux moyennes harmoniques.} Avec $S_j=\sum_i1/a_i$, on a $H_N=\frac{N+1}N\sum_j\frac1{S_j}$ et $G_N=\frac{N(N+1)}{\sum_jS_j}$. L'inégalité $H_N\geq G_N$ s'écrit $\frac1N\sum_j\frac1{S_j}\geq\frac N{\sum_jS_j}$ : c'est l'inégalité entre moyenne arithmétique et moyenne harmonique des $1/S_j$.
+\end{proof}
+
+Les deux bornes ont une lecture physique. La borne supérieure est la conductivité d'un matériau en couches parallèles au flux : la chaleur suit chaque couche sans en changer, et les conductances s'additionnent comme des résistances en parallèle. La borne inférieure est celle de couches perpendiculaires au flux, où les résistances $1/a$ s'additionnent en série. Le cas d'égalité de Cauchy-Schwarz dit quand la minoration est atteinte : il faut que le flux $a_i(1+\nabla\varphi)$ soit constant le long de chaque ligne. En dimension $1$, c'est toujours possible, et $a_N$ est exactement la moyenne harmonique (exercice \ref{exo:dim1}).
+
+\begin{proposition}\label{prop:concave}
+Vue comme fonction des conductances $(a(e))_e\in\,]0,+\infty[^{2m}$, la conductivité $a_N$ est concave et croissante en chaque variable.
+\end{proposition}
+
+\begin{proof}
+Pour $\varphi$ fixé, $\E_N(\varphi)$ est une fonction affine des $a(e)$, à coefficients positifs. Un infimum de fonctions affines est concave, un infimum de fonctions croissantes est croissant.
+\end{proof}
+
+La croissance est le principe de monotonie de Rayleigh : améliorer un conducteur ne peut pas diminuer la conductivité de l'ensemble. La concavité, combinée à l'inégalité de Jensen, redonne en moyenne la borne supérieure : $\mathbb{E}[a_N]\leq a_N(\mathbb{E}[a])=\frac{\alpha+\beta}2$.
+
+\subsection{Quand la boîte grandit}
+
+\begin{proposition}\label{prop:lgn}
+Presque sûrement, $M_N\to\frac{\alpha+\beta}2$ et $G_N\to\frac{2\alpha\beta}{\alpha+\beta}$ quand $N\to\infty$. En particulier, presque sûrement,
+\[
+  \frac{2\alpha\beta}{\alpha+\beta}\leq\liminf_{N\to\infty}a_N\leq\limsup_{N\to\infty}a_N\leq\frac{\alpha+\beta}2 .
+\]
+\end{proposition}
+
+\begin{proof}
+Les ensembles $\E^h_N$ sont croissants pour l'inclusion. On peut donc ranger les arêtes horizontales de $\{0,1,2,\dots\}\times\{1,2,\dots\}$ en une suite $(e_k)$ de sorte que $\E^h_N=\{e_1,\dots,e_{m_N}\}$ avec $m_N=N(N+1)$. Les $a(e_k)$ sont indépendantes, de même loi, et la loi forte des grands nombres, appliquée aux $a(e_k)$ et aux $1/a(e_k)$, donne la convergence des moyennes de Cesàro le long de la sous-suite $(m_N)$. Le reste vient du théorème \ref{thm:wiener}.
+\end{proof}
+
+Pour $\alpha=1$ et $\beta=9$, la conductivité effective est donc, à la limite, comprise entre $1{,}8$ et $5$. La théorie de l'homogénéisation stochastique va plus loin : la suite $(a_N)$ converge presque sûrement vers une constante déterministe $a_{\mathrm{hom}}$ (Kozlov \cite{kozlov}, Künnemann \cite{kunnemann}), et dans ce cas précis on connaît sa valeur : $a_{\mathrm{hom}}=\sqrt{\alpha\beta}=3$. On admet ces deux résultats.
+
+\begin{remarque}[pourquoi la moyenne géométrique]
+L'argument, dû à Keller \cite{keller} et Dykhne \cite{dykhne}, est propre à la dimension $2$. Un courant de divergence nulle sur la grille, tourné d'un quart de tour, devient un gradient sur la grille duale, dont les arêtes croisent celles de la grille de départ ; les rôles du courant et du gradient s'échangent, et la conductance $a$ devient la résistance $1/a$. On en déduit que la conductivité effective du réseau de conductances $1/a$ est l'inverse de celle du réseau de conductances $a$. Or la loi de $a$ est invariante par $a\mapsto\alpha\beta/a$, qui échange $\alpha$ et $\beta$, et la conductivité effective est homogène de degré $1$. Donc $a_{\mathrm{hom}}=\alpha\beta\cdot a_{\mathrm{hom}}(1/a)=\alpha\beta/a_{\mathrm{hom}}$, d'où $a_{\mathrm{hom}}^2=\alpha\beta$.
+
+Le rapport présentait la moyenne géométrique comme le résultat attendu « dans ce cas particulier ». Il faut préciser lequel : la dimension $2$ et une loi invariante par $a\mapsto\alpha\beta/a$, ce qui est le cas pour un tirage à pile ou face équilibré. En dimension $1$, on trouve la moyenne harmonique ; en dimension $3$, il n'existe pas de formule close. Le rapport définissait aussi $\alpha_{\mathrm{hom}}$ comme la constante qui « minimise l'écart » entre deux solutions ; la définition correcte est celle d'une limite, ou, de façon équivalente, celle d'une énergie minimale par unité de volume, comme ici.
+\end{remarque}
+
+\subsection{Ce que donne le calcul}
+
+On a calculé $a_N$ pour des réalisations indépendantes des conductances, en résolvant $R\varphi=F$ par le gradient conjugué de la section suivante. La moyenne empirique et l'écart type empirique sont reportés ci-dessous.
+
+\begin{center}
+\begin{tabular}{@{}rrcccc@{}}
+\toprule
+$N$ & réalisations & moyenne de $a_N$ & écart type & $N\times$ écart type & $N\times$(moyenne $-3$) \\
+\midrule
+$4$ & $400$ & $3{,}469$ & $0{,}945$ & $3{,}78$ & $1{,}88$ \\
+$8$ & $200$ & $3{,}212$ & $0{,}449$ & $3{,}59$ & $1{,}70$ \\
+$16$ & $100$ & $3{,}122$ & $0{,}224$ & $3{,}58$ & $1{,}96$ \\
+$32$ & $40$ & $3{,}064$ & $0{,}112$ & $3{,}57$ & $2{,}04$ \\
+$64$ & $40$ & $3{,}047$ & $0{,}061$ & $3{,}89$ & $3{,}0\pm0{,}6$ \\
+$128$ & $8$ & $3{,}017$ & $0{,}020$ & $2{,}6$ & $2{,}1\pm0{,}9$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Pour les mêmes tirages, $H_N$ vaut en moyenne $1{,}84$ pour $N=32$ et $M_N$ vaut $4{,}99$ : les bornes de Wiener sont loin de $3$. Le tableau montre deux phénomènes distincts. L'écart type est divisé par deux quand $N$ double : il décroît comme $1/N$, c'est-à-dire que la variance décroît comme l'inverse du nombre $N^2$ de points de la boîte. C'est l'échelle du théorème central limite, comme si les $N^2$ densités d'énergie locales étaient presque indépendantes. La moyenne, elle, reste au-dessus de $3$, avec un écart d'environ $2/N$ (les deux dernières lignes, avec peu de réalisations, sont imprécises). Cet écart systématique vient du cadre : imposer $\varphi=0$ sur le bord empêche le flux de contourner les mauvais conducteurs proches du bord, ce qui augmente l'énergie dans une couche d'épaisseur bornée. La proportion d'arêtes dans cette couche est de l'ordre du périmètre sur l'aire, soit $4/N$. On revient sur ces deux erreurs à la section 5.
+
+% ==========================================================
+\section{Chercher le minimum : méthodes de gradient}
+% ==========================================================
+
+Il reste à calculer $\varphi^*$. Le stage visait des boîtes de $N^2=10^9$ points. À cette taille, une méthode directe est exclue : la factorisation de Cholesky d'une matrice bande de largeur $N$ remplit toute la bande, soit $N^3$ coefficients à stocker, quand le vecteur $\varphi$ n'en a que $N^2$. On se tourne vers des méthodes itératives qui n'utilisent $R$ qu'à travers des produits $R\,x$, de coût proportionnel à $N^2$.
+
+\begin{remarque}
+Le rapport rangeait les méthodes de relaxation parmi les méthodes directes. Les méthodes de Jacobi, de Gauss-Seidel et de surrelaxation sont des méthodes itératives : elles produisent une suite qui converge vers la solution sans l'atteindre en un nombre fini d'étapes.
+\end{remarque}
+
+Dans toute cette section, $R$ est une matrice symétrique définie positive de taille $n$, $F\in\R^n$, $J(x)=\frac12\ps{Rx}{x}-\ps{F}{x}$, $x^*=R^{-1}F$ ; on note $r=F-Rx=-\nabla J(x)$ le \emph{résidu} et $\varepsilon=x-x^*$ l'erreur. D'après \eqref{eq:energie}, faire décroître $J$, c'est faire décroître $\|\varepsilon\|_R$.
+
+\subsection{Le gradient à pas optimal}
+
+L'idée la plus naturelle est de descendre dans la direction de plus grande pente, $r_k=-\nabla J(x_k)$, et d'avancer jusqu'au minimum de $J$ sur cette droite :
+\[
+  x_{k+1}=x_k+\tau_kr_k,\qquad \tau_k=\frac{\|r_k\|^2}{\ps{Rr_k}{r_k}} .
+\]
+La valeur de $\tau_k$ s'obtient en annulant la dérivée de $\tau\mapsto J(x_k+\tau r_k)$, qui vaut $\tau\ps{Rr_k}{r_k}-\|r_k\|^2$.
+
+\begin{theoreme}\label{thm:gpo}
+Pour le gradient à pas optimal, $\displaystyle\|\varepsilon_{k+1}\|_R\leq\frac{\kappa-1}{\kappa+1}\,\|\varepsilon_k\|_R$, où $\kappa=\kappa(R)$.
+\end{theoreme}
+
+\begin{proof}
+Comme $x_{k+1}$ minimise $J$ sur la droite $x_k+\R r_k$, il fait au moins aussi bien que le pas fixe $\tau=2/(\lambda_{\min}+\lambda_{\max})$. Avec $r_k=-R\varepsilon_k$, le point $x_k+\tau r_k$ a pour erreur $(I-\tau R)\varepsilon_k$. Décomposons $\varepsilon_k=\sum_ic_iv_i$ dans une base orthonormée de vecteurs propres de $R$, de valeurs propres $\lambda_i$. Alors
+\[
+  \|(I-\tau R)\varepsilon_k\|_R^2=\sum_i\lambda_i(1-\tau\lambda_i)^2c_i^2\leq\max_i(1-\tau\lambda_i)^2\,\|\varepsilon_k\|_R^2 .
+\]
+La fonction $\lambda\mapsto|1-\tau\lambda|$ est maximale aux bords de $[\lambda_{\min},\lambda_{\max}]$, où elle vaut $\frac{\lambda_{\max}-\lambda_{\min}}{\lambda_{\max}+\lambda_{\min}}=\frac{\kappa-1}{\kappa+1}$. On conclut avec \eqref{eq:energie}.
+\end{proof}
+
+Pour multiplier l'erreur par $\delta<1$, il faut donc de l'ordre de $\frac\kappa2\ln\frac1\delta$ itérations, puisque $\ln\frac{\kappa+1}{\kappa-1}\sim\frac2\kappa$. La borne est atteinte. Pour $J(x)=\frac12(x_1^2+5x_2^2)$ et $x_0=(5,1)$, chaque pas multiplie l'erreur par exactement $\frac23=\frac{5-1}{5+1}$ : les itérés rebondissent d'un bord à l'autre de la vallée (figure \ref{fig:zigzag}). Deux directions successives sont orthogonales, puisque $\tau_k$ annule $\ps{r_{k+1}}{r_k}$, et la méthode repasse sans cesse dans les mêmes directions.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.85]
+  \foreach \a in {5.477,3.651,2.434,1.623,1.082}
+    \draw[gray!50] (0,0) ellipse ({\a} and {\a/2.2361});
+  \draw[->,gray] (-6,0) -- (6.2,0) node[right] {$x_1$};
+  \draw[->,gray] (0,-2.7) -- (0,2.9) node[above] {$x_2$};
+  \draw[accent2,thick] (5,1) -- (3.3333,-0.6667) -- (2.2222,0.4444) -- (1.4815,-0.2963) -- (0.9877,0.1975) -- (0.6584,-0.1317) -- (0.4390,0.0878) -- (0.2926,-0.0585) -- (0.1951,0.0390);
+  \foreach \p in {(5,1),(3.3333,-0.6667),(2.2222,0.4444),(1.4815,-0.2963),(0.9877,0.1975)}
+    \fill[accent2] \p circle (1.8pt);
+  \draw[accent,very thick,dashed] (3.3333,-0.6667) -- (0,0);
+  \fill[accent] (0,0) circle (2.2pt);
+  \node[above right,font=\small] at (5,1) {$x_0$};
+  \node[accent2,font=\small,align=left] at (5.0,-2.35) {pas optimal :\\ erreur $\times\frac23$ à chaque pas};
+  \node[accent,font=\small,align=right] at (-4.3,-2.3) {gradient conjugué :\\ $x_2=x^*$};
+\end{tikzpicture}
+\caption{Lignes de niveau de $J(x)=\frac12(x_1^2+5x_2^2)$. Le gradient à pas optimal zigzague ; le gradient conjugué fait le même premier pas, puis atteint le minimum au deuxième.}\label{fig:zigzag}
+\end{figure}
+
+\subsection{Le gradient conjugué}
+
+Le défaut du gradient à pas optimal est d'oublier le passé : à chaque pas, il minimise sur une droite. On fait mieux en minimisant, au pas $k$, sur tout l'espace affine engendré par les directions déjà explorées. Ces directions, $r_0$, puis $Rr_0$, puis $R^2r_0$\dots, engendrent les \emph{espaces de Krylov}
+\[
+  \K_k=\mathrm{Vect}(r_0,Rr_0,\dots,R^{k-1}r_0),\qquad \K_0=\{0\}.
+\]
+On \emph{définit} le $k$-ième itéré comme le minimiseur de $J$ sur $x_0+\K_k$ ; il existe et il est unique, car $J$ restreinte à un sous-espace affine est encore une fonction quadratique strictement convexe. Le point remarquable est qu'on le calcule par une récurrence courte, sans garder en mémoire les directions passées.
+
+\begin{lemme}\label{lem:galerkine}
+Soit $W$ un sous-espace vectoriel. Le point $x\in x_0+W$ minimise $J$ sur $x_0+W$ si et seulement si $r=F-Rx$ est orthogonal à $W$.
+\end{lemme}
+
+\begin{proof}
+Pour $w\in W$ et $t\in\R$, $J(x+tw)=J(x)-t\ps{r}{w}+\frac{t^2}2\ps{Rw}{w}$. Si $\ps{r}{w}\neq0$, un petit $t$ du bon signe fait décroître $J$. Si $r\perp W$, alors $J(x+w)-J(x)=\frac12\ps{Rw}{w}\geq0$.
+\end{proof}
+
+\begin{theoreme}[Hestenes-Stiefel \cite{hs}]\label{thm:gc}
+Soit $x_k$ le minimiseur de $J$ sur $x_0+\K_k$, $r_k=F-Rx_k$, et supposons $r_0,\dots,r_{k}$ non nuls. Alors :
+\begin{enumerate}[nosep]
+\item les résidus $r_0,\dots,r_k$ sont deux à deux orthogonaux et forment une base de $\K_{k+1}$ ;
+\item les vecteurs $p_j=x_{j+1}-x_j$, $0\leq j\leq k$, sont deux à deux conjugués : $\ps{Rp_i}{p_j}=0$ pour $i\neq j$ ;
+\item les itérés se calculent par $p_0=r_0$ et, pour $j\geq0$,
+\[
+  \begin{gathered}
+  \alpha_j=\frac{\|r_j\|^2}{\ps{Rp_j}{p_j}},\qquad x_{j+1}=x_j+\alpha_jp_j,\qquad r_{j+1}=r_j-\alpha_jRp_j,\\
+  \beta_j=\frac{\|r_{j+1}\|^2}{\|r_j\|^2},\qquad p_{j+1}=r_{j+1}+\beta_jp_j,
+  \end{gathered}
+\]
+où l'on a renormalisé les $p_j$ (ce sont maintenant des multiples non nuls de $x_{j+1}-x_j$).
+\end{enumerate}
+En particulier, la méthode trouve $x^*$ en au plus $n$ itérations.
+\end{theoreme}
+
+\begin{proof}
+\emph{Les résidus.} D'après le lemme \ref{lem:galerkine}, $r_j\perp\K_j$. D'autre part $r_j=r_0-R(x_j-x_0)\in\K_{j+1}$, puisque $R\K_j\subset\K_{j+1}$. Si $r_j\neq0$, il est donc dans $\K_{j+1}$ sans être dans $\K_j$, et $\K_{j+1}=\K_j\oplus\R r_j$. Par récurrence, $(r_0,\dots,r_k)$ est une base orthogonale de $\K_{k+1}$, ce qui prouve 1.
+
+\emph{Les directions.} Le vecteur $p_j=x_{j+1}-x_j$ est dans $\K_{j+1}$, et pour $w\in\K_j$, $\ps{Rp_j}{w}=\ps{r_j-r_{j+1}}{w}=0$, car $r_j$ et $r_{j+1}$ sont orthogonaux à $\K_j$. Donc $p_j$ est $R$-orthogonal à $\K_j$, qui contient $p_0,\dots,p_{j-1}$ : c'est 2. De plus $p_j\neq0$, sinon $r_{j+1}=r_j$ serait orthogonal à $\K_{j+1}\ni r_j$, donc nul. Les $p_0,\dots,p_k$ forment ainsi une base $R$-orthogonale de $\K_{k+1}$.
+
+\emph{La récurrence.} Comme $p_j\notin\K_j$ (il est $R$-orthogonal à $\K_j$ et non nul) et $\K_{j+1}=\K_j\oplus\R r_j$, la composante de $p_j$ sur $r_j$ n'est pas nulle ; on renormalise $p_j$ pour qu'elle vaille $1$ : $p_j=r_j+w$ avec $w\in\K_j$. Décomposons $w$ dans la base $R$-orthogonale $p_0,\dots,p_{j-1}$ de $\K_j$. Pour $i\leq j-2$, on a $Rp_i\in\K_{i+2}\subset\K_j$, donc
+\[
+  \ps{Rw}{p_i}=\ps{R(p_j-r_j)}{p_i}=-\ps{r_j}{Rp_i}=0 .
+\]
+Seule reste la composante sur $p_{j-1}$ : $p_j=r_j+\beta_{j-1}p_{j-1}$. Le point $x_{j+1}$ minimise $J$ sur $x_0+\K_{j+1}$, donc sur la droite $x_j+\R p_j$, ce qui donne $\alpha_j=\ps{r_j}{p_j}/\ps{Rp_j}{p_j}$ ; et $\ps{r_j}{p_j}=\|r_j\|^2$ car $r_j\perp p_{j-1}$. La relation $r_{j+1}=r_j-\alpha_jRp_j$ vient de $r=F-Rx$. Enfin, la conjugaison $\ps{Rp_j}{p_{j-1}}=0$ s'écrit $\beta_{j-1}=-\ps{Rr_j}{p_{j-1}}/\ps{Rp_{j-1}}{p_{j-1}}$. Comme $Rp_{j-1}=(r_{j-1}-r_j)/\alpha_{j-1}$ et que $r_j\perp r_{j-1}$,
+\[
+  \ps{Rr_j}{p_{j-1}}=\frac{\ps{r_j}{r_{j-1}-r_j}}{\alpha_{j-1}}=-\frac{\|r_j\|^2}{\alpha_{j-1}},\qquad
+  \ps{Rp_{j-1}}{p_{j-1}}=\frac{\|r_{j-1}\|^2}{\alpha_{j-1}},
+\]
+d'où $\beta_{j-1}=\|r_j\|^2/\|r_{j-1}\|^2$.
+
+\emph{Terminaison.} Des vecteurs non nuls deux à deux orthogonaux de $\R^n$ sont au plus $n$ : un résidu $r_k$ avec $k\leq n$ est nul, et alors $x_k=x^*$.
+\end{proof}
+
+Chaque itération coûte un produit $Rp_j$ et quelques combinaisons linéaires, et ne garde en mémoire que quatre vecteurs. En arithmétique flottante, l'orthogonalité des résidus se perd peu à peu et la terminaison en $n$ pas n'a plus de sens pratique ; c'est le théorème suivant qui fait l'intérêt de la méthode. On trouvera dans \cite{shewchuk} une présentation très progressive de ces idées.
+
+\begin{theoreme}\label{thm:tcheb}
+Pour le gradient conjugué, avec $\kappa=\kappa(R)$,
+\[
+  \|\varepsilon_k\|_R\leq2\Big(\frac{\sqrt\kappa-1}{\sqrt\kappa+1}\Big)^k\|\varepsilon_0\|_R .
+\]
+\end{theoreme}
+
+\begin{proof}
+\emph{Réduction à un problème polynomial.} Un point de $x_0+\K_k$ s'écrit $x=x_0+s(R)r_0$ avec $s$ polynôme de degré au plus $k-1$. Comme $r_0=-R\varepsilon_0$, son erreur est $\varepsilon=q(R)\varepsilon_0$ avec $q(\lambda)=1-\lambda s(\lambda)$, et $q$ décrit exactement l'ensemble $\mathcal P_k$ des polynômes de degré au plus $k$ tels que $q(0)=1$. Par définition de $x_k$ et par \eqref{eq:energie}, $\|\varepsilon_k\|_R=\min_{q\in\mathcal P_k}\|q(R)\varepsilon_0\|_R$. Comme dans la preuve du théorème \ref{thm:gpo}, une décomposition sur une base propre donne $\|q(R)\varepsilon_0\|_R\leq\max_i|q(\lambda_i)|\,\|\varepsilon_0\|_R$. Donc
+\[
+  \|\varepsilon_k\|_R\leq\Big(\min_{q\in\mathcal P_k}\ \max_{\lambda\in[\lambda_{\min},\lambda_{\max}]}|q(\lambda)|\Big)\,\|\varepsilon_0\|_R .
+\]
+\emph{Un bon polynôme.} Soit $T_k$ le $k$-ième polynôme de Tchebychev, $T_k(\cos\theta)=\cos(k\theta)$. Il vérifie $|T_k|\leq1$ sur $[-1,1]$, et pour $z\geq1$,
+\[
+  T_k(z)=\tfrac12\big[(z+\sqrt{z^2-1})^k+(z-\sqrt{z^2-1})^k\big]\geq\tfrac12\,(z+\sqrt{z^2-1})^k ,
+\]
+les deux expressions coïncidant sur $[1,+\infty[$ parce qu'elles vérifient la même récurrence $T_{k+1}=2zT_k-T_{k-1}$ avec les mêmes deux premiers termes. L'application affine $\lambda\mapsto\frac{\lambda_{\max}+\lambda_{\min}-2\lambda}{\lambda_{\max}-\lambda_{\min}}$ envoie $[\lambda_{\min},\lambda_{\max}]$ sur $[-1,1]$ et $0$ sur $z_0=\frac{\kappa+1}{\kappa-1}>1$. Le polynôme
+\[
+  q(\lambda)=T_k\Big(\frac{\lambda_{\max}+\lambda_{\min}-2\lambda}{\lambda_{\max}-\lambda_{\min}}\Big)\Big/T_k(z_0)
+\]
+est dans $\mathcal P_k$, et $|q|\leq1/T_k(z_0)$ sur $[\lambda_{\min},\lambda_{\max}]$. Enfin
+\[
+  z_0+\sqrt{z_0^2-1}=\frac{\kappa+1+2\sqrt\kappa}{\kappa-1}=\frac{(\sqrt\kappa+1)^2}{(\sqrt\kappa-1)(\sqrt\kappa+1)}=\frac{\sqrt\kappa+1}{\sqrt\kappa-1},
+\]
+donc $1/T_k(z_0)\leq2\big(\frac{\sqrt\kappa-1}{\sqrt\kappa+1}\big)^k$.
+\end{proof}
+
+Il faut maintenant de l'ordre de $\frac{\sqrt\kappa}2\ln\frac2\delta$ itérations pour multiplier l'erreur par $\delta$ : le conditionnement est remplacé par sa racine carrée.
+
+\subsection{Application au laplacien aléatoire}
+
+\begin{proposition}\label{prop:cond}
+Si toutes les conductances sont dans $[\alpha,\beta]$, alors
+\[
+  \kappa(R)\leq\frac\beta\alpha\,\cot^2\frac{\pi}{2(N+1)}\sim\frac{4\beta}{\pi^2\alpha}\,N^2 .
+\]
+\end{proposition}
+
+\begin{proof}
+Soit $\Delta_N$ la matrice $R$ obtenue quand toutes les conductances valent $1$ (le laplacien discret avec condition de Dirichlet). Comme $\ps{R\varphi}{\varphi}=\sum a(e)(\nabla_e\varphi)^2$, on a $\alpha\ps{\Delta_N\varphi}{\varphi}\leq\ps{R\varphi}{\varphi}\leq\beta\ps{\Delta_N\varphi}{\varphi}$. Les valeurs propres extrêmes d'une matrice symétrique sont le minimum et le maximum de son quotient de Rayleigh, donc $\lambda_{\min}(R)\geq\alpha\lambda_{\min}(\Delta_N)$ et $\lambda_{\max}(R)\leq\beta\lambda_{\max}(\Delta_N)$. Il reste à calculer le spectre de $\Delta_N$. En dimension $1$, le vecteur $(\sin\frac{pi\pi}{N+1})_{1\leq i\leq N}$ est propre pour la matrice tridiagonale $(-1,2,-1)$, de valeur propre $4\sin^2\frac{p\pi}{2(N+1)}$, pour $1\leq p\leq N$ ; cela se vérifie avec $\sin(\theta-h)+\sin(\theta+h)=2\sin\theta\cos h$. En dimension $2$, $\Delta_N$ est la somme des opérateurs unidimensionnels agissant sur chaque coordonnée, et les produits $\sin\frac{pi\pi}{N+1}\sin\frac{qj\pi}{N+1}$ sont propres, de valeurs propres $4\sin^2\frac{p\pi}{2(N+1)}+4\sin^2\frac{q\pi}{2(N+1)}$. Les extrêmes sont $8\sin^2\frac{\pi}{2(N+1)}$ et $8\cos^2\frac{\pi}{2(N+1)}$, de quotient $\cot^2\frac\pi{2(N+1)}$.
+\end{proof}
+
+Pour notre composite, le gradient à pas optimal demande donc de l'ordre de $N^2$ itérations et le gradient conjugué de l'ordre de $N$. Le calcul le confirme. Pour une réalisation des conductances et un résidu relatif $\|r_k\|/\|r_0\|\leq10^{-6}$, on obtient :
+
+\begin{center}
+\begin{tabular}{@{}rcccc@{}}
+\toprule
+$N$ & borne de $\kappa(R)$ & $\sqrt{\kappa}$ & gradient conjugué & pas optimal \\
+\midrule
+$8$ & $289$ & $17$ & $35$ & $354$ \\
+$16$ & $1\,048$ & $32$ & $75$ & $1\,352$ \\
+$32$ & $3\,966$ & $63$ & $132$ & $4\,210$ \\
+$64$ & $15\,405$ & $124$ & $263$ & -- \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Le nombre d'itérations du gradient conjugué vaut à peu près $2\sqrt\kappa$, celui du pas optimal à peu près $\kappa$, deux constantes plus petites que ce que donnent les théorèmes \ref{thm:gpo} et \ref{thm:tcheb} : les bornes sont des pires cas, et la proposition \ref{prop:cond} surestime $\kappa$. Pour $N=64$, le pas optimal demanderait plus de $15\,000$ itérations. La figure \ref{fig:residus} montre l'évolution du résidu pour $N=32$.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[xscale=0.05,yscale=0.32]
+  \draw[->,gray] (0,-12.8) -- (245,-12.8) node[right] {$k$};
+  \draw[->,gray] (0,-12.8) -- (0,1.2);
+  \foreach \y in {0,-4,-8,-12} \node[left,font=\small] at (0,\y) {$10^{\y}$};
+  \foreach \y in {0,-4,-8,-12} \draw[gray!35] (0,\y) -- (235,\y);
+  \foreach \x in {50,100,150,200} \node[below,font=\small] at (\x,-12.8) {$\x$};
+  \draw[accent2,thick] plot coordinates {(0,0.000) (10,-1.079) (20,-1.383) (30,-1.556) (40,-1.673) (50,-1.762) (60,-1.836) (70,-1.899) (80,-1.956) (90,-2.008) (100,-2.057) (110,-2.101) (120,-2.144) (130,-2.183) (140,-2.221) (150,-2.256) (160,-2.289) (170,-2.321) (180,-2.352) (190,-2.380) (200,-2.408)};
+  \node[accent2,above,font=\small] at (200,-2.3) {pas optimal};
+  \draw[accent,thick] plot coordinates {(0,0.000) (5,-0.946) (10,-1.351) (15,-1.560) (20,-1.782) (25,-1.957) (30,-2.078) (35,-2.236) (40,-2.316) (45,-2.420) (50,-2.540) (55,-2.694) (60,-2.742) (65,-2.784) (70,-2.921) (75,-3.210) (80,-3.508) (85,-3.821) (90,-4.050) (95,-4.411) (100,-4.735) (105,-4.935) (110,-5.057) (115,-5.272) (120,-5.447) (125,-5.625) (130,-5.951) (135,-6.151) (140,-6.304) (145,-6.477) (150,-6.827) (155,-7.163) (160,-7.435) (165,-7.685) (170,-7.994) (175,-8.242) (180,-8.509) (185,-8.840) (190,-9.258) (195,-9.727) (200,-9.964) (205,-10.310) (210,-10.644) (215,-10.964) (220,-11.344) (225,-11.640) (230,-11.979) (231,-12.079)};
+  \node[accent,font=\small] at (45,-4.6) {gradient conjugué};
+\end{tikzpicture}
+\caption{Résidu relatif $\|r_k\|/\|r_0\|$ (échelle logarithmique) pour une réalisation des conductances, $N=32$, soit $1\,024$ inconnues. Le gradient conjugué atteint $10^{-12}$ en $231$ itérations ; le pas optimal n'a gagné que deux décimales après $200$.}\label{fig:residus}
+\end{figure}
+
+\subsection{Préconditionner}
+
+Comme $\sqrt\kappa$ croît comme $N$, le gradient conjugué reste lent sur de très grandes grilles. On peut changer de métrique. Soit $C=LL^\top$ une matrice symétrique définie positive, proche de $R$ en un sens à préciser, et pour laquelle résoudre $Cz=r$ est bon marché. Dans la variable $y=L^\top x$, la fonction $J$ devient $\frac12\ps{\hat Ry}{y}-\ps{L^{-1}F}{y}$ avec $\hat R=L^{-1}RL^{-\top}$, matrice symétrique définie positive semblable à $C^{-1}R$. On applique le gradient conjugué à ce problème, puis on revient à $x$ : on obtient la même récurrence que dans le théorème \ref{thm:gc}, où l'on calcule à chaque pas $z_j=C^{-1}r_j$ et où l'on remplace $\|r_j\|^2$ par $\ps{z_j}{r_j}$ et $r_{j+1}$ par $z_{j+1}$ dans la mise à jour de la direction. Le théorème \ref{thm:tcheb} s'applique avec $\kappa(C^{-1}R)$ à la place de $\kappa(R)$.
+
+Le stage utilisait la \emph{factorisation de Cholesky incomplète} : on calcule une factorisation $C=LL^\top$ en effectuant l'algorithme de Cholesky, mais en ne gardant dans $L$ que les coefficients situés aux places des coefficients non nuls de $R$. Elle existe pour les matrices symétriques définies positives à coefficients hors diagonaux négatifs (Meijerink et van der Vorst \cite{mvdv}), ce qui est le cas de $R$.
+
+\begin{remarque}
+Le rapport décrivait le préconditionnement comme la résolution de $(CR)U=CF$, avec $\kappa(CR)$ « le plus proche de $1$ ». Écrit ainsi, le système n'est plus symétrique et le gradient conjugué ne s'applique pas ; c'est la forme symétrique $\hat R=L^{-1}RL^{-\top}$ qu'il faut considérer, même si l'algorithme final ne forme jamais $\hat R$. D'autre part, pour le laplacien discret, la factorisation de Cholesky incomplète améliore la constante mais pas l'ordre : $\kappa(C^{-1}R)$ reste de l'ordre de $N^2$ (voir \cite{saad}). Une variante, la factorisation incomplète modifiée de Gustafsson \cite{gustafsson}, ramène ce conditionnement à l'ordre de $N$.
+\end{remarque}
+
+% ==========================================================
+\section{De la boîte au coefficient homogénéisé}
+% ==========================================================
+
+Le tableau de la section 3 a mis en évidence deux erreurs, de natures différentes, dans l'approximation de $a_{\mathrm{hom}}$ par $a_N$.
+
+L'\emph{erreur aléatoire} $a_N-\mathbb{E}[a_N]$ mesure la dépendance au tirage ; sa variance décroissait comme $1/N^2$. Gloria et Otto ont démontré que c'est le bon ordre de grandeur, et qu'on ne peut pas faire mieux en général : pour une moyenne spatiale lissée de la densité d'énergie à l'échelle $L$, la variance est majorée par une constante fois $L^{-d}$ en dimension $d$, l'échelle du théorème central limite \cite{go1}. C'était la vitesse que le stage devait illustrer numériquement.
+
+L'\emph{erreur systématique} $\mathbb{E}[a_N]-a_{\mathrm{hom}}$ vient de la troncature : $a_{\mathrm{hom}}$ est défini sur tout $\Z^2$, et la condition $\varphi=0$ sur le cadre, imposée faute de mieux, perturbe la solution près du bord. Pour la réduire, la méthode étudiée pendant le stage, analysée par Gloria et Otto \cite{go2}, combine deux idées.
+
+\begin{enumerate}[nosep]
+\item On ajoute un terme d'ordre zéro : on résout $T^{-1}\varphi-\nabla^*\cdot A(\xi+\nabla\varphi)=0$, c'est-à-dire qu'on minimise $\E_N(\varphi)+\frac1{mT}\sum_x\varphi(x)^2$. La matrice devient $R+T^{-1}I$, mieux conditionnée. Surtout, l'influence d'une perturbation lointaine décroît alors exponentiellement à l'échelle $\sqrt T$, comme la fonction de Green de $T^{-1}-\Delta$ : à distance grande devant $\sqrt T$ du bord, la condition imposée sur le cadre ne se voit presque plus.
+\item On remplace la moyenne uniforme de la densité d'énergie par une moyenne pondérée par un filtre $\mu$, en plateau, qui donne peu de poids aux points proches du cadre.
+\end{enumerate}
+
+Le prix à payer est une nouvelle erreur systématique, due au terme $T^{-1}\varphi$ lui-même ; le choix de $T$ en fonction de $N$ équilibre les termes. Le rapport prenait $T=N$ et observait une variance décroissant comme $1/T$ ; c'est l'ordre prévu par l'estimation de Gloria et Otto si la longueur sur laquelle on moyenne effectivement est de l'ordre de $\sqrt T$. Le stage en tirait ensuite une méthode parallèle, en découpant $Q_N$ en sous-carrés traités indépendamment, et atteignait ainsi $N\approx10^{4,5}$, soit $10^9$ inconnues.
+
+\begin{remarque}
+Le rapport mesurait l'erreur par la variance, présentée comme « un bon indicateur de l'erreur moyenne commise à chaque réalisation ». La variance ne voit que l'erreur aléatoire : l'erreur quadratique moyenne vaut $\mathbb{E}[(a_N-a_{\mathrm{hom}})^2]=\mathrm{Var}(a_N)+(\mathbb{E}[a_N]-a_{\mathrm{hom}})^2$, et le second terme, dans notre tableau, est du même ordre que le premier. Une étude complète doit suivre les deux.
+\end{remarque}
+
+Quand les conductances sont périodiques au lieu d'être aléatoires, il n'y a plus d'erreur aléatoire, et toute l'erreur vient du désaccord entre la boîte et la période (on parle d'erreur de résonance). Blanc et Le Bris \cite{blb} ont montré qu'une régularisation et un filtrage bien choisis améliorent nettement la vitesse de convergence, dans les cadres périodique et quasi-périodique ; Gloria a ensuite étudié la réduction de cette erreur de façon systématique \cite{gloria}. En fin de stage, des simulations dans ce cadre périodique avaient montré des vitesses bien supérieures à $1/N$ ; elles ne sont pas reprises ici.
+
+\begin{remarque}[sommer un milliard de nombres]
+Pour moyenner $10^9$ densités d'énergie, le stage utilisait une sommation par paires : on additionne les termes deux par deux, puis les sommes partielles deux par deux, et ainsi de suite. Le gain est réel, mais pas pour la raison donnée. Le rapport invoquait un risque de dépassement de capacité, inexistant pour des flottants en double précision qui vont jusqu'à $10^{308}$. La vraie raison est la propagation des arrondis : l'erreur relative de la sommation naïve peut croître comme $(n-1)u$, celle de la sommation par paires comme $u\log_2n$, où $u=2^{-53}$ est l'unité d'arrondi (exercice \ref{exo:somme}, et \cite{higham} pour une étude complète). Le test proposé, la moyenne de $100\,000$ termes égaux à $1$, ne pouvait rien montrer : les sommes partielles sont des entiers inférieurs à $2^{53}$, représentés exactement, et la sommation naïve est exacte. En sommant $10^7$ fois le flottant $0{,}1$, on obtient au contraire $999\,999{,}99983\ldots$ par la sommation naïve, soit une erreur relative de $1{,}6\cdot10^{-10}$, et la valeur correctement arrondie $10^6$ par la sommation par paires.
+\end{remarque}
+
+% ==========================================================
+\section{Bilan}
+% ==========================================================
+
+Tout part d'une seule observation : la solution de l'équation discrète de la chaleur est le minimum d'une énergie quadratique. On en tire l'existence et l'unicité (proposition \ref{prop:dirichlet}), puis des encadrements de la conductivité effective par des fonctions test bien choisies et par l'inégalité de Cauchy-Schwarz (théorème \ref{thm:wiener}), enfin des méthodes de calcul qui sont des méthodes de descente. Parmi les méthodes qui n'utilisent que des produits par $R$, le gradient conjugué est optimal : à chaque pas, il minimise l'énergie sur tout l'espace de Krylov, et sa vitesse se lit sur un problème d'approximation polynomiale que résolvent les polynômes de Tchebychev.
+
+Une question reste ouverte dans cette fiche. Les simulations de la section 3 donnent une erreur systématique voisine de $2/N$, et l'argument du périmètre l'explique en ordre de grandeur, mais nous ne l'avons pas démontré ; c'est précisément ce que quantifient les travaux cités à la section 5.
+
+% ==========================================================
+\section{Exercices}
+% ==========================================================
+
+\begin{exercice}\label{exo:dim1}
+\emph{La dimension 1.} Soit $a_0,\dots,a_N>0$. Minimiser $\sum_{i=0}^Na_i(1+\varphi_{i+1}-\varphi_i)^2$ sur les $(\varphi_0,\dots,\varphi_{N+1})$ tels que $\varphi_0=\varphi_{N+1}=0$. Montrer que le minimum vaut $(N+1)\,h$, où $h$ est la moyenne harmonique des $a_i$, et décrire le minimiseur.
+\end{exercice}
+
+\begin{exercice}\label{exo:couches}
+\emph{Couches parallèles.} On suppose que la conductance d'une arête horizontale ne dépend que de sa ligne : $a([(i,j),(i+1,j)])=c_j$. Les conductances verticales sont quelconques. Montrer que $a_N=M_N$.
+\end{exercice}
+
+\begin{exercice}\label{exo:spectre}
+Montrer que si $R$ n'a que $p$ valeurs propres distinctes, le gradient conjugué trouve $x^*$ en au plus $p$ itérations.
+\end{exercice}
+
+\begin{exercice}\label{exo:somme}
+\emph{Sommation par paires.} On modélise l'arithmétique flottante par $\mathrm{fl}(a+b)=(a+b)(1+\delta)$ avec $|\delta|\leq u$, et l'on pose $\gamma_k=\frac{ku}{1-ku}$ pour $ku<1$. Soit $x_1,\dots,x_n$ avec $n=2^k$, $s=\sum x_i$ et $\hat s$ la somme calculée par paires. Montrer que $|\hat s-s|\leq\gamma_k\sum|x_i|$. Que donne le même raisonnement pour la sommation naïve ?
+\end{exercice}
+
+% ==========================================================
+\section{Corrigés}
+% ==========================================================
+
+\paragraph{Exercice 1.} C'est le théorème \ref{thm:wiener} sur une seule ligne, sans arêtes verticales : l'inégalité de Cauchy-Schwarz donne le minorant $(N+1)h$. Il y a égalité si et seulement si $a_i(1+\varphi_{i+1}-\varphi_i)$ est une constante $q$ (le flux), c'est-à-dire $\varphi_{i+1}-\varphi_i=q/a_i-1$. La condition $\varphi_{N+1}=\varphi_0$ impose $q\sum1/a_i=N+1$, soit $q=h$, et $\varphi_i=\sum_{l<i}(h/a_l-1)$ convient. Le flux est le même dans toutes les arêtes, comme pour des résistances en série.
+
+\paragraph{Exercice 2.} Sur chaque ligne, $F(x)=c_j-c_j=0$. L'équation d'Euler $R\varphi^*=F=0$ donne $\varphi^*=0$, d'où $a_N=\E_N(0)=M_N$. La borne supérieure du théorème \ref{thm:wiener} est atteinte : la chaleur suit les couches sans jamais les traverser.
+
+\paragraph{Exercice 3.} Soit $\mu_1,\dots,\mu_p$ les valeurs propres distinctes. Le polynôme $q(\lambda)=\prod_l(1-\lambda/\mu_l)$ est dans $\mathcal P_p$ et s'annule sur le spectre ; la réduction faite dans la preuve du théorème \ref{thm:tcheb} donne $\|\varepsilon_p\|_R\leq\max_i|q(\lambda_i)|\,\|\varepsilon_0\|_R=0$. Pour une matrice proche d'une matrice ayant peu de valeurs propres distinctes, on s'attend de même à une convergence rapide : c'est l'idée qui guide le choix d'un préconditionneur.
+
+\paragraph{Exercice 4.} Par récurrence sur $k$. Pour $k=1$, $\hat s=(x_1+x_2)(1+\delta)$ et $|\hat s-s|\leq u(|x_1|+|x_2|)\leq\gamma_1\sum|x_i|$. Si l'énoncé vaut pour $2^{k-1}$ termes, soit $\hat s_1$ et $\hat s_2$ les sommes calculées des deux moitiés, de sommes exactes $s_1,s_2$ et de sommes de modules $S_1,S_2$. Alors $\hat s=(\hat s_1+\hat s_2)(1+\delta)$ et
+\[
+  |\hat s-s|=\big|(\hat s_1-s_1+\hat s_2-s_2)(1+\delta)+(s_1+s_2)\delta\big|\leq\big(\gamma_{k-1}(1+u)+u\big)(S_1+S_2) .
+\]
+Or $(1+\gamma_{k-1})(1+u)\leq\frac{1}{1-(k-1)u}\cdot\frac1{1-u}\leq\frac1{1-ku}=1+\gamma_k$, ce qui donne $\gamma_{k-1}(1+u)+u\leq\gamma_k$. Pour la sommation naïve, la $l$-ième addition intervient dans tous les arrondis suivants, et le même raisonnement donne $\gamma_{n-1}\sum|x_i|$ : l'erreur peut croître linéairement en $n$ au lieu de logarithmiquement. Avec $n=10^9$, on compare $10^9u\approx10^{-7}$ à $30u\approx3\cdot10^{-15}$.
+
+\begin{thebibliography}{99}
+\bibitem{go1} A. Gloria, F. Otto, \emph{An optimal variance estimate in stochastic homogenization of discrete elliptic equations}, Annals of Probability 39 (2011), pp. 779-856.
+\bibitem{go2} A. Gloria, F. Otto, \emph{An optimal error estimate in stochastic homogenization of discrete elliptic equations}, Annals of Applied Probability 22 (2012), pp. 1-28.
+\bibitem{gloria} A. Gloria, \emph{Reduction of the resonance error. Part 1: Approximation of homogenized coefficients}, Mathematical Models and Methods in Applied Sciences 21 (2011), pp. 1601-1630.
+\bibitem{blb} X. Blanc, C. Le Bris, \emph{Improving on computation of homogenized coefficients in the periodic and quasi-periodic settings}, Networks and Heterogeneous Media 5 (2010), pp. 1-29.
+\bibitem{lebris} C. Le Bris, \emph{Systèmes multi-échelles : modélisation et simulation}, Mathématiques et Applications 47, Springer, 2005.
+\bibitem{kozlov} S. M. Kozlov, \emph{Averaging of difference schemes}, Mathematics of the USSR-Sbornik 57 (1987), pp. 351-369.
+\bibitem{kunnemann} R. Künnemann, \emph{The diffusion limit for reversible jump processes on $\mathbb{Z}^d$ with ergodic random bond conductivities}, Communications in Mathematical Physics 90 (1983), pp. 27-68.
+\bibitem{keller} J. B. Keller, \emph{A theorem on the conductivity of a composite medium}, Journal of Mathematical Physics 5 (1964), pp. 548-549.
+\bibitem{dykhne} A. M. Dykhne, \emph{Conductivity of a two-dimensional two-phase system}, Soviet Physics JETP 32 (1971), pp. 63-65.
+\bibitem{hs} M. R. Hestenes, E. Stiefel, \emph{Methods of conjugate gradients for solving linear systems}, Journal of Research of the National Bureau of Standards 49 (1952), pp. 409-436.
+\bibitem{mvdv} J. A. Meijerink, H. A. van der Vorst, \emph{An iterative solution method for linear systems of which the coefficient matrix is a symmetric M-matrix}, Mathematics of Computation 31 (1977), pp. 148-162.
+\bibitem{gustafsson} I. Gustafsson, \emph{A class of first order factorization methods}, BIT 18 (1978), pp. 142-156.
+\bibitem{saad} Y. Saad, \emph{Iterative Methods for Sparse Linear Systems}, 2e édition, SIAM, 2003, chapitres 5, 6 et 10.
+\bibitem{shewchuk} J. R. Shewchuk, \emph{An introduction to the conjugate gradient method without the agonizing pain}, rapport technique, Carnegie Mellon University, 1994.
+\bibitem{higham} N. J. Higham, \emph{Accuracy and Stability of Numerical Algorithms}, 2e édition, SIAM, 2002, chapitre 4.
+\end{thebibliography}
+
+\paragraph{Source.} Rapport de stage de deuxième année de l'École centrale de Lille, « Méthodes numériques en homogénéisation », effectué de juin à août 2009 dans l'équipe-projet SIMPAF de l'INRIA Lille-Nord Europe sous la direction d'Antoine Gloria, avec ses programmes C++ et ses feuilles de simulation. Les résultats de recherche que le stage illustrait sont ceux d'Antoine Gloria et Felix Otto \cite{go1,go2} pour le cadre aléatoire, de Xavier Blanc et Claude Le Bris \cite{blb} pour le cadre périodique ; on renvoie à leurs articles et au livre de Claude Le Bris \cite{lebris} pour l'homogénéisation elle-même. Les démonstrations de cette fiche portent sur la partie élémentaire (principe de Dirichlet, bornes de Wiener, méthodes de gradient) et les simulations ont été refaites. La fiche corrige le signe de l'équation et son second membre, la portée de la formule $a_{\mathrm{hom}}=\sqrt{\alpha\beta}$, le classement des méthodes de relaxation, la forme du système préconditionné, l'usage de la variance comme mesure de l'erreur et la justification de la sommation par paires.
+
+\end{document}

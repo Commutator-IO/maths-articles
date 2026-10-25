@@ -28,6 +28,10 @@
     "intitule": "Exponentielle de matrices. Applications."
   },
   {
+    "numero": "158",
+    "intitule": "Matrices symétriques réelles, matrices hermitiennes."
+  },
+  {
     "numero": "191",
     "intitule": "Exemples d'utilisation de techniques d'algèbre en géométrie."
   },
@@ -46,6 +50,10 @@
   {
     "numero": "218",
     "intitule": "Formules de Taylor. Exemples et applications."
+  },
+  {
+    "numero": "219",
+    "intitule": "Extremums : existence, caractérisation, recherche. Exemples et applications."
   },
   {
     "numero": "220",
