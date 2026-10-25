@@ -18,6 +18,7 @@ Ce sont des matériaux pour écrire ses plans et préparer ses développements, 
 | 222 | Exemples d'équations aux dérivées partielles linéaires | [hille-yosida.tex](lecons/222-equations-derivees-partielles/hille-yosida.tex), [HilleYosida.lean](lecons/222-equations-derivees-partielles/HilleYosida.lean) | 205, 208, 213, 220 |
 | 224 | Exemples de développements asymptotiques de suites et de fonctions | [autour-de-e.tex](lecons/224-developpements-asymptotiques/autour-de-e.tex), [AutourDeE.lean](lecons/224-developpements-asymptotiques/AutourDeE.lean) | 218, 223, 229, 230 |
 | 228 | Continuité, dérivabilité des fonctions réelles d'une variable réelle | [partie-entiere-regularite.tex](lecons/228-continuite-derivabilite/partie-entiere-regularite.tex), [PartieEntiereRegularite.lean](lecons/228-continuite-derivabilite/PartieEntiereRegularite.lean) | 229 |
+| 233 | Analyse numérique matricielle : résolution approchée de systèmes linéaires, recherche d'éléments propres, exemples | [perron-frobenius-pagerank.tex](lecons/233-analyse-numerique-matricielle/perron-frobenius-pagerank.tex) | 223, 226 |
 | 236 | Illustrer par des exemples quelques méthodes de calcul d'intégrales | [calcul-integral.tex](lecons/236-calcul-integrales/calcul-integral.tex), [CalculIntegral.lean](lecons/236-calcul-integrales/CalculIntegral.lean) | 218, 230, 235, 239, 246 |
 
 ## Site web
@@ -66,4 +67,4 @@ Le site est publié sur **[agreg.commutator.io](https://agreg.commutator.io)**. 
 
 ## Origine des fiches
 
-Les fiches 126, 142, 224, 228 et 236 sont des réécritures, au niveau agrégation, de feuilles d'exercices de terminale S (2003), tirées des manuels *Hyperbole*, *Bréal*, *Terracher* et *Method'S*. Les énoncés faux de ces feuilles y sont signalés et corrigés. La fiche 222 reprend une note sur le théorème de Hille-Yosida écrite en décembre 2009, d'après le chapitre VII de Brezis : elle complète la preuve, que la note laissait en plan, et corrige son énoncé.
+Les fiches 126, 142, 224, 228 et 236 sont des réécritures, au niveau agrégation, de feuilles d'exercices de terminale S (2003), tirées des manuels *Hyperbole*, *Bréal*, *Terracher* et *Method'S*. Les énoncés faux de ces feuilles y sont signalés et corrigés. La fiche 222 reprend une note sur le théorème de Hille-Yosida écrite en décembre 2009, d'après le chapitre VII de Brezis : elle complète la preuve, que la note laissait en plan, et corrige son énoncé. La fiche 233 reprend un TER de master sur le théorème de Perron-Frobenius et l'algorithme PageRank (université Lille 1, mai 2009) : ses exemples y sont recalculés et ses erreurs corrigées.

@@ -1,0 +1,488 @@
+% Du théorème de Perron-Frobenius à PageRank
+% Compile avec pdflatex, xelatex ou lualatex.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+  \IfFileExists{lmodern.sty}{\usepackage{lmodern}}{}
+  \usepackage[french]{babel}
+\else
+  \usepackage{fontspec}
+  \usepackage{polyglossia}
+  \setdefaultlanguage{french}
+\fi
+\usepackage[margin=2.6cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{tikz}
+\input{../figures/tikz-setup.tex}
+\usepackage[hidelinks]{hyperref}
+
+% ---------- Environnements ----------
+\theoremstyle{plain}
+\newtheorem{theoreme}{Théorème}[section]
+\newtheorem{proposition}[theoreme]{Proposition}
+\newtheorem{lemme}[theoreme]{Lemme}
+\newtheorem{corollaire}[theoreme]{Corollaire}
+\theoremstyle{definition}
+\newtheorem{definition}[theoreme]{Définition}
+\newtheorem{exemple}[theoreme]{Exemple}
+\newtheorem{exercice}{Exercice}
+\theoremstyle{remark}
+\newtheorem{remarque}[theoreme]{Remarque}
+
+% ---------- Notations ----------
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\un}{\mathbf{1}}
+\DeclareMathOperator{\Sp}{Sp}
+
+\title{Du théorème de Perron-Frobenius à PageRank\\[2pt]
+\large Classer les pages du Web avec un vecteur propre}
+\author{Michel Hua, d'après un TER de master (université Lille 1, mai 2009)}
+\date{Octobre 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Un moteur de recherche trouve des milliers de pages pour une requête ; il faut encore les ranger. L'idée de Brin et Page (1998) est de lire l'importance d'une page dans la structure des liens : une page importante est une page vers laquelle pointent des pages importantes. Cette définition circulaire est une équation aux valeurs propres, $G^\top\pi=\pi$, pour une matrice stochastique $G$ construite à partir du graphe du Web. Le théorème de Perron-Frobenius dit quand elle a une solution unique et positive ; une analyse du spectre de $G$ dit à quelle vitesse la méthode de la puissance la calcule. On démontre ces deux résultats, on recalcule les exemples du TER dont cette fiche est issue, et l'on explique une observation qu'il laissait sans réponse : la méthode converge souvent bien plus vite que la borne théorique.
+\end{abstract}
+
+\paragraph{Leçons concernées.} 233 (Analyse numérique matricielle : résolution approchée de systèmes linéaires, recherche d'éléments propres, exemples), 226 (Suites vectorielles et réelles définies par une relation de récurrence $u_{n+1}=f(u_n)$), 223 (Suites numériques), ainsi que les leçons d'algèbre sur la réduction des endomorphismes et les matrices à coefficients positifs.
+
+\paragraph{Développements possibles.} Le théorème de Perron \ref{thm:perron}, avec sa preuve complète ; le spectre de la matrice Google (théorème \ref{thm:spectre}) et la vitesse de la méthode de la puissance (théorème \ref{thm:puissance}).
+
+\paragraph{Prérequis.} Réduction des matrices (valeurs propres, multiplicités, forme de Jordan), rayon spectral et formule de Gelfand $\rho(A)=\lim\|A^k\|^{1/k}$, graphes orientés.
+
+\paragraph{Notations.} Pour une matrice réelle $A$, on écrit $A\geq0$ si tous ses coefficients sont positifs ou nuls, et $A>0$ s'ils sont tous strictement positifs ; de même pour les vecteurs. On note $|x|$ le vecteur des modules $|x_i|$, $\rho(A)$ le rayon spectral, $\Sp(A)$ le spectre, $\un$ le vecteur dont toutes les coordonnées valent $1$, et $\|x\|_1=\sum|x_i|$.
+
+\tableofcontents
+
+% ==========================================================
+\section{Classer des pages}
+% ==========================================================
+
+On représente le Web par un graphe orienté : les sommets sont les pages, numérotées de $1$ à $n$, et un arc $i\to j$ signifie que la page $i$ contient un lien vers la page $j$. On veut attribuer à chaque page une note $\pi_i\geq0$, qui mesure son importance.
+
+Compter les liens entrants ne suffit pas : il serait trop facile de créer des pages qui pointent vers la sienne. Brin et Page proposent une définition récursive. Une page partage sa note à parts égales entre les pages qu'elle cite, et la note d'une page est la somme des parts qu'elle reçoit :
+\[
+  \pi_j=\sum_{i\to j}\frac{\pi_i}{d_i},
+\]
+où $d_i$ est le nombre de liens sortants de $i$. Avec la matrice $P$ de coefficients $P_{ij}=1/d_i$ si $i\to j$ et $0$ sinon, c'est l'équation $P^\top\pi=\pi$ : la note est un vecteur propre de $P^\top$ pour la valeur propre $1$.
+
+Cette équation a une lecture probabiliste. Un internaute se promène au hasard : depuis la page $i$, il suit l'un des $d_i$ liens, choisi uniformément. Si $\pi^{(k)}_i$ est la probabilité qu'il soit sur la page $i$ après $k$ clics, alors $\pi^{(k+1)}=P^\top\pi^{(k)}$, et une solution de $P^\top\pi=\pi$ est une répartition qui ne change plus : une \emph{distribution stationnaire}. La note d'une page est la fraction du temps que l'internaute y passe à long terme.
+
+Trois questions se posent alors, et elles organisent la fiche.
+\begin{enumerate}[nosep]
+\item L'équation $P^\top\pi=\pi$ a-t-elle une solution positive, et une seule ? C'est l'objet du théorème de Perron-Frobenius (sections 2 et 3).
+\item Que faire quand elle n'en a pas, ou en a plusieurs ? On modifie $P$ (section 4).
+\item Comment calculer $\pi$ quand $n$ vaut plusieurs milliards ? Par la méthode de la puissance, dont on étudie la vitesse (section 5).
+\end{enumerate}
+
+% ==========================================================
+\section{Le théorème de Perron : matrices strictement positives}
+% ==========================================================
+
+Oskar Perron (1907) a remarqué que les matrices à coefficients strictement positifs ont un spectre très particulier : la valeur propre de plus grand module est réelle, positive, simple, et son vecteur propre peut être choisi à coordonnées positives. On le démontre en n'utilisant que des inégalités entre vecteurs.
+
+\begin{lemme}\label{lem:positif}
+Soit $A>0$, $B\geq0$ et $x\in\R^n$.
+\begin{enumerate}[nosep]
+\item Si $x\geq0$ et $x\neq0$, alors $Ax>0$.
+\item Si $x\geq y\geq0$, alors $Bx\geq By$.
+\item Pour tout $x\in\C^n$, $|Bx|\leq B|x|$ (inégalité triangulaire, coordonnée par coordonnée).
+\end{enumerate}
+\end{lemme}
+
+\begin{proof}
+1. Chaque coordonnée $\sum_ja_{ij}x_j$ est une somme de termes positifs dont l'un au moins est strictement positif. 2. $B(x-y)\geq0$. 3. $\big|\sum_jb_{ij}x_j\big|\leq\sum_jb_{ij}|x_j|$.
+\end{proof}
+
+\begin{theoreme}[Perron]\label{thm:perron}
+Soit $A>0$ et $\rho=\rho(A)$. Alors :
+\begin{enumerate}[nosep]
+\item $\rho>0$, et $\rho$ est une valeur propre de $A$, avec un vecteur propre $p>0$ ;
+\item toute autre valeur propre $\lambda$ vérifie $|\lambda|<\rho$ ;
+\item $\rho$ est une valeur propre simple : sa multiplicité algébrique vaut $1$.
+\end{enumerate}
+On appelle $\rho$ la \emph{racine de Perron} et $p$, normalisé par $\|p\|_1=1$, le \emph{vecteur de Perron} de $A$.
+\end{theoreme}
+
+La preuve suit un fil simple : on part d'un vecteur propre $x$ pour une valeur propre de module maximal, et l'on montre que l'inégalité triangulaire $|Ax|\leq A|x|$ est en fait une égalité. Tout le reste en découle.
+
+\begin{proof}
+\emph{$\rho>0$.} D'après le lemme, $A^k>0$ pour tout $k$, donc $A$ n'est pas nilpotente, et elle a une valeur propre non nulle.
+
+\emph{$\rho$ est valeur propre, avec un vecteur propre positif.} Soit $\lambda$ une valeur propre de module $\rho$, et $x$ un vecteur propre. Par le lemme, $\rho|x|=|\lambda x|=|Ax|\leq A|x|$. Posons $y=A|x|-\rho|x|\geq0$, et supposons $y\neq0$. Alors $Ay>0$ et $z=A|x|>0$, donc il existe $\varepsilon>0$ tel que $Ay\geq\varepsilon z$, c'est-à-dire $Az\geq(\rho+\varepsilon)z$. En itérant (lemme, point 2), $A^kz\geq(\rho+\varepsilon)^kz$. Pour la norme $\|w\|_z=\max_i|w_i|/z_i$, cela donne $\|A^k\|_z\geq(\rho+\varepsilon)^k$, et la formule de Gelfand $\rho=\lim\|A^k\|_z^{1/k}$ donne $\rho\geq\rho+\varepsilon$ : contradiction. Donc $A|x|=\rho|x|$, et $p=|x|/\|x\|_1$ est un vecteur propre positif pour $\rho$. Il est même strictement positif, puisque $p=Ap/\rho>0$.
+
+\emph{Unicité sur le cercle spectral.} Reprenons $\lambda$ et $x$. On vient de voir que $|Ax|=A|x|$, c'est-à-dire que pour chaque $i$, $\big|\sum_ja_{ij}x_j\big|=\sum_ja_{ij}|x_j|$. Comme tous les $a_{ij}$ sont strictement positifs, l'égalité dans l'inégalité triangulaire force tous les $x_j$ à avoir le même argument : $x=e^{i\theta}|x|$. Alors $\lambda|x|=A|x|=\rho|x|$, donc $\lambda=\rho$.
+
+\emph{La droite propre.} Soit $x$ un vecteur propre réel pour $\rho$ ; quitte à changer $x$ en $-x$, il a une coordonnée strictement positive. Soit $t=\min_ix_i/p_i$ et $w=x-tp$. Alors $w\geq0$, $w$ a une coordonnée nulle, et $Aw=\rho w$. Si $w\neq0$, le lemme donne $w=Aw/\rho>0$, ce qui contredit la coordonnée nulle. Donc $x=tp$. Pour un vecteur propre complexe, on applique ce raisonnement à sa partie réelle et à sa partie imaginaire.
+
+\emph{Multiplicité algébrique.} Comme $A^\top>0$, ce qui précède donne un vecteur $q>0$ tel que $A^\top q=\rho q$. S'il existait un bloc de Jordan de taille $2$ pour $\rho$, il existerait $y$ tel que $(A-\rho I)y=p$ ; en multipliant à gauche par $q^\top$, on obtiendrait $0=q^\top(A-\rho I)y=q^\top p>0$. Donc $\rho$ n'a que des blocs de taille $1$ ; comme la droite propre est de dimension $1$, il n'y en a qu'un.
+\end{proof}
+
+\begin{remarque}
+La note de 2009 démontrait la multiplicité en observant que la suite $\big((A/\rho)^k\big)$ ne peut pas diverger. L'argument est juste mais demande d'expliquer pourquoi elle reste bornée ; le vecteur de Perron à gauche $q$ donne une preuve plus directe. La formule de Collatz-Wielandt, qui calcule $\rho$ par un problème d'optimisation, fait l'objet de l'exercice \ref{exo:collatz}.
+\end{remarque}
+
+% ==========================================================
+\section{Frobenius : matrices positives et irréductibles}
+% ==========================================================
+
+Les matrices du Web sont creuses : presque tous leurs coefficients sont nuls. Le théorème de Perron ne s'applique plus, et ses conclusions peuvent tomber en défaut :
+\[
+  A_1=\begin{pmatrix}1&1\\0&1\end{pmatrix},\qquad
+  A_2=\begin{pmatrix}0&1\\1&0\end{pmatrix}.
+\]
+La matrice $A_1$ a la valeur propre double $1$, avec une seule droite propre. La matrice $A_2$ a deux valeurs propres de module $1$, à savoir $1$ et $-1$. Frobenius (1912) a compris que ce qui compte n'est pas le nombre de zéros, mais leur position, et que la bonne notion est une propriété du graphe de la matrice.
+
+\begin{definition}
+Le \emph{graphe} d'une matrice $A\geq0$ de taille $n\geq2$ a pour sommets $1,\dots,n$, et un arc $i\to j$ quand $a_{ij}>0$. La matrice $A$ est \emph{irréductible} si son graphe est fortement connexe : pour tous $i$ et $j$, il existe un chemin de $i$ à $j$.
+\end{definition}
+
+De façon équivalente, $A$ est irréductible si aucune permutation simultanée des lignes et des colonnes ne la met sous la forme triangulaire par blocs $\begin{pmatrix}X&Y\\0&Z\end{pmatrix}$ avec $X$ et $Z$ carrées. En effet, une telle forme dit exactement qu'aucun arc ne va des derniers sommets vers les premiers. La matrice $A_1$ est réductible, puisqu'on ne va pas de $2$ à $1$ ; la matrice $A_2$ est irréductible.
+
+\begin{lemme}\label{lem:connexe}
+Si $A\geq0$ est irréductible, alors $(I+A)^{n-1}>0$.
+\end{lemme}
+
+\begin{proof}
+Le coefficient $(i,j)$ de $A^k$ vaut $\sum a_{ih_1}a_{h_1h_2}\cdots a_{h_{k-1}j}$ ; il est strictement positif si et seulement s'il existe un chemin de longueur $k$ de $i$ à $j$. Dans un graphe fortement connexe à $n$ sommets, deux sommets distincts sont reliés par un chemin de longueur au plus $n-1$. Le coefficient $(i,j)$ de $(I+A)^{n-1}=\sum_{k=0}^{n-1}\binom{n-1}{k}A^k$ est donc strictement positif, le terme $k=0$ s'occupant des coefficients diagonaux.
+\end{proof}
+
+\begin{theoreme}[Perron-Frobenius]\label{thm:pf}
+Soit $A\geq0$ irréductible et $\rho=\rho(A)$. Alors $\rho>0$ est une valeur propre simple de $A$, avec un vecteur propre $p>0$, et tout vecteur propre positif de $A$ est colinéaire à $p$.
+\end{theoreme}
+
+\begin{proof}
+Par le lemme \ref{lem:connexe}, $B=(I+A)^{n-1}>0$, et le théorème de Perron s'applique à $B$. Les valeurs propres de $B$ sont les $(1+\lambda)^{n-1}$, $\lambda\in\Sp(A)$, et $|1+\lambda|^{n-1}\leq(1+|\lambda|)^{n-1}\leq(1+\rho)^{n-1}$. Montrons d'abord que $\rho$ est valeur propre de $A$ avec un vecteur propre positif. On applique le théorème de Perron aux matrices $A+\varepsilon\,\un\un^\top>0$ : elles ont des vecteurs de Perron $p_\varepsilon\geq0$ de norme $1$ ; quand $\varepsilon\to0$, une sous-suite converge (compacité) vers un $p\geq0$ de norme $1$, et la continuité du rayon spectral donne $Ap=\rho p$. Alors $Bp=(1+\rho)^{n-1}p$ : c'est la racine de Perron de $B$, simple, et $p$ est colinéaire au vecteur de Perron de $B$, donc $p>0$. Un vecteur propre positif $x$ de $A$, pour une valeur propre $\lambda$, vérifie $Bx=(1+\lambda)^{n-1}x$ avec $x\geq0$ non nul ; comme $q^\top x>0$ pour le vecteur de Perron à gauche $q>0$ de $B$, on a $(1+\lambda)^{n-1}=\rho(B)$, donc $x$ est colinéaire à $p$. La multiplicité algébrique de $\rho$ dans $A$ est au plus celle de $(1+\rho)^{n-1}$ dans $B$, qui vaut $1$. Enfin $\rho>0$ : sinon $Ap=0$ avec $p>0$ forcerait $A=0$, qui n'est pas irréductible.
+\end{proof}
+
+L'irréductibilité rend le vecteur de Perron unique, mais pas la valeur propre dominante seule sur son cercle : $A_2$ est irréductible et a $-1$ sur son cercle spectral. D'où une seconde notion.
+
+\begin{definition}
+Une matrice $A\geq0$ irréductible est \emph{primitive} si $\rho(A)$ est sa seule valeur propre de module $\rho(A)$.
+\end{definition}
+
+On admettra le critère de Frobenius : $A\geq0$ est primitive si et seulement s'il existe $m\geq1$ tel que $A^m>0$. Une matrice strictement positive est donc primitive. La matrice $A_2$ ne l'est pas, puisque ses puissances alternent entre $A_2$ et $I$.
+
+% ==========================================================
+\section{Matrices stochastiques et matrice Google}
+% ==========================================================
+
+\subsection{Chaînes de Markov}
+
+\begin{definition}
+Une matrice $P\geq0$ est \emph{stochastique} si la somme de chaque ligne vaut $1$, c'est-à-dire si $P\un=\un$. Une \emph{distribution} est un vecteur $\pi\geq0$ tel que $\|\pi\|_1=1$ ; elle est \emph{stationnaire} pour $P$ si $P^\top\pi=\pi$.
+\end{definition}
+
+Une matrice stochastique a pour rayon spectral $1$ : la valeur propre $1$ est atteinte par $\un$, et $\rho(P)\leq\|P\|_\infty=1$. Le coefficient $(P^k)_{ij}$ est la probabilité d'aller de $i$ à $j$ en $k$ pas, et la distribution au temps $k$ est $\pi^{(k)}=(P^\top)^k\pi^{(0)}$.
+
+\begin{theoreme}\label{thm:markov}
+Soit $P$ une matrice stochastique.
+\begin{enumerate}[nosep]
+\item $P$ a toujours au moins une distribution stationnaire.
+\item Si $P$ est irréductible, elle en a une seule, $\pi$, et $\pi>0$.
+\item Si $P$ est primitive, alors $\pi^{(k)}\to\pi$ pour toute distribution initiale $\pi^{(0)}$.
+\end{enumerate}
+\end{theoreme}
+
+\begin{proof}
+1. La matrice $P^\top\geq0$ a pour rayon spectral $1$ ; par le passage à la limite fait dans la preuve du théorème \ref{thm:pf} (qui n'utilise pas l'irréductibilité), $1$ est valeur propre de $P^\top$ avec un vecteur propre positif, qu'on normalise.
+
+2. $P^\top$ est irréductible en même temps que $P$ (le graphe est retourné) : on applique le théorème \ref{thm:pf}.
+
+3. La valeur propre $1$ est simple et seule sur le cercle unité. Dans une base de Jordan, $(P^\top)^k$ converge donc vers le projecteur spectral sur la droite $\R\pi$, parallèlement à la somme des autres sous-espaces caractéristiques ; ce projecteur est $\pi\un^\top$, puisque $\un^\top P^\top=\un^\top$. Donc $\pi^{(k)}\to\pi\,\un^\top\pi^{(0)}=\pi$.
+\end{proof}
+
+\begin{remarque}
+Le TER présentait l'irréductibilité et la primitivité comme une condition nécessaire et suffisante d'existence et d'unicité d'une distribution stationnaire. Le théorème \ref{thm:markov} sépare les trois propriétés : l'existence est toujours vraie, l'irréductibilité donne l'unicité, et la primitivité donne la convergence des $\pi^{(k)}$. La matrice $A_2$ est stochastique et irréductible, avec l'unique distribution stationnaire $(\frac12,\frac12)$, mais les $\pi^{(k)}$ oscillent si l'on part de $(1,0)$.
+\end{remarque}
+
+\subsection{La matrice Google}
+
+La matrice $P$ du Web n'a aucune des bonnes propriétés : beaucoup de pages n'ont aucun lien sortant, et le graphe est loin d'être fortement connexe. On la corrige en deux temps.
+
+\paragraph{Les pages sans issue.} Une page sans lien sortant donne une ligne nulle, et $P$ n'est pas stochastique. On convient que depuis une telle page, l'internaute repart vers une page tirée selon une distribution $v>0$ fixée, par exemple uniforme. Si $d$ est le vecteur indicateur des pages sans issue, on obtient la matrice stochastique
+\[
+  P_1=P+d\,v^\top .
+\]
+
+\paragraph{La téléportation.} Pour forcer l'irréductibilité, on suppose qu'à chaque clic l'internaute suit un lien avec probabilité $c\in\,]0,1[$, et qu'avec probabilité $1-c$ il se lasse et repart d'une page tirée selon $v$. C'est la \emph{matrice Google}
+\[
+  G=c\,P_1+(1-c)\,\un v^\top .
+\]
+Brin et Page prenaient $c=0{,}85$.
+
+\begin{proposition}\label{prop:google}
+Si $v>0$, la matrice $G$ est stochastique et strictement positive. Elle a donc une unique distribution stationnaire $\pi$, le \emph{vecteur PageRank}, et $\pi>0$. De plus
+\[
+  \pi=(1-c)\,(I-cP_1^\top)^{-1}v=(1-c)\sum_{k\geq0}c^k\,(P_1^\top)^kv .
+\]
+\end{proposition}
+
+\begin{proof}
+$G$ est une combinaison convexe de deux matrices stochastiques, et $(1-c)\un v^\top>0$. Le théorème \ref{thm:markov} donne $\pi$. Pour une distribution $\pi$, $G^\top\pi=cP_1^\top\pi+(1-c)v\,(\un^\top\pi)=cP_1^\top\pi+(1-c)v$ ; l'équation $G^\top\pi=\pi$ s'écrit donc $(I-cP_1^\top)\pi=(1-c)v$. Comme $\|P_1^\top\|_1=\|P_1\|_\infty=1$, la série de Neumann converge, et $I-cP_1^\top$ est inversible.
+\end{proof}
+
+La série a un sens concret : $(1-c)c^k$ est la probabilité que l'internaute ait suivi exactement $k$ liens depuis sa dernière téléportation, et $(P_1^\top)^kv$ est la distribution après ces $k$ liens.
+
+\begin{exemple}\label{ex:quatre}
+Le web de la figure \ref{fig:quatre} a quatre pages : $1\to2,4$ ; $3\to1,2,4$ ; $4\to1,2$ ; la page $2$ n'a pas de lien sortant, et la page $3$ ne reçoit aucun lien. Avec $v=\frac14\un$, on obtient
+\[
+  P_1=\begin{pmatrix}0&\frac12&0&\frac12\\[2pt] \frac14&\frac14&\frac14&\frac14\\[2pt] \frac13&\frac13&0&\frac13\\[2pt] \frac12&\frac12&0&0\end{pmatrix},
+\]
+et pour $c=0{,}85$, le vecteur PageRank vaut environ $\pi=(0{,}258\,;\,0{,}368\,;\,0{,}116\,;\,0{,}258)$. La page $2$, qui reçoit trois liens, vient en tête ; la page $3$, que personne ne cite, n'a que ce que la téléportation lui donne, soit $\pi_3\geq(1-c)/4$.
+\end{exemple}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[>={Stealth[length=2.6mm]},node distance=2.6cm,
+  page/.style={circle,draw,thick,minimum size=9mm}]
+  \node[page] (1) at (0,0) {$1$};
+  \node[page,fill=accent!15] (2) at (3,0) {$2$};
+  \node[page] (3) at (0,-2.6) {$3$};
+  \node[page] (4) at (3,-2.6) {$4$};
+  \draw[->,thick] (1) -- (2);
+  \draw[->,thick] (1) to[bend left=12] (4);
+  \draw[->,thick] (3) -- (1);
+  \draw[->,thick] (3) -- (2);
+  \draw[->,thick] (3) -- (4);
+  \draw[->,thick] (4) to[bend left=12] (1);
+  \draw[->,thick] (4) -- (2);
+  \node[above=2pt,font=\small] at (1.north) {$0{,}258$};
+  \node[above=2pt,font=\small,accent] at (2.north) {$0{,}368$};
+  \node[below=2pt,font=\small] at (3.south) {$0{,}116$};
+  \node[below=2pt,font=\small] at (4.south) {$0{,}258$};
+\end{tikzpicture}
+\caption{Un web à quatre pages et son vecteur PageRank pour $c=0{,}85$ et $v$ uniforme. La page $2$ n'a aucun lien sortant ; la matrice $P_1$ la fait repartir vers une page uniforme.}\label{fig:quatre}
+\end{figure}
+
+% ==========================================================
+\section{Calculer le vecteur PageRank}
+% ==========================================================
+
+\subsection{La méthode de la puissance}
+
+Avec $n$ de l'ordre de $10^{10}$, inverser $I-cP_1^\top$ est hors de question. On itère :
+\[
+  \pi^{(k+1)}=G^\top\pi^{(k)},\qquad\pi^{(0)}=v .
+\]
+C'est la méthode de la puissance, et la suite des distributions de l'internaute. Le théorème \ref{thm:markov} garantit la convergence ; la vitesse est donnée par le spectre de $G$, que l'on peut décrire entièrement.
+
+\begin{theoreme}\label{thm:spectre}
+Si $\Sp(P_1)=\{1,\mu_2,\dots,\mu_n\}$, comptées avec multiplicité, alors
+\[
+  \Sp(G)=\{1,\,c\mu_2,\,\dots,\,c\mu_n\} .
+\]
+En particulier, toute valeur propre $\lambda\neq1$ de $G$ vérifie $|\lambda|\leq c$.
+\end{theoreme}
+
+\begin{proof}
+Complétons $\un$ en une base : soit $Q=(\un\,|\,X)$ inversible. Comme $P_1\un=\un$ et $Q^{-1}\un=e_1$,
+\[
+  Q^{-1}P_1Q=\begin{pmatrix}1&y^\top\\0&B\end{pmatrix},\qquad
+  Q^{-1}\un v^\top Q=e_1\,(v^\top\un,\ v^\top X)=\begin{pmatrix}1&v^\top X\\0&0\end{pmatrix},
+\]
+où $\Sp(B)=\{\mu_2,\dots,\mu_n\}$. Donc $Q^{-1}GQ=\begin{pmatrix}1&*\\0&cB\end{pmatrix}$, dont le spectre est $\{1\}\cup c\,\Sp(B)$. Enfin $|\mu_i|\leq\rho(P_1)=1$.
+\end{proof}
+
+\begin{remarque}
+Si le graphe de $P_1$ a au moins deux classes fermées, c'est-à-dire deux groupes de pages dont on ne sort pas en suivant les liens, alors $1$ est valeur propre multiple de $P_1$, et $c$ est valeur propre de $G$ (Haveliwala et Kamvar, 2003). C'est le cas du vrai Web. Le TER affirmait que la deuxième valeur propre vaut toujours $c$ ; ce n'est vrai que dans ce cas, et le théorème \ref{thm:spectre} donne en général $|\lambda_2(G)|=c\,|\mu_2|\leq c$.
+\end{remarque}
+
+\begin{theoreme}\label{thm:puissance}
+Pour toutes distributions $\pi^{(0)}$, la suite $\pi^{(k)}=(G^\top)^k\pi^{(0)}$ vérifie
+\[
+  \|\pi^{(k)}-\pi\|_1\leq c^k\,\|\pi^{(0)}-\pi\|_1
+  \qquad\text{et}\qquad
+  \|\pi^{(k)}-\pi\|_1\leq\frac{c}{1-c}\,\|\pi^{(k)}-\pi^{(k-1)}\|_1 .
+\]
+\end{theoreme}
+
+\begin{proof}
+Pour deux distributions $x$ et $y$, $G^\top x-G^\top y=cP_1^\top(x-y)$, puisque les termes $(1-c)v$ se compensent. Or $\|P_1^\top w\|_1\leq\|w\|_1$ pour tout $w$, car $P_1^\top\geq0$ et ses colonnes sont de somme $1$. L'application $x\mapsto G^\top x$ est donc $c$-contractante pour $\|\cdot\|_1$ sur l'ensemble des distributions, et $\pi$ en est le point fixe : cela donne la première inégalité. Pour la seconde, $\|\pi^{(k)}-\pi\|_1\leq\|\pi^{(k)}-\pi^{(k+1)}\|_1+\|\pi^{(k+1)}-\pi\|_1\leq c\,\|\pi^{(k-1)}-\pi^{(k)}\|_1+c\,\|\pi^{(k)}-\pi\|_1$.
+\end{proof}
+
+La seconde inégalité fournit un critère d'arrêt qui ne demande pas de connaître $\pi$. La première donne un nombre d'itérations suffisant a priori : comme $\|\pi^{(0)}-\pi\|_1\leq2$, on a $\|\pi^{(k)}-\pi\|_1\leq10^{-4}$ dès que $k\geq\ln(5\cdot10^{-5})/\ln c$.
+
+\begin{center}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+$c$ & $0{,}85$ & $0{,}86$ & $0{,}87$ & $0{,}88$ & $0{,}89$ & $0{,}90$ \\
+\midrule
+nombre d'itérations & $61$ & $66$ & $72$ & $78$ & $85$ & $94$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Une itération coûte autant que le nombre de liens}
+
+On ne forme jamais $G$, qui est pleine. Pour une distribution $x$, la proposition \ref{prop:google} et le calcul de sa preuve donnent
+\[
+  G^\top x=cP^\top x+\big(1-\|cP^\top x\|_1\big)\,v ,
+\]
+car la masse perdue par les pages sans issue et par la téléportation, $1-\|cP^\top x\|_1$, est redistribuée selon $v$. Le produit $P^\top x$ ne touche que les coefficients non nuls de $P$ : une itération coûte de l'ordre du nombre de liens, une vingtaine par page en moyenne. Le TER évoquait l'algorithme de Strassen ; il accélère le produit de deux matrices pleines, pas le produit d'une matrice creuse par un vecteur, qui est déjà linéaire en le nombre de coefficients non nuls.
+
+\subsection{Pourquoi la convergence est souvent plus rapide que prévu}
+
+Le TER observait, sur ses simulations, que l'erreur décroît bien plus vite que $c^k$, sans l'expliquer. Le théorème \ref{thm:spectre} en donne la raison : la vitesse asymptotique est $|\lambda_2(G)|=c\,|\mu_2|$, et non $c$.
+
+\begin{exemple}\label{ex:vitesse}
+Pour l'exemple \ref{ex:quatre}, le polynôme caractéristique de $P_1$ est $X^4-\frac14X^3-\frac7{12}X^2-\frac7{48}X-\frac1{48}=(X-1)\big(X+\frac12\big)\big(X^2+\frac14X+\frac1{24}\big)$. Les valeurs propres de $P_1$ sont donc $1$, $-\frac12$ et deux valeurs complexes conjuguées de module $1/\sqrt{24}\approx0{,}204$. Celles de $G$ sont $1$, $-0{,}425$ et deux valeurs de module $0{,}85/\sqrt{24}\approx0{,}174$. En partant de $\pi^{(0)}=e_1$, le rapport $\|\pi^{(k+1)}-\pi^{(k)}\|_1/\|\pi^{(k)}-\pi^{(k-1)}\|_1$ se stabilise à $0{,}425$. En partant de $\pi^{(0)}=v$, il oscille autour de $0{,}17$ : par symétrie entre les pages $1$ et $4$, la distribution uniforme n'a pas de composante sur le vecteur propre de $-0{,}425$ (figure \ref{fig:vitesse}).
+\end{exemple}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[xscale=0.55,yscale=0.32]
+  \draw[->,gray] (0,-12.5) -- (16,-12.5) node[right] {$k$};
+  \draw[->,gray] (0,-12.5) -- (0,1.2);
+  \foreach \y in {0,-4,-8,-12} \node[left,font=\small] at (0,\y) {$10^{\y}$};
+  \foreach \y in {0,-4,-8,-12} \draw[gray!40] (0,\y) -- (15.5,\y);
+  \foreach \x in {5,10,15} \node[below,font=\small] at (\x,-12.5) {$\x$};
+  \draw[gray,dashed,thick] (0,0.301) -- (15,-0.758) node[right,font=\small] {$2c^k$};
+  \draw[accent2,thick] plot coordinates {(0,0.284) (1,-0.093) (2,-0.541) (3,-0.949) (4,-1.325) (5,-1.700) (6,-2.075) (7,-2.447) (8,-2.819) (9,-3.191) (10,-3.562) (11,-3.934) (12,-4.306) (13,-4.677) (14,-5.049) (15,-5.420)};
+  \node[accent2,right,font=\small] at (15,-5.42) {départ $e_1$};
+  \draw[accent,thick] plot coordinates {(0,-0.497) (1,-1.278) (2,-2.127) (3,-2.832) (4,-3.505) (5,-4.353) (6,-5.133) (7,-5.805) (8,-6.630) (9,-7.479) (10,-8.163) (11,-8.836) (12,-9.685) (13,-10.446) (14,-11.119) (15,-11.967)};
+  \node[accent,right,font=\small] at (15,-11.967) {départ uniforme};
+\end{tikzpicture}
+\caption{Écart $\|\pi^{(k+1)}-\pi^{(k)}\|_1$ (échelle logarithmique) pour le web de la figure \ref{fig:quatre}. Les deux pentes valent $\log_{10}0{,}425$ et environ $\log_{10}0{,}17$, bien plus raides que celle de la borne $c^k$ du théorème \ref{thm:puissance}.}\label{fig:vitesse}
+\end{figure}
+
+% ==========================================================
+\section{Ce que le classement récompense}
+% ==========================================================
+
+L'équation $\pi_j=c\sum_{i\to j}\pi_i/d_i+(\dots)$ dit trois choses : une page gagne à recevoir des liens, elle dilue sa note en multipliant ses liens sortants, et un lien vaut d'autant plus qu'il vient d'une page bien notée. Elle invite aussi à la tricher. Une \emph{ferme de liens} est un ensemble de pages créées pour pointer vers une page cible.
+
+\begin{exemple}\label{ex:ferme}
+Prenons quatre pages en cycle $A\to B\to C\to D\to A$, avec en plus $D\to T$ et $T\to A$, et ajoutons $k$ pages satellites qui ne font que pointer vers $T$ (figure \ref{fig:ferme}). Comme le nombre de pages change avec $k$, on compare la note de $T$ à la note moyenne $1/n$, c'est-à-dire $n\,\pi_T$ :
+
+\begin{center}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+satellites $k$ & $0$ & $1$ & $2$ & $3$ & $4$ & $5$ \\
+\midrule
+$n\,\pi_T$ pour $c=0{,}85$ & $0{,}61$ & $0{,}79$ & $0{,}97$ & $1{,}15$ & $1{,}34$ & $1{,}52$ \\
+$n\,\pi_T$ pour $c=0{,}95$ & $0{,}57$ & $0{,}71$ & $0{,}85$ & $0{,}98$ & $1{,}12$ & $1{,}26$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Cinq pages factices font passer $T$ de la moitié de la moyenne à une fois et demie la moyenne. Avec $c=0{,}95$, l'effet est atténué : chaque satellite, que personne ne cite, ne vit que de la téléportation, de poids $1-c$, et transmet donc moins. Augmenter $c$ rend le classement plus fidèle aux liens et moins sensible aux pages sans lien entrant ; mais le théorème \ref{thm:puissance} montre qu'on le paie en vitesse de convergence.
+\end{exemple}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[>={Stealth[length=2.4mm]},
+  page/.style={circle,draw,thick,minimum size=7.5mm,font=\small},
+  sat/.style={circle,draw,dashed,minimum size=5.5mm,font=\scriptsize}]
+  \node[page] (A) at (0,1.3) {$A$};
+  \node[page] (B) at (1.3,0) {$B$};
+  \node[page] (C) at (0,-1.3) {$C$};
+  \node[page] (D) at (-1.3,0) {$D$};
+  \node[page,fill=accent!15] (T) at (-3.6,0) {$T$};
+  \draw[->,thick] (A) -- (B);
+  \draw[->,thick] (B) -- (C);
+  \draw[->,thick] (C) -- (D);
+  \draw[->,thick] (D) -- (A);
+  \draw[->,thick] (D) -- (T);
+  \draw[->,thick] (T) to[bend left=35] (A);
+  \foreach \a/\i in {120/1,150/2,180/3,210/4,240/5} {
+    \node[sat] (s\i) at ($(T)+(\a:1.6)$) {$s_{\i}$};
+    \draw[->,accent2] (s\i) -- (T);
+  }
+\end{tikzpicture}
+\caption{Une ferme de liens : les satellites $s_1,\dots,s_5$ n'existent que pour pointer vers la page cible $T$.}\label{fig:ferme}
+\end{figure}
+
+% ==========================================================
+\section{Le point de vue des systèmes linéaires}
+% ==========================================================
+
+La proposition \ref{prop:google} ramène le calcul de $\pi$ à un système linéaire,
+\[
+  (I-cP_1^\top)\,\pi=(1-c)\,v ,
+\]
+dont la matrice est de norme $\|cP_1^\top\|_1=c<1$ près de l'identité. Toutes les méthodes itératives de l'analyse numérique matricielle s'appliquent, et l'on retrouve la méthode de la puissance parmi elles.
+
+\begin{itemize}
+\item La méthode de Richardson $\pi^{(k+1)}=cP_1^\top\pi^{(k)}+(1-c)v$, qui correspond à la décomposition $I-cP_1^\top=M-N$ avec $M=I$, est exactement la méthode de la puissance sur l'ensemble des distributions. Le TER l'appelait méthode de Jacobi et la qualifiait de méthode directe ; c'est une méthode itérative, et la vraie méthode de Jacobi prend pour $M$ la diagonale de $I-cP_1^\top$.
+\item La méthode de Gauss-Seidel utilise les coordonnées déjà mises à jour dans la même itération ; elle converge ici, car $I-cP_1^\top$ est une M-matrice, et demande souvent nettement moins d'itérations, mais elle se parallélise mal.
+\item Les méthodes de Krylov (GMRES, BiCGSTAB) sont plus robustes quand $c$ s'approche de $1$, là où la méthode de la puissance ralentit.
+\end{itemize}
+
+\begin{remarque}[extrapolation]
+Si l'on suppose que les valeurs propres de $G$ de plus grand module, après $1$, sont $c$ et $-c$, alors $\pi^{(2)}\approx\pi+c^2(\pi^{(0)}-\pi)$ sur les directions correspondantes, d'où l'estimation $\tilde\pi=(\pi^{(2)}-c^2\pi^{(0)})/(1-c^2)$. Kamvar et ses coauteurs (2003) relancent la méthode depuis $\tilde\pi$ et gagnent environ $20\,\%$ d'itérations sur de grands graphes. Sur les graphes aléatoires d'un millier de pages du TER, l'extrapolation coûtait au contraire trois itérations de plus. L'exemple \ref{ex:vitesse} l'explique : quand $|\lambda_2(G)|$ est bien inférieur à $c$, l'hypothèse de l'extrapolation est fausse, et la méthode converge déjà vite sans elle.
+\end{remarque}
+
+% ==========================================================
+\section{Bilan}
+% ==========================================================
+
+La définition « une page importante est citée par des pages importantes » est une équation aux valeurs propres. Le théorème de Perron-Frobenius lui donne une solution unique et positive, à condition de rendre la matrice irréductible et primitive ; la téléportation fait les deux d'un coup, en rendant $G$ strictement positive. Le même paramètre $c$ fixe la vitesse de calcul, par le théorème \ref{thm:spectre}, et la robustesse du classement, par l'exemple \ref{ex:ferme} : c'est le seul vrai compromis du modèle.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{4.2cm}p{5.2cm}p{5.2cm}@{}}
+\toprule
+\textbf{Question} & \textbf{Outil} & \textbf{Résultat} \\
+\midrule
+Existe-t-il un classement ? & Perron-Frobenius & $\pi>0$ unique si $G$ irréductible \\
+Le calcul converge-t-il ? & primitivité, contraction & $\|\pi^{(k)}-\pi\|_1\leq c^k\|\pi^{(0)}-\pi\|_1$ \\
+À quelle vitesse ? & spectre de $G$ & $|\lambda_2(G)|=c|\mu_2|\leq c$ \\
+À quel coût ? & matrice creuse & une itération en $O(\text{nombre de liens})$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ==========================================================
+\section{Exercices}
+% ==========================================================
+
+\begin{exercice}\label{exo:collatz}
+\emph{Formule de Collatz-Wielandt.} Soit $A>0$, de racine de Perron $\rho$. Pour $x\geq0$ non nul, on pose $f(x)=\min_{x_i\neq0}(Ax)_i/x_i$. Montrer que $\rho=\max_{x\geq0,\,x\neq0}f(x)$.
+\end{exercice}
+
+\begin{exercice}\label{exo:periodique}
+Soit $P=\begin{pmatrix}0&1\\1&0\end{pmatrix}$ et $G=cP+(1-c)\un v^\top$ avec $v=(\frac12,\frac12)$. Calculer le spectre de $G$, son vecteur PageRank, et la suite $\pi^{(k)}$ issue de $\pi^{(0)}=(1,0)$.
+\end{exercice}
+
+\begin{exercice}\label{exo:personnalise}
+On remplace $v$ par $e_j$, la distribution concentrée sur la page $j$ (« PageRank personnalisé »). Montrer, avec la proposition \ref{prop:google}, que le vecteur obtenu dépend linéairement de $v$, et en déduire le PageRank pour une distribution $v$ quelconque à partir des $n$ vecteurs personnalisés.
+\end{exercice}
+
+\begin{exercice}\label{exo:monotonie}
+Montrer que $\pi_j\geq(1-c)v_j$ pour tout $j$. Quand le web n'a pas de page sans issue, montrer que l'égalité a lieu pour une page qui ne reçoit aucun lien. Pourquoi la page $3$ de l'exemple \ref{ex:quatre} fait-elle mieux ?
+\end{exercice}
+
+% ==========================================================
+\section{Corrigés}
+% ==========================================================
+
+\paragraph{Exercice 1.} Par définition, $f(x)\,x\leq Ax$. Soit $q>0$ le vecteur de Perron à gauche, $A^\top q=\rho q$. En multipliant par $q^\top$, on obtient $f(x)\,q^\top x\leq q^\top Ax=\rho\,q^\top x$, et $q^\top x>0$, donc $f(x)\leq\rho$. Pour $x=p$, le vecteur de Perron, $f(p)=\rho$. Le maximum est donc atteint, et vaut $\rho$.
+
+\paragraph{Exercice 2.} $P$ a pour valeurs propres $1$ et $-1$, donc, par le théorème \ref{thm:spectre}, $\Sp(G)=\{1,-c\}$. Par symétrie, le vecteur PageRank est $(\frac12,\frac12)$. On a $G=\begin{pmatrix}\frac{1-c}2&\frac{1+c}2\\[2pt]\frac{1+c}2&\frac{1-c}2\end{pmatrix}$, et en décomposant $(1,0)=(\frac12,\frac12)+(\frac12,-\frac12)$ sur les vecteurs propres de $G^\top=G$, $\pi^{(k)}=(\frac12,\frac12)+(-c)^k(\frac12,-\frac12)$. La suite oscille autour de $\pi$ et converge à la vitesse $c^k$ : la téléportation a rendu primitive une matrice qui ne l'était pas, et la valeur propre $-1$ de $P$ est devenue $-c$.
+
+\paragraph{Exercice 3.} La formule $\pi=(1-c)(I-cP_1^\top)^{-1}v$ est linéaire en $v$, à condition que $P_1$ ne dépende pas de $v$, c'est-à-dire qu'on garde une redistribution fixe pour les pages sans issue. Si $\pi_j$ désigne le vecteur obtenu pour $v=e_j$, alors pour $v=\sum_jv_je_j$, le vecteur PageRank est $\sum_jv_j\pi_j$. C'est ainsi qu'on calcule des classements personnalisés par thème à partir de quelques vecteurs de base.
+
+\paragraph{Exercice 4.} Dans la série de la proposition \ref{prop:google}, tous les termes sont positifs, et le terme $k=0$ vaut $(1-c)v$. Donc $\pi\geq(1-c)v$. S'il n'y a pas de page sans issue, $P_1=P$, et la colonne $j$ de $P$ est nulle pour une page $j$ qui ne reçoit aucun lien : la coordonnée $j$ de $(P_1^\top)^kw$ est nulle pour tout $w$ et tout $k\geq1$, d'où $\pi_j=(1-c)v_j$ exactement. Dans l'exemple \ref{ex:quatre}, la page $2$ est sans issue, et $P_1$ la fait repartir vers toutes les pages, dont la page $3$ : celle-ci reçoit un quart de la note de la page $2$ à chaque passage, d'où $\pi_3\approx0{,}116>(1-c)/4=0{,}0375$.
+
+\begin{thebibliography}{9}
+\bibitem{bp} S. Brin, L. Page, \emph{The anatomy of a large-scale hypertextual Web search engine}, Computer Networks and ISDN Systems 30 (1998), pp. 107-117.
+\bibitem{lm} A. N. Langville, C. D. Meyer, \emph{Google's PageRank and Beyond: The Science of Search Engine Rankings}, Princeton University Press, 2006.
+\bibitem{meyer} C. D. Meyer, \emph{Matrix Analysis and Applied Linear Algebra}, SIAM, 2000, chapitre 8 (matrices positives et théorème de Perron-Frobenius).
+\bibitem{hk} T. Haveliwala, S. Kamvar, \emph{The second eigenvalue of the Google matrix}, rapport technique, Stanford University, 2003.
+\bibitem{kamvar} S. Kamvar, T. Haveliwala, C. Manning, G. Golub, \emph{Extrapolation methods for accelerating PageRank computations}, Proceedings of WWW 2003.
+\bibitem{berkhin} P. Berkhin, \emph{A survey on PageRank computing}, Internet Mathematics 2 (2005), pp. 73-120.
+\end{thebibliography}
+
+\paragraph{Source.} TER « Du théorème de Perron-Frobenius à l'algorithme PageRank », master Mathématiques et Modélisation, université Lille 1, mai 2009, avec ses simulations Scilab. Les exemples numériques de cette fiche ont été recalculés. Elle corrige la condition d'existence et d'unicité de la distribution stationnaire, l'affirmation $|\lambda_2(G)|=c$, la mention de l'algorithme de Strassen et le nom de la méthode itérative, et explique la convergence plus rapide que prévu que le TER constatait.
+
+\end{document}

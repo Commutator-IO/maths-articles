@@ -68,6 +68,10 @@
     "intitule": "Exemples de développements asymptotiques de suites et de fonctions."
   },
   {
+    "numero": "226",
+    "intitule": "Suites vectorielles et réelles définies par une relation de récurrence u_{n+1} = f(u_n). Exemples. Applications à la résolution approchée d'équations."
+  },
+  {
     "numero": "228",
     "intitule": "Continuité, dérivabilité des fonctions réelles d'une variable réelle. Exemples et applications."
   },
@@ -78,6 +82,10 @@
   {
     "numero": "230",
     "intitule": "Séries de nombres réels ou complexes. Convergence des séries à termes réels ou complexes. Exemples et applications."
+  },
+  {
+    "numero": "233",
+    "intitule": "Analyse numérique matricielle : résolution approchée de systèmes linéaires, recherche d'éléments propres, exemples."
   },
   {
     "numero": "235",
