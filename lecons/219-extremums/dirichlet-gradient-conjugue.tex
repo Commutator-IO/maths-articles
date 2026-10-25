@@ -252,7 +252,7 @@ L'argument, dû à Keller \cite{keller} et Dykhne \cite{dykhne}, est propre à l
 Le rapport présentait la moyenne géométrique comme le résultat attendu « dans ce cas particulier ». Il faut préciser lequel : la dimension $2$ et une loi invariante par $a\mapsto\alpha\beta/a$, ce qui est le cas pour un tirage à pile ou face équilibré. En dimension $1$, on trouve la moyenne harmonique ; en dimension $3$, il n'existe pas de formule close. Le rapport définissait aussi $\alpha_{\mathrm{hom}}$ comme la constante qui « minimise l'écart » entre deux solutions ; la définition correcte est celle d'une limite, ou, de façon équivalente, celle d'une énergie minimale par unité de volume, comme ici.
 \end{remarque}
 
-\subsection{Ce que donne le calcul}
+\subsection{Résultats numériques}
 
 On a calculé $a_N$ pour des réalisations indépendantes des conductances, en résolvant $R\varphi=F$ par le gradient conjugué de la section suivante. La moyenne empirique et l'écart type empirique sont reportés ci-dessous.
 
@@ -466,30 +466,13 @@ Le rapport décrivait le préconditionnement comme la résolution de $(CR)U=CF$,
 \end{remarque}
 
 % ==========================================================
-\section{De la boîte au coefficient homogénéisé}
+\section{Ouverture : de la boîte au coefficient homogénéisé}
 % ==========================================================
 
-Le tableau de la section 3 a mis en évidence deux erreurs, de natures différentes, dans l'approximation de $a_{\mathrm{hom}}$ par $a_N$.
-
-L'\emph{erreur aléatoire} $a_N-\mathbb{E}[a_N]$ mesure la dépendance au tirage ; sa variance décroissait comme $1/N^2$. Gloria et Otto ont démontré que c'est le bon ordre de grandeur, et qu'on ne peut pas faire mieux en général : pour une moyenne spatiale lissée de la densité d'énergie à l'échelle $L$, la variance est majorée par une constante fois $L^{-d}$ en dimension $d$, l'échelle du théorème central limite \cite{go1}. C'était la vitesse que le stage devait illustrer numériquement.
-
-L'\emph{erreur systématique} $\mathbb{E}[a_N]-a_{\mathrm{hom}}$ vient de la troncature : $a_{\mathrm{hom}}$ est défini sur tout $\Z^2$, et la condition $\varphi=0$ sur le cadre, imposée faute de mieux, perturbe la solution près du bord. Pour la réduire, la méthode étudiée pendant le stage, analysée par Gloria et Otto \cite{go2}, combine deux idées.
-
-\begin{enumerate}[nosep]
-\item On ajoute un terme d'ordre zéro : on résout $T^{-1}\varphi-\nabla^*\cdot A(\xi+\nabla\varphi)=0$, c'est-à-dire qu'on minimise $\E_N(\varphi)+\frac1{mT}\sum_x\varphi(x)^2$. La matrice devient $R+T^{-1}I$, mieux conditionnée. Surtout, l'influence d'une perturbation lointaine décroît alors exponentiellement à l'échelle $\sqrt T$, comme la fonction de Green de $T^{-1}-\Delta$ : à distance grande devant $\sqrt T$ du bord, la condition imposée sur le cadre ne se voit presque plus.
-\item On remplace la moyenne uniforme de la densité d'énergie par une moyenne pondérée par un filtre $\mu$, en plateau, qui donne peu de poids aux points proches du cadre.
-\end{enumerate}
-
-Le prix à payer est une nouvelle erreur systématique, due au terme $T^{-1}\varphi$ lui-même ; le choix de $T$ en fonction de $N$ équilibre les termes. Le rapport prenait $T=N$ et observait une variance décroissant comme $1/T$ ; c'est l'ordre prévu par l'estimation de Gloria et Otto si la longueur sur laquelle on moyenne effectivement est de l'ordre de $\sqrt T$. Le stage en tirait ensuite une méthode parallèle, en découpant $Q_N$ en sous-carrés traités indépendamment, et atteignait ainsi $N\approx10^{4,5}$, soit $10^9$ inconnues.
+Le tableau de la section 3 sépare deux erreurs dans l'approximation de $a_{\mathrm{hom}}$ par $a_N$. L'\emph{erreur aléatoire} $a_N-\mathbb{E}[a_N]$ dépend du tirage ; Gloria et Otto ont montré que sa variance est en général de l'ordre de l'inverse du nombre de points moyennés, l'échelle du théorème central limite, et qu'on ne peut pas faire mieux \cite{go1}. L'\emph{erreur systématique} $\mathbb{E}[a_N]-a_{\mathrm{hom}}$ vient de la condition $\varphi=0$ imposée sur le cadre. Pour la réduire, on ajoute à l'énergie un terme $\frac1{mT}\sum_x\varphi(x)^2$, qui rend négligeable l'influence du bord à distance grande devant $\sqrt T$, et l'on moyenne la densité d'énergie avec un poids qui néglige les points proches du cadre ; Gloria et Otto analysent cette méthode \cite{go2}, et Egloffe, Gloria, Mourrat et Nguyen la comparent numériquement aux autres approches \cite{egmn}. Pendant le stage, la méthode a aussi été parallélisée en découpant $Q_N$ en sous-carrés traités indépendamment, ce qui a permis d'atteindre $N\approx10^{4,5}$, soit $10^9$ inconnues. Dans le cas de conductances périodiques, où seule subsiste l'erreur systématique, Blanc et Le Bris \cite{blb} puis Gloria \cite{gloria} ont montré comment accélérer nettement la convergence.
 
 \begin{remarque}
-Le rapport mesurait l'erreur par la variance, présentée comme « un bon indicateur de l'erreur moyenne commise à chaque réalisation ». La variance ne voit que l'erreur aléatoire : l'erreur quadratique moyenne vaut $\mathbb{E}[(a_N-a_{\mathrm{hom}})^2]=\mathrm{Var}(a_N)+(\mathbb{E}[a_N]-a_{\mathrm{hom}})^2$, et le second terme, dans notre tableau, est du même ordre que le premier. Une étude complète doit suivre les deux.
-\end{remarque}
-
-Quand les conductances sont périodiques au lieu d'être aléatoires, il n'y a plus d'erreur aléatoire, et toute l'erreur vient du désaccord entre la boîte et la période (on parle d'erreur de résonance). Blanc et Le Bris \cite{blb} ont montré qu'une régularisation et un filtrage bien choisis améliorent nettement la vitesse de convergence, dans les cadres périodique et quasi-périodique ; Gloria a ensuite étudié la réduction de cette erreur de façon systématique \cite{gloria}. En fin de stage, des simulations dans ce cadre périodique avaient montré des vitesses bien supérieures à $1/N$ ; elles ne sont pas reprises ici.
-
-\begin{remarque}[sommer un milliard de nombres]
-Pour moyenner $10^9$ densités d'énergie, le stage utilisait une sommation par paires : on additionne les termes deux par deux, puis les sommes partielles deux par deux, et ainsi de suite. Le gain est réel, mais pas pour la raison donnée. Le rapport invoquait un risque de dépassement de capacité, inexistant pour des flottants en double précision qui vont jusqu'à $10^{308}$. La vraie raison est la propagation des arrondis : l'erreur relative de la sommation naïve peut croître comme $(n-1)u$, celle de la sommation par paires comme $u\log_2n$, où $u=2^{-53}$ est l'unité d'arrondi (exercice \ref{exo:somme}, et \cite{higham} pour une étude complète). Le test proposé, la moyenne de $100\,000$ termes égaux à $1$, ne pouvait rien montrer : les sommes partielles sont des entiers inférieurs à $2^{53}$, représentés exactement, et la sommation naïve est exacte. En sommant $10^7$ fois le flottant $0{,}1$, on obtient au contraire $999\,999{,}99983\ldots$ par la sommation naïve, soit une erreur relative de $1{,}6\cdot10^{-10}$, et la valeur correctement arrondie $10^6$ par la sommation par paires.
+Le rapport mesurait l'erreur par la variance seule. Or l'erreur quadratique moyenne vaut $\mathbb{E}[(a_N-a_{\mathrm{hom}})^2]=\mathrm{Var}(a_N)+(\mathbb{E}[a_N]-a_{\mathrm{hom}})^2$, et dans notre tableau le second terme est du même ordre que le premier : une étude complète doit suivre les deux.
 \end{remarque}
 
 % ==========================================================
@@ -516,9 +499,6 @@ Une question reste ouverte dans cette fiche. Les simulations de la section 3 don
 Montrer que si $R$ n'a que $p$ valeurs propres distinctes, le gradient conjugué trouve $x^*$ en au plus $p$ itérations.
 \end{exercice}
 
-\begin{exercice}\label{exo:somme}
-\emph{Sommation par paires.} On modélise l'arithmétique flottante par $\mathrm{fl}(a+b)=(a+b)(1+\delta)$ avec $|\delta|\leq u$, et l'on pose $\gamma_k=\frac{ku}{1-ku}$ pour $ku<1$. Soit $x_1,\dots,x_n$ avec $n=2^k$, $s=\sum x_i$ et $\hat s$ la somme calculée par paires. Montrer que $|\hat s-s|\leq\gamma_k\sum|x_i|$. Que donne le même raisonnement pour la sommation naïve ?
-\end{exercice}
 
 % ==========================================================
 \section{Corrigés}
@@ -530,16 +510,11 @@ Montrer que si $R$ n'a que $p$ valeurs propres distinctes, le gradient conjugué
 
 \paragraph{Exercice 3.} Soit $\mu_1,\dots,\mu_p$ les valeurs propres distinctes. Le polynôme $q(\lambda)=\prod_l(1-\lambda/\mu_l)$ est dans $\mathcal P_p$ et s'annule sur le spectre ; la réduction faite dans la preuve du théorème \ref{thm:tcheb} donne $\|\varepsilon_p\|_R\leq\max_i|q(\lambda_i)|\,\|\varepsilon_0\|_R=0$. Pour une matrice proche d'une matrice ayant peu de valeurs propres distinctes, on s'attend de même à une convergence rapide : c'est l'idée qui guide le choix d'un préconditionneur.
 
-\paragraph{Exercice 4.} Par récurrence sur $k$. Pour $k=1$, $\hat s=(x_1+x_2)(1+\delta)$ et $|\hat s-s|\leq u(|x_1|+|x_2|)\leq\gamma_1\sum|x_i|$. Si l'énoncé vaut pour $2^{k-1}$ termes, soit $\hat s_1$ et $\hat s_2$ les sommes calculées des deux moitiés, de sommes exactes $s_1,s_2$ et de sommes de modules $S_1,S_2$. Alors $\hat s=(\hat s_1+\hat s_2)(1+\delta)$ et
-\[
-  |\hat s-s|=\big|(\hat s_1-s_1+\hat s_2-s_2)(1+\delta)+(s_1+s_2)\delta\big|\leq\big(\gamma_{k-1}(1+u)+u\big)(S_1+S_2) .
-\]
-Or $(1+\gamma_{k-1})(1+u)\leq\frac{1}{1-(k-1)u}\cdot\frac1{1-u}\leq\frac1{1-ku}=1+\gamma_k$, ce qui donne $\gamma_{k-1}(1+u)+u\leq\gamma_k$. Pour la sommation naïve, la $l$-ième addition intervient dans tous les arrondis suivants, et le même raisonnement donne $\gamma_{n-1}\sum|x_i|$ : l'erreur peut croître linéairement en $n$ au lieu de logarithmiquement. Avec $n=10^9$, on compare $10^9u\approx10^{-7}$ à $30u\approx3\cdot10^{-15}$.
-
 \begin{thebibliography}{99}
 \bibitem{go1} A. Gloria, F. Otto, \emph{An optimal variance estimate in stochastic homogenization of discrete elliptic equations}, Annals of Probability 39 (2011), pp. 779-856.
 \bibitem{go2} A. Gloria, F. Otto, \emph{An optimal error estimate in stochastic homogenization of discrete elliptic equations}, Annals of Applied Probability 22 (2012), pp. 1-28.
 \bibitem{gloria} A. Gloria, \emph{Reduction of the resonance error. Part 1: Approximation of homogenized coefficients}, Mathematical Models and Methods in Applied Sciences 21 (2011), pp. 1601-1630.
+\bibitem{egmn} A.-C. Egloffe, A. Gloria, J.-C. Mourrat, T. N. Nguyen, \emph{Random walk in random environment, corrector equation and homogenized coefficients: from theory to numerics, back and forth}, IMA Journal of Numerical Analysis 35 (2015), pp. 499-545.
 \bibitem{blb} X. Blanc, C. Le Bris, \emph{Improving on computation of homogenized coefficients in the periodic and quasi-periodic settings}, Networks and Heterogeneous Media 5 (2010), pp. 1-29.
 \bibitem{lebris} C. Le Bris, \emph{Systèmes multi-échelles : modélisation et simulation}, Mathématiques et Applications 47, Springer, 2005.
 \bibitem{kozlov} S. M. Kozlov, \emph{Averaging of difference schemes}, Mathematics of the USSR-Sbornik 57 (1987), pp. 351-369.
@@ -551,9 +526,8 @@ Or $(1+\gamma_{k-1})(1+u)\leq\frac{1}{1-(k-1)u}\cdot\frac1{1-u}\leq\frac1{1-ku}=
 \bibitem{gustafsson} I. Gustafsson, \emph{A class of first order factorization methods}, BIT 18 (1978), pp. 142-156.
 \bibitem{saad} Y. Saad, \emph{Iterative Methods for Sparse Linear Systems}, 2e édition, SIAM, 2003, chapitres 5, 6 et 10.
 \bibitem{shewchuk} J. R. Shewchuk, \emph{An introduction to the conjugate gradient method without the agonizing pain}, rapport technique, Carnegie Mellon University, 1994.
-\bibitem{higham} N. J. Higham, \emph{Accuracy and Stability of Numerical Algorithms}, 2e édition, SIAM, 2002, chapitre 4.
 \end{thebibliography}
 
-\paragraph{Source.} Rapport de stage de deuxième année de l'École centrale de Lille, « Méthodes numériques en homogénéisation », effectué de juin à août 2009 dans l'équipe-projet SIMPAF de l'INRIA Lille-Nord Europe sous la direction d'Antoine Gloria, avec ses programmes C++ et ses feuilles de simulation. Les résultats de recherche que le stage illustrait sont ceux d'Antoine Gloria et Felix Otto \cite{go1,go2} pour le cadre aléatoire, de Xavier Blanc et Claude Le Bris \cite{blb} pour le cadre périodique ; on renvoie à leurs articles et au livre de Claude Le Bris \cite{lebris} pour l'homogénéisation elle-même. Les démonstrations de cette fiche portent sur la partie élémentaire (principe de Dirichlet, bornes de Wiener, méthodes de gradient) et les simulations ont été refaites. La fiche corrige le signe de l'équation et son second membre, la portée de la formule $a_{\mathrm{hom}}=\sqrt{\alpha\beta}$, le classement des méthodes de relaxation, la forme du système préconditionné, l'usage de la variance comme mesure de l'erreur et la justification de la sommation par paires.
+\paragraph{Source.} Rapport de stage de deuxième année de l'École centrale de Lille, « Méthodes numériques en homogénéisation », effectué de juin à août 2009 dans l'équipe-projet SIMPAF de l'INRIA Lille-Nord Europe sous la direction d'Antoine Gloria, avec ses programmes C++ et ses feuilles de simulation. Les résultats de recherche que le stage illustrait sont ceux d'Antoine Gloria et Felix Otto \cite{go1,go2} pour le cadre aléatoire, dont l'étude numérique a été publiée depuis \cite{egmn}, de Xavier Blanc et Claude Le Bris \cite{blb} pour le cadre périodique ; on renvoie à leurs articles et au livre de Claude Le Bris \cite{lebris} pour l'homogénéisation elle-même. Les démonstrations de cette fiche portent sur la partie élémentaire (principe de Dirichlet, bornes de Wiener, méthodes de gradient) et les simulations ont été refaites. La fiche corrige le signe de l'équation et son second membre, la portée de la formule $a_{\mathrm{hom}}=\sqrt{\alpha\beta}$, le classement des méthodes de relaxation, la forme du système préconditionné et l'usage de la variance comme seule mesure de l'erreur.
 
 \end{document}
