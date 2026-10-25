@@ -66,4 +66,4 @@ Le site est publié sur **[agreg.commutator.io](https://agreg.commutator.io)**. 
 
 ## Origine des fiches
 
-Les fiches 126, 142, 224, 228 et 236 sont des réécritures, au niveau agrégation, de feuilles d’exercices de terminale S (2003), tirées des manuels *Hyperbole*, *Bréal*, *Terracher* et *Method'S*. Les énoncés faux de ces feuilles y sont signalés et corrigés. La fiche 222 reprend une note sur le théorème de Hille-Yosida écrite avec Bertrand Cloez en décembre 2009, d'après le chapitre VII de Brezis : elle complète la preuve, que la note laissait en plan, et corrige son énoncé.
+Les fiches 126, 142, 224, 228 et 236 sont des réécritures, au niveau agrégation, de feuilles d’exercices de terminale S (2003), tirées des manuels *Hyperbole*, *Bréal*, *Terracher* et *Method'S*. Les énoncés faux de ces feuilles y sont signalés et corrigés. La fiche 222 reprend une note sur le théorème de Hille-Yosida écrite en décembre 2009, d'après le chapitre VII de Brezis : elle complète la preuve, que la note laissait en plan, et corrige son énoncé.
