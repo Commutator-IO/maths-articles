@@ -1,0 +1,601 @@
+% Triangulations et maillages : barycentres, Delaunay et lissage
+% Compile avec pdflatex, xelatex ou lualatex.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+  \IfFileExists{lmodern.sty}{\usepackage{lmodern}}{}
+  \usepackage[french]{babel}
+\else
+  \usepackage{fontspec}
+  \usepackage{polyglossia}
+  \setdefaultlanguage{french}
+\fi
+\usepackage[margin=2.6cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{tikz}
+\input{../figures/tikz-setup.tex}
+\usepackage[hidelinks]{hyperref}
+
+% ---------- Environnements ----------
+\theoremstyle{plain}
+\newtheorem{theoreme}{Théorème}[section]
+\newtheorem{proposition}[theoreme]{Proposition}
+\newtheorem{lemme}[theoreme]{Lemme}
+\newtheorem{corollaire}[theoreme]{Corollaire}
+\theoremstyle{definition}
+\newtheorem{definition}[theoreme]{Définition}
+\newtheorem{exemple}[theoreme]{Exemple}
+\newtheorem{exercice}{Exercice}
+\theoremstyle{remark}
+\newtheorem{remarque}[theoreme]{Remarque}
+
+% ---------- Notations ----------
+\newcommand{\R}{\mathbb{R}}
+\DeclareMathOperator{\conv}{conv}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\aire}{aire}
+
+\title{Triangulations et maillages\\[2pt]
+\large Barycentres, triangulation de Delaunay et lissage}
+\author{Michel Hua}
+\date{Octobre 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Pour calculer par éléments finis la déformation d'une tôle, on remplace la surface par un maillage : un pavage par des triangles ou des quadrangles, aussi réguliers que possible. Les logiciels construisent un premier maillage par une méthode frontale, mesurent la qualité de chaque élément, puis l'améliorent par deux sortes d'opérations locales : basculer des arêtes, déplacer des sommets. Ces étapes reposent sur des arguments de géométrie, convexe pour la plupart. La qualité d'un triangle est une fonction décroissante du conditionnement de sa matrice jacobienne ; les positions admissibles d'un sommet forment un convexe, le noyau de son étoile, sur lequel la recherche du meilleur emplacement est un problème d'optimisation convexe ; le lissage laplacien est un barycentre, qui fait rester les sommets dans l'enveloppe convexe du bord ; enfin la triangulation de Delaunay, que l'on atteint par bascules successives, est la projection de l'enveloppe convexe inférieure de points relevés sur un paraboloïde. On démontre ces résultats et on les illustre sur de petits exemples calculés à la main ou par un script.
+\end{abstract}
+
+\paragraph{Leçons concernées.} 181 (Convexité dans $\R^n$. Applications en algèbre et en géométrie), 253 (Utilisation de la notion de convexité en analyse), 190 (Méthodes combinatoires, problèmes de dénombrement), 233 (Analyse numérique matricielle) et 162 (Systèmes d'équations linéaires).
+
+\paragraph{Développements possibles.} La triangulation de Delaunay par relèvement sur le paraboloïde : caractérisation locale (théorème \ref{thm:local-global}) et terminaison de l'algorithme de Lawson (théorème \ref{thm:lawson}). Le lissage d'un sommet : noyau de l'étoile (proposition \ref{prop:noyau}) et convexité stricte du problème min-max (théorème \ref{thm:minmax}). Le lissage laplacien global : inversibilité, convergence de Jacobi et principe du maximum (théorème \ref{thm:laplacien}). Plus court, pour compléter un plan : la formule d'Euler par les angles (proposition \ref{prop:euler}) et la qualité d'un triangle comme fonction d'un conditionnement (théorème \ref{thm:qualite}).
+
+\paragraph{Prérequis.} Barycentres et coordonnées barycentriques, fonctions convexes d'une et de plusieurs variables, décomposition en valeurs singulières d'une matrice $2\times2$, rayon spectral et normes subordonnées, somme des angles d'un polygone simple, théorème de l'angle inscrit.
+
+\paragraph{Notations.} Le plan est $\R^2$, muni de sa structure euclidienne et de son orientation usuelle. Pour $u,v\in\R^2$, $\det(u,v)=u_1v_2-u_2v_1$. L'aire orientée du triangle $abc$ est $\aire(a,b,c)=\frac12\det(b-a,c-a)$ ; le triangle est \emph{direct} si elle est strictement positive. On note $\conv(S)$ l'enveloppe convexe d'une partie $S$, $\|M\|_F=(\tr M^\top M)^{1/2}$ la norme de Frobenius d'une matrice, $\sigma_1\geq\sigma_2$ ses valeurs singulières, et $\widehat{abc}\in[0,\pi]$ l'angle géométrique en $b$ du triangle $abc$.
+
+\tableofcontents
+
+% ==========================================================
+\section{Mailler une surface}
+% ==========================================================
+
+Un code d'éléments finis ne sait calculer que sur des domaines découpés en morceaux simples. Pour une pièce de carrosserie, les morceaux sont des quadrangles, complétés par quelques triangles là où la géométrie l'impose. Leur forme compte : les estimations d'erreur de la méthode font intervenir, élément par élément, un facteur qui explose quand l'élément s'aplatit \cite{ciarlet}. Un bon maillage est fait d'éléments proches du carré ou du triangle équilatéral, de taille à peu près constante.
+
+La chaîne classique comporte trois étapes \cite{freygeorge}.
+\begin{enumerate}[nosep]
+\item \emph{Génération.} La méthode frontale part d'une discrétisation du bord et avance vers l'intérieur : on crée un élément sur le front, on met à jour le front, et l'on recommence jusqu'à ce que le domaine soit rempli. La méthode Q-Morph d'Owen, Staten, Canann et Saigal \cite{qmorph} produit ainsi des quadrangles en recombinant les triangles d'un premier maillage.
+\item \emph{Évaluation.} On calcule pour chaque élément des indicateurs de forme (rapport des longueurs, angles, gauchissement) et l'on marque ceux qui sortent des plages imposées par le cahier des charges.
+\item \emph{Optimisation.} On corrige les mauvais éléments par des opérations locales. Les opérations \emph{topologiques} changent les connexions : bascule d'une arête dans un quadrilatère, insertion ou suppression d'une arête, contraction d'une arête en un sommet ; Canann, Muthukrishnan et Phillips \cite{canann} les guident par le nombre de voisins de chaque sommet, et Kinney \cite{kinney} en a fait un catalogue pour les quadrangles. Les opérations \emph{géométriques} déplacent les sommets sans changer les connexions : c'est le lissage, laplacien ou par optimisation, que Mukherjee \cite{mukherjee} combine dans un lisseur hybride.
+\end{enumerate}
+
+On suit ici cette chaîne, dans le plan et pour des triangles. Avant d'améliorer un maillage, il faut savoir ce qu'il est possible d'obtenir : la section 2 compte triangles, arêtes et voisins, et montre que certains défauts sont imposés par le bord. La section 3 donne un sens précis à la « qualité » d'un triangle ; c'est elle que le lissage cherche à augmenter en déplaçant les sommets, un par un (section 4) ou tous ensemble (section 5). La section 6 traite les bascules, qui mènent à la triangulation de Delaunay.
+
+% ==========================================================
+\section{Triangulations d'un polygone}
+% ==========================================================
+
+\subsection{Coordonnées barycentriques}
+
+\begin{lemme}\label{lem:barycentriques}
+Soit $abc$ un triangle direct. Pour tout $x\in\R^2$, il existe un unique triplet $(\lambda_a,\lambda_b,\lambda_c)$ de réels de somme $1$ tel que $x=\lambda_aa+\lambda_bb+\lambda_cc$, à savoir
+\[
+  \lambda_a=\frac{\aire(x,b,c)}{\aire(a,b,c)},\qquad
+  \lambda_b=\frac{\aire(a,x,c)}{\aire(a,b,c)},\qquad
+  \lambda_c=\frac{\aire(a,b,x)}{\aire(a,b,c)}.
+\]
+Ce sont des fonctions affines de $x$. Le triangle fermé est $\{\lambda_a,\lambda_b,\lambda_c\geq0\}=\conv\{a,b,c\}$ et son intérieur est $\{\lambda_a,\lambda_b,\lambda_c>0\}$.
+\end{lemme}
+
+\begin{proof}
+L'égalité $x=\lambda_aa+\lambda_bb+\lambda_cc$ avec $\lambda_a=1-\lambda_b-\lambda_c$ s'écrit $x-a=\lambda_b(b-a)+\lambda_c(c-a)$. Les vecteurs $b-a$ et $c-a$ forment une base, puisque $\det(b-a,c-a)=2\aire(a,b,c)\neq0$, d'où l'existence et l'unicité. Les formules de Cramer donnent $\lambda_c=\det(b-a,x-a)/\det(b-a,c-a)=\aire(a,b,x)/\aire(a,b,c)$, et de même pour les autres. Chaque $\lambda$ est affine en $x$, car l'aire orientée l'est en chacun de ses arguments. L'ensemble $\{\lambda\geq0\}$ est par définition l'ensemble des combinaisons convexes de $a,b,c$. Enfin $\{\lambda>0\}$ est un ouvert contenu dans le triangle, donc dans son intérieur ; réciproquement, un point où $\lambda_a=0$, par exemple, est limite de points où $\lambda_a<0$, qui ne sont pas dans le triangle.
+\end{proof}
+
+\subsection{Triangulations conformes}
+
+Dans toute la suite, $\Omega$ est un \emph{polygone} : la partie compacte du plan bordée par une ligne polygonale fermée simple.
+
+\begin{definition}\label{def:triangulation}
+Une \emph{triangulation} (conforme) de $\Omega$ est un ensemble fini $\mathcal T$ de triangles fermés non aplatis tel que :
+\begin{enumerate}[nosep]
+\item la réunion des triangles de $\mathcal T$ est $\Omega$ ;
+\item l'intersection de deux triangles distincts est vide, réduite à un sommet commun, ou égale à une arête commune.
+\end{enumerate}
+Les sommets et arêtes de $\mathcal T$ sont ceux de ses triangles. On note $V_i$ et $V_b$ les nombres de sommets intérieurs à $\Omega$ et situés sur son bord $\partial\Omega$, $V=V_i+V_b$, $E$ le nombre d'arêtes et $T$ le nombre de triangles. Le \emph{degré} (ou valence) $d(s)$ d'un sommet $s$ est le nombre d'arêtes qui en partent.
+\end{definition}
+
+La condition 2 interdit qu'un sommet d'un triangle tombe au milieu d'une arête d'un autre : c'est elle qui rend le maillage utilisable par les éléments finis, car une fonction affine par triangle et continue est alors déterminée par ses valeurs aux sommets. Elle a deux conséquences que l'on utilisera sans cesse.
+\begin{itemize}[nosep]
+\item Une arête contenue dans $\partial\Omega$ appartient à un seul triangle ; une autre arête appartient à exactement deux triangles, situés de part et d'autre (un petit disque centré au milieu de l'arête est recouvert par les triangles qui contiennent ce milieu, et ce sont, par la condition 2, des triangles qui contiennent toute l'arête).
+\item Les sommets de bord découpent $\partial\Omega$ en $V_b$ arêtes : il y a donc exactement $V_b$ arêtes de bord. Les coins de $\Omega$ sont des sommets de bord, et un sommet de bord peut aussi être un point « plat » du bord, où l'angle intérieur vaut $\pi$.
+\end{itemize}
+
+\subsection{La formule d'Euler par les angles}
+
+\begin{proposition}\label{prop:euler}
+Pour toute triangulation d'un polygone,
+\[
+  T=2V_i+V_b-2,\qquad E=3V_i+2V_b-3,\qquad V-E+T=1.
+\]
+\end{proposition}
+
+\begin{proof}
+On calcule de deux façons la somme $\Sigma$ de tous les angles de tous les triangles. Triangle par triangle, $\Sigma=\pi T$. Sommet par sommet : les triangles qui contiennent un sommet intérieur $s$ recouvrent un voisinage de $s$ sans se chevaucher, et leurs angles en $s$ font donc un tour complet, $2\pi$ ; en un sommet de bord, ils remplissent l'angle intérieur de $\Omega$ en ce point. Les angles intérieurs d'un polygone simple à $V_b$ sommets (en comptant les sommets plats) ont pour somme $(V_b-2)\pi$. Donc
+\[
+  \pi T=2\pi V_i+(V_b-2)\pi,\quad\text{soit}\quad T=2V_i+V_b-2.
+\]
+Comptons ensuite les couples (triangle, arête du triangle) : il y en a $3T$, et chaque arête est comptée deux fois, sauf les $V_b$ arêtes de bord, comptées une fois. Donc $3T=2E-V_b$, d'où $E=(3T+V_b)/2=3V_i+2V_b-3$. Enfin $V-E+T=(V_i+V_b)-(3V_i+2V_b-3)+(2V_i+V_b-2)=1$.
+\end{proof}
+
+\begin{corollaire}[formule de Gauss-Bonnet discrète]\label{cor:valences}
+Pour toute triangulation d'un polygone,
+\[
+  \sum_{s\text{ intérieur}}\big(6-d(s)\big)+\sum_{s\text{ de bord}}\big(4-d(s)\big)=6.
+\]
+En particulier, si les degrés des sommets de bord sont majorés par une constante $D$, le degré moyen $\bar d$ des sommets intérieurs vérifie $|\bar d-6|\leq\big(6+(D+4)V_b\big)/V_i$.
+\end{corollaire}
+
+\begin{proof}
+Chaque arête a deux extrémités, donc $\sum_sd(s)=2E=6V_i+4V_b-6$ par la proposition \ref{prop:euler}, ce qui est exactement l'égalité annoncée. Elle s'écrit $V_i(\bar d-6)=\sum_{\text{bord}}(4-d(s))-6$, et chaque terme $|4-d(s)|$ est majoré par $D+4$.
+\end{proof}
+
+Sans hypothèse sur le bord, le degré moyen intérieur peut rester loin de $6$ : un sommet de bord relié à presque tous les sommets intérieurs absorbe le bilan. Mais dans un maillage où la taille des éléments est à peu près constante, les degrés sont bornés, $V_i$ croît comme le carré de l'inverse du pas et $V_b$ comme son inverse : le degré moyen intérieur tend vers $6$.
+
+\begin{remarque}
+Le degré $6$ est celui du pavage du plan par des triangles équilatéraux. Un sommet de degré $5$ ou $7$ signale un défaut du maillage, et le corollaire dit que ces défauts ne peuvent pas tous disparaître : leur bilan est fixé par le bord. C'est pourquoi les procédures d'amélioration topologique de Canann et al. \cite{canann} cherchent à minimiser une somme comme $\sum_s(d(s)-d_{\text{idéal}}(s))^2$ par des bascules d'arêtes, plutôt qu'à annuler chaque écart.
+\end{remarque}
+
+\begin{exemple}\label{ex:delaunay11}
+La figure \ref{fig:triangulation} montre une triangulation d'un octogone, dont les sommets sont $(0;0)$, $(2{,}2;-0{,}4)$, $(4{,}3;0{,}1)$, $(5{,}6;1{,}6)$, $(5{,}2;3{,}6)$, $(3;4{,}4)$, $(0{,}9;4)$, $(-0{,}6;2{,}1)$, avec trois sommets intérieurs $p_1=(1{,}5;1{,}6)$, $p_2=(3{,}4;1{,}4)$, $p_3=(2{,}6;2{,}9)$. On a $V_i=3$, $V_b=8$, et l'on compte $T=12=2\cdot3+8-2$ triangles et $E=22=9+16-3$ arêtes. Les degrés intérieurs sont $6,6,5$, ceux du bord $3,4,3,3,4,3,4,3$, et $(0+0+1)+(1+0+1+1+0+1+0+1)=6$. C'est la triangulation de Delaunay de ces onze points (section 6) ; son plus petit angle vaut environ $35{,}1^\circ$.
+\end{exemple}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.95]
+  \coordinate (v0) at (0,0);
+  \coordinate (v1) at (2.2,-0.4);
+  \coordinate (v2) at (4.3,0.1);
+  \coordinate (v3) at (5.6,1.6);
+  \coordinate (v4) at (5.2,3.6);
+  \coordinate (v5) at (3.0,4.4);
+  \coordinate (v6) at (0.9,4.0);
+  \coordinate (v7) at (-0.6,2.1);
+  \coordinate (v8) at (1.5,1.6);
+  \coordinate (v9) at (3.4,1.4);
+  \coordinate (v10) at (2.6,2.9);
+  \draw[gray] (v0) -- (v8) (v1) -- (v8) (v1) -- (v9) (v2) -- (v9) (v3) -- (v9) (v4) -- (v9) (v4) -- (v10) (v5) -- (v10) (v6) -- (v8) (v6) -- (v10) (v7) -- (v8) (v8) -- (v9) (v8) -- (v10) (v9) -- (v10);
+  \draw[thick] (v0) -- (v1) -- (v2) -- (v3) -- (v4) -- (v5) -- (v6) -- (v7) -- cycle;
+  \fill (v0) circle (1.6pt) node[below left,font=\small] {$3$};
+  \fill (v1) circle (1.6pt) node[below,font=\small] {$4$};
+  \fill (v2) circle (1.6pt) node[below right,font=\small] {$3$};
+  \fill (v3) circle (1.6pt) node[right,font=\small] {$3$};
+  \fill (v4) circle (1.6pt) node[above right,font=\small] {$4$};
+  \fill (v5) circle (1.6pt) node[above,font=\small] {$3$};
+  \fill (v6) circle (1.6pt) node[above left,font=\small] {$4$};
+  \fill (v7) circle (1.6pt) node[left,font=\small] {$3$};
+  \fill[accent] (v8) circle (2.4pt) node[left=3pt,font=\small,accent] {$6$};
+  \fill[accent] (v9) circle (2.4pt) node[right=3pt,font=\small,accent] {$6$};
+  \fill[accent] (v10) circle (2.4pt) node[above=3pt,font=\small,accent] {$5$};
+\end{tikzpicture}
+\caption{La triangulation de l'exemple \ref{ex:delaunay11}. Chaque sommet porte son degré ; les sommets intérieurs sont en couleur. Le bilan du corollaire \ref{cor:valences} vaut $1+5=6$.}\label{fig:triangulation}
+\end{figure}
+
+\subsection{Quadrangulations}
+
+Les maillages pour le calcul des structures sont surtout faits de quadrangles. Le même calcul d'angles donne une contrainte qui surprend au premier abord.
+
+\begin{proposition}\label{prop:quad}
+Soit $\mathcal Q$ un maillage conforme d'un polygone $\Omega$ par $Q$ quadrangles (simples, non nécessairement convexes). Alors le nombre $V_b$ d'arêtes de bord est pair, et
+\[
+  Q=V_i+\frac{V_b}2-1,\qquad V-E+Q=1,\qquad \sum_{s\text{ intérieur}}\big(4-d(s)\big)+\sum_{s\text{ de bord}}\big(3-d(s)\big)=4.
+\]
+\end{proposition}
+
+\begin{proof}
+Les angles d'un quadrangle simple ont pour somme $2\pi$. Le décompte de la proposition \ref{prop:euler} donne $2\pi Q=2\pi V_i+(V_b-2)\pi$, d'où $Q=V_i+V_b/2-1$ ; comme $Q$ est entier, $V_b$ est pair. Le décompte des couples (quadrangle, arête) donne $4Q=2E-V_b$, d'où $E=2Q+V_b/2=2V_i+\frac32V_b-2$ et $V-E+Q=1$. Enfin $\sum_sd(s)=2E=4V_i+3V_b-4$.
+\end{proof}
+
+Le degré idéal intérieur est donc $4$, celui du quadrillage. La parité est une vraie contrainte pratique : une méthode frontale de quadrangles, comme Q-Morph \cite{qmorph}, doit commencer par s'assurer que la discrétisation du bord a un nombre pair d'arêtes, faute de quoi elle laissera forcément au moins un triangle. Réciproquement, on peut toujours quadranguler, au prix de sommets supplémentaires (exercice \ref{exo:quad}).
+
+% ==========================================================
+\section{Qualité d'un triangle}
+% ==========================================================
+
+Parmi les nombreux indicateurs de forme, en voici un qui se prête bien au calcul.
+
+\begin{definition}\label{def:qualite}
+La \emph{qualité} d'un triangle direct $abc$ de côtés $\ell_1,\ell_2,\ell_3$ est
+\[
+  q(a,b,c)=\frac{4\sqrt3\,\aire(a,b,c)}{\ell_1^2+\ell_2^2+\ell_3^2}.
+\]
+\end{definition}
+
+Elle ne change pas par similitude directe, et vaut $1$ pour le triangle équilatéral, d'aire $\frac{\sqrt3}4\ell^2$ et de somme des carrés des côtés $3\ell^2$. Le théorème suivant dit que c'est son maximum, et en donne une lecture matricielle. Notons $e$ le triangle équilatéral de sommets $e_0=(0,0)$, $e_1=(1,0)$, $e_2=(\frac12,\frac{\sqrt3}2)$. Pour tout triangle direct $abc$, il existe une unique application affine $x\mapsto Mx+t$ qui envoie $e_0,e_1,e_2$ sur $a,b,c$, et $\det M>0$ : c'est l'application qui transporte l'élément de référence sur l'élément réel, dont la matrice jacobienne $M$ apparaît dans tous les calculs d'éléments finis.
+
+\begin{theoreme}\label{thm:qualite}
+Avec ces notations, si $\sigma_1\geq\sigma_2>0$ sont les valeurs singulières de $M$ et $\kappa=\sigma_1/\sigma_2=\|M\|_2\|M^{-1}\|_2$ son conditionnement,
+\[
+  q(a,b,c)=\frac{2\det M}{\|M\|_F^2}=\frac{2\sigma_1\sigma_2}{\sigma_1^2+\sigma_2^2}=\frac{2}{\kappa+\kappa^{-1}}.
+\]
+En particulier $0<q\leq1$, avec égalité si et seulement si $abc$ est équilatéral. De façon équivalente, pour tout triangle d'aire $A$ et de côtés $\ell_1,\ell_2,\ell_3$, on a l'inégalité de Weitzenböck $\ell_1^2+\ell_2^2+\ell_3^2\geq4\sqrt3\,A$.
+\end{theoreme}
+
+\begin{proof}
+Les côtés de $e$, vus comme vecteurs, sont $u_1=(1,0)$, $u_2=(-\frac12,\frac{\sqrt3}2)$ et $u_3=(-\frac12,-\frac{\sqrt3}2)$, et l'on calcule
+\[
+  u_1u_1^\top+u_2u_2^\top+u_3u_3^\top=\begin{pmatrix}1+\frac14+\frac14&0-\frac{\sqrt3}4+\frac{\sqrt3}4\\[2pt]0-\frac{\sqrt3}4+\frac{\sqrt3}4&0+\frac34+\frac34\end{pmatrix}=\frac32I_2.
+\]
+Les côtés de $abc$ sont les vecteurs $Mu_k$, donc
+\[
+  \sum_k\ell_k^2=\sum_k\|Mu_k\|^2=\sum_k\tr\big(Mu_ku_k^\top M^\top\big)=\tr\Big(M\,\tfrac32I_2\,M^\top\Big)=\frac32\|M\|_F^2.
+\]
+L'aire est multipliée par $\det M$ : $\aire(a,b,c)=\frac{\sqrt3}4\det M$. Donc $q=4\sqrt3\cdot\frac{\sqrt3}4\det M\big/\frac32\|M\|_F^2=2\det M/\|M\|_F^2$. Si $M=U\operatorname{diag}(\sigma_1,\sigma_2)V^\top$ avec $U,V$ orthogonales, alors $|\det M|=\sigma_1\sigma_2$, donc $\det M=\sigma_1\sigma_2$ puisque $\det M>0$, et $\|M\|_F^2=\sigma_1^2+\sigma_2^2$. La dernière forme s'obtient en divisant par $\sigma_1\sigma_2$.
+
+Par l'inégalité $\sigma_1^2+\sigma_2^2\geq2\sigma_1\sigma_2$, $q\leq1$, avec égalité si et seulement si $\sigma_1=\sigma_2$, c'est-à-dire si $M$ est le produit d'un réel positif et d'une matrice orthogonale, de déterminant positif : une similitude directe. Dans ce cas $abc$, image de $e$, est équilatéral. Réciproquement, un triangle équilatéral a une qualité égale à $1$, on l'a vu. L'inégalité finale est $q\leq1$ réécrite.
+\end{proof}
+
+\begin{remarque}
+L'estimation classique de l'erreur d'interpolation $P^1$ sur un triangle fait intervenir le produit $\|M\|\,\|M^{-1}\|$ \cite[chapitre 3]{ciarlet}, c'est-à-dire le conditionnement $\kappa$. Le théorème dit que maximiser $q$ revient à minimiser $\kappa$ : la qualité est un indicateur de forme qui a un sens pour le calcul. Knupp \cite{knupp} a systématisé cette idée sous le nom d'indicateurs algébriques, définis à partir de la jacobienne $M$. Pour un quadrangle gauche de l'espace, on mesure aussi la non-planéité, par exemple par l'angle entre les normales des deux triangles que découpe une diagonale (le \emph{warp angle}).
+\end{remarque}
+
+\begin{exemple}\label{ex:qualites}
+Le triangle rectangle isocèle $(0,0),(1,0),(0,1)$ a pour qualité $q=4\sqrt3\cdot\frac12/4=\frac{\sqrt3}2\approx0{,}866$, et $\kappa=\sqrt3$ (en effet $\kappa+\kappa^{-1}=4/\sqrt3$). Le triangle aplati $(0,0),(1,0),(\frac12;0{,}1)$, d'angles $11{,}3^\circ$, $11{,}3^\circ$ et $157{,}4^\circ$, a pour qualité $q\approx0{,}228$, et son conditionnement vaut $\kappa\approx8{,}66$.
+\end{exemple}
+
+% ==========================================================
+\section{Lisser un sommet : le noyau de l'étoile}
+% ==========================================================
+
+Fixons un sommet intérieur $p$ d'une triangulation, de degré $k$, et ses voisins $q_1,\dots,q_k$ numérotés dans le sens direct, avec $q_{k+1}=q_1$. Les triangles $pq_iq_{i+1}$ forment l'\emph{étoile} de $p$, et la ligne polygonale fermée $q_1q_2\cdots q_k$ est son \emph{bord}. Lisser $p$, c'est le déplacer en un point $x$, sans toucher au reste : on remplace les triangles $pq_iq_{i+1}$ par les triangles $xq_iq_{i+1}$.
+
+\begin{definition}\label{def:noyau}
+Le \emph{noyau} de l'étoile est l'ensemble $K=\bigcap_{i=1}^kH_i$, où $H_i=\{x\in\R^2:\aire(x,q_i,q_{i+1})>0\}$ est le demi-plan ouvert situé à gauche de la droite orientée $(q_iq_{i+1})$.
+\end{definition}
+
+Chaque $H_i$ est un demi-plan ouvert, car $x\mapsto\aire(x,q_i,q_{i+1})$ est affine et non constante. Le noyau est donc un \emph{convexe ouvert}, intersection finie de demi-plans ; il contient $p$, puisque la triangulation de départ est formée de triangles directs.
+
+\begin{proposition}\label{prop:noyau}
+Les triangles $xq_iq_{i+1}$ sont tous directs si et seulement si $x\in K$. Dans ce cas, ils forment une triangulation de la même région que l'étoile de départ, et le maillage obtenu en déplaçant $p$ en $x$ est encore une triangulation de $\Omega$.
+\end{proposition}
+
+\begin{proof}
+La première affirmation est la définition de $K$. Soit $x\in K$, et $\theta_i(x)\in\,]0,\pi[$ l'angle orienté de $q_i-x$ à $q_{i+1}-x$ ; il est dans $]0,\pi[$ parce que $\det(q_i-x,q_{i+1}-x)=2\aire(x,q_i,q_{i+1})>0$. La somme $\sum_i\theta_i(x)$ vaut $2\pi w(x)$, où $w(x)$ est l'indice du lacet $q_1\cdots q_kq_1$ par rapport à $x$. Cet indice est une fonction continue à valeurs entières sur le convexe $K$, qui ne rencontre pas le lacet (un point de $K$ n'est sur aucune droite $(q_iq_{i+1})$) ; elle est donc constante. En $x=p$, les angles des triangles de l'étoile font un tour complet, donc $w=1$ sur $K$.
+
+Ainsi les secteurs angulaires $\{x+r(\cos t,\sin t):r>0,\ t\in\,]\alpha_i,\alpha_i+\theta_i(x)[\}$, où $\alpha_{i+1}=\alpha_i+\theta_i(x)$, sont consécutifs et font exactement un tour sans se chevaucher. Les triangles $xq_iq_{i+1}$, contenus chacun dans son secteur, ont des intérieurs disjoints, deux triangles consécutifs partagent l'arête $[xq_{i+1}]$, et chaque demi-droite issue de $x$ rencontre le bord de l'étoile en un seul point. La réunion des triangles est donc la région bornée délimitée par ce bord, la même que pour $p$. Les autres triangles de $\mathcal T$ ne sont pas touchés, et les conditions de la définition \ref{def:triangulation} restent vraies.
+\end{proof}
+
+Le lissage le plus simple place $p$ à l'isobarycentre de ses voisins : c'est le \emph{lissage laplacien},
+\[
+  x=\frac1k\sum_{i=1}^kq_i.
+\]
+
+\begin{proposition}\label{prop:laplacien-convexe}
+Si le bord de l'étoile est un polygone convexe, l'isobarycentre des $q_i$, et plus généralement tout barycentre des $q_i$ à poids strictement positifs, appartient au noyau $K$.
+\end{proposition}
+
+\begin{proof}
+Soit $x=\sum_i\mu_iq_i$ avec $\mu_i>0$ et $\sum_i\mu_i=1$, et soit $j$ un indice. La fonction $\varphi_j:y\mapsto\aire(y,q_j,q_{j+1})$ est affine, donc $\varphi_j(x)=\sum_i\mu_i\varphi_j(q_i)$. Le polygone étant convexe et parcouru dans le sens direct, tous ses sommets sont à gauche de la droite orientée $(q_jq_{j+1})$ ou sur elle : $\varphi_j(q_i)\geq0$ pour tout $i$. Ils ne sont pas tous sur cette droite, sinon l'étoile serait aplatie. Donc $\varphi_j(x)>0$, pour tout $j$, et $x\in K$.
+\end{proof}
+
+Sans convexité, le lissage laplacien peut retourner des triangles.
+
+\begin{exemple}\label{ex:etoile}
+Prenons $p=(0,0)$ et le bord d'étoile non convexe de sommets
+\begin{gather*}
+  q_1=(-1,-1),\quad q_2=(1,-1),\quad q_3=(1;-0{,}2),\quad q_4=(4;-0{,}2),\\
+  q_5=(4;0{,}6),\quad q_6=(1;0{,}6),\quad q_7=(1,1),\quad q_8=(-1,1).
+\end{gather*}
+Les huit triangles $pq_iq_{i+1}$ sont directs. Les demi-plans $H_i$ s'écrivent $x_1<1$, $x_2>-0{,}2$, $x_1<4$, $x_2<0{,}6$, $x_1<1$, $x_2<1$, $x_1>-1$, $x_2>-1$ : le noyau est le rectangle $K=\,]-1,1[\times]-0{,}2;0{,}6[$ (figure \ref{fig:etoile}). L'isobarycentre des voisins est $g=(1{,}25;0{,}1)$, hors de $K$ : les triangles $gq_2q_3$ et $gq_6q_7$, d'aires orientées $-0{,}1$ et $-0{,}05$, sont retournés. Le « doigt » $q_3q_4q_5q_6$ attire le barycentre au-delà des deux sommets rentrants $q_3$ et $q_6$.
+\end{exemple}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=1.15]
+  \fill[accent!15] (-1,-0.2) rectangle (1,0.6);
+  \foreach \q in {(-1,-1),(1,-1),(1,-0.2),(4,-0.2),(4,0.6),(1,0.6),(1,1),(-1,1)}
+    \draw[gray!60] (0,0) -- \q;
+  \draw[thick] (-1,-1) -- (1,-1) -- (1,-0.2) -- (4,-0.2) -- (4,0.6) -- (1,0.6) -- (1,1) -- (-1,1) -- cycle;
+  \draw[accent2,dashed] (1,-1) -- (1.25,0.1) -- (1,-0.2);
+  \draw[accent2,dashed] (1,0.6) -- (1.25,0.1) -- (1,1);
+  \fill (0,0) circle (1.6pt) node[below left,font=\small] {$p$};
+  \fill[accent2] (1.25,0.1) circle (1.8pt) node[right,font=\small,accent2] {$g$};
+  \fill[accent] (0.822,0.2) circle (1.8pt) node[above,font=\small,accent] {$x^*$};
+  \node[font=\small,accent] at (-0.55,0.35) {$K$};
+  \node[below,font=\small] at (-1,-1) {$q_1$};
+  \node[below,font=\small] at (1,-1) {$q_2$};
+  \node[below right,font=\small] at (1.4,-0.2) {$q_3$};
+  \node[right,font=\small] at (4,-0.2) {$q_4$};
+  \node[right,font=\small] at (4,0.6) {$q_5$};
+  \node[above right,font=\small] at (1.4,0.6) {$q_6$};
+  \node[above,font=\small] at (1,1) {$q_7$};
+  \node[above,font=\small] at (-1,1) {$q_8$};
+\end{tikzpicture}
+\caption{L'étoile de l'exemple \ref{ex:etoile}. Le noyau $K$ est le rectangle coloré. L'isobarycentre $g$ des voisins en sort, et deux triangles (en tirets) se retournent ; le point $x^*$ du théorème \ref{thm:minmax} est dans $K$.}\label{fig:etoile}
+\end{figure}
+
+On peut au contraire chercher, dans $K$, la position qui rend le pire triangle de l'étoile le meilleur possible. C'est le lissage « par optimisation ». Fait remarquable, ce problème est convexe.
+
+\begin{lemme}\label{lem:perspective}
+La fonction $(y,t)\mapsto\|y\|^2/t$ est convexe sur $\R^2\times\,]0,+\infty[$, et la fonction $t\mapsto1/t$ est strictement convexe sur $]0,+\infty[$.
+\end{lemme}
+
+\begin{proof}
+Pour $t>0$ et $z\in\R^2$, $2\langle z,y\rangle-t\|z\|^2=\frac{\|y\|^2}t-t\big\|z-\frac yt\big\|^2\leq\frac{\|y\|^2}t$, avec égalité pour $z=y/t$. Donc $\|y\|^2/t=\sup_z\big(2\langle z,y\rangle-t\|z\|^2\big)$ est un sup de fonctions affines de $(y,t)$ : elle est convexe. La seconde affirmation vient de $(1/t)''=2/t^3>0$.
+\end{proof}
+
+\begin{theoreme}\label{thm:minmax}
+Pour $x\in K$, posons $F(x)=\max_{1\leq i\leq k}1/q(x,q_i,q_{i+1})$. Alors $F$ est strictement convexe sur $K$, tend vers $+\infty$ au bord de $K$, et atteint son minimum en un unique point $x^*\in K$. C'est l'unique position de $p$ qui maximise la plus petite qualité des triangles de l'étoile ; elle est aussi l'unique minimum local de $F$.
+\end{theoreme}
+
+\begin{proof}
+Notons $m_i$ le milieu de $[q_iq_{i+1}]$, $\ell_i=\|q_{i+1}-q_i\|$ et $A_i(x)=\aire(x,q_i,q_{i+1})$, fonction affine de $x$, positive sur $K$. Par l'identité du parallélogramme, $\|x-q_i\|^2+\|x-q_{i+1}\|^2=2\|x-m_i\|^2+\frac12\ell_i^2$, donc
+\[
+  f_i(x):=\frac1{q(x,q_i,q_{i+1})}=\frac{2\|x-m_i\|^2+\frac32\ell_i^2}{4\sqrt3\,A_i(x)}
+  =\frac1{2\sqrt3}\,\frac{\|x-m_i\|^2}{A_i(x)}+\frac{\sqrt3\,\ell_i^2}{8}\,\frac1{A_i(x)}.
+\]
+
+\emph{Convexité stricte de $f_i$.} L'application $x\mapsto(x-m_i,A_i(x))$ est affine, et elle prend ses valeurs dans $\R^2\times\,]0,+\infty[$ quand $x\in K$ ; par le lemme \ref{lem:perspective}, les deux termes sont convexes. Restreignons $f_i$ à une droite $x(s)=x_0+sv$, $v\neq0$. Si $A_i$ n'est pas constante sur cette droite, $s\mapsto1/A_i(x(s))$ est strictement convexe et le second terme l'est. Si $A_i$ est constante, égale à $\alpha>0$, le premier terme vaut $\|x_0+sv-m_i\|^2/(2\sqrt3\alpha)$, polynôme du second degré de coefficient dominant $\|v\|^2/(2\sqrt3\alpha)>0$, strictement convexe. Dans tous les cas, $f_i$ est strictement convexe sur toute droite, donc strictement convexe.
+
+\emph{Convexité stricte de $F$.} Soit $x\neq y$ dans $K$, $t\in\,]0,1[$ et $j$ un indice tel que $F(tx+(1-t)y)=f_j(tx+(1-t)y)$. Alors $F(tx+(1-t)y)<tf_j(x)+(1-t)f_j(y)\leq tF(x)+(1-t)F(y)$.
+
+\emph{Comportement au bord.} Si $x_n\in K$ tend vers un point $\bar x$ du bord de $K$, alors $A_i(\bar x)\geq0$ pour tout $i$, et l'un d'eux est nul, sinon $\bar x$ serait dans l'ouvert $K$. Pour cet indice, $F(x_n)\geq f_i(x_n)\geq\frac{\sqrt3\ell_i^2}{8A_i(x_n)}\to+\infty$.
+
+\emph{Existence et unicité.} Le noyau est borné : il est contenu dans la région délimitée par le bord de l'étoile (proposition \ref{prop:noyau}). L'ensemble $N=\{x\in K:F(x)\leq F(p)\}$ est non vide, borné, et fermé dans $\R^2$ : une limite de points de $N$ est dans l'adhérence de $K$, et pas sur son bord puisque $F$ y tendrait vers l'infini, donc dans $K$, puis dans $N$ par continuité de $F$. Le minimum de la fonction continue $F$ sur le compact $N$ est son minimum sur $K$. Deux points de minimum distincts $x,y$ donneraient $F(\frac{x+y}2)<\min F$ par convexité stricte : il est unique. Enfin, pour une fonction convexe, un minimum local $x_0$ est global : si $F(y)<F(x_0)$, alors $F(x_0+t(y-x_0))\leq F(x_0)+t(F(y)-F(x_0))<F(x_0)$ pour tout $t\in\,]0,1]$, ce qui contredit la minimalité locale.
+\end{proof}
+
+\begin{exemple}\label{ex:minmax}
+Pour l'étoile de l'exemple \ref{ex:etoile}, en $p=(0,0)$, la plus petite qualité vaut environ $0{,}080$, atteinte pour le triangle très aplati $pq_3q_4$. Une minimisation numérique de $F$ donne $x^*\approx(0{,}822;0{,}200)$, où la plus petite qualité vaut environ $0{,}214$ ; elle est atteinte simultanément par trois triangles, $x^*q_2q_3$, $x^*q_3q_4$ et $x^*q_5q_6$. Rien d'étonnant pour un problème min-max : à l'optimum, plusieurs contraintes sont actives et $F$ n'est pas dérivable. On ne peut donc pas employer telle quelle une méthode de gradient ; on utilise des sous-gradients, ou une méthode de recherche directe.
+\end{exemple}
+
+\begin{remarque}
+Le lissage laplacien est bon marché mais aveugle ; le lissage par optimisation est sûr mais coûteux. Le lisseur hybride de Mukherjee \cite{mukherjee} essaie d'abord la position laplacienne, ne l'accepte que si elle améliore la qualité, et passe sinon à une optimisation locale. Le théorème \ref{thm:minmax} garantit que cette optimisation a une solution, et une seule.
+\end{remarque}
+
+% ==========================================================
+\section{Le lissage laplacien global}
+% ==========================================================
+
+Lissons maintenant tous les sommets intérieurs à la fois. On fixe les sommets de bord, et l'on demande que chaque sommet intérieur soit l'isobarycentre de ses voisins. Numérotons $1,\dots,n$ les sommets intérieurs, notons $x_i\in\R^2$ leurs positions inconnues, $d_i$ leurs degrés, $i\sim j$ la relation d'adjacence, et $b_i$ la somme des positions des voisins de $i$ situés sur le bord. Le système s'écrit
+\[
+  d_ix_i-\sum_{j\sim i,\ j\text{ intérieur}}x_j=b_i\qquad(1\leq i\leq n),
+\]
+coordonnée par coordonnée : $Lx=b$ avec $L=D-A$, où $D=\operatorname{diag}(d_i)$ et $A$ est la matrice d'adjacence des sommets intérieurs. Sa méthode de Jacobi est exactement le lissage laplacien itéré, où l'on déplace tous les sommets en même temps : $x^{(m+1)}=Jx^{(m)}+D^{-1}b$ avec $J=D^{-1}A$.
+
+On suppose que le graphe des arêtes est connexe, ce qui est le cas pour une triangulation d'un polygone (connexe) : tout sommet intérieur est relié au bord par un chemin d'arêtes.
+
+\begin{theoreme}\label{thm:laplacien}
+Sous cette hypothèse :
+\begin{enumerate}[nosep]
+\item le rayon spectral de $J$ vérifie $\rho(J)<1$ ; la matrice $L$ est inversible et la méthode de Jacobi converge vers la solution, quel que soit le point de départ ;
+\item (principe du maximum) chaque position $x_i$ de la solution est une combinaison convexe des positions des sommets de bord ; en particulier, tous les sommets restent dans l'enveloppe convexe du bord.
+\end{enumerate}
+\end{theoreme}
+
+\begin{proof}
+1. La matrice $J$ est à coefficients positifs ou nuls ; la somme $s_i$ de sa ligne $i$ est le nombre de voisins intérieurs de $i$ divisé par $d_i$ : $s_i\leq1$, et $s_i<1$ si et seulement si $i$ a un voisin sur le bord. Posons $u^{(m)}=J^m\mathbf 1$, où $\mathbf 1$ est le vecteur dont toutes les coordonnées valent $1$. Comme $J\geq0$ et $u^{(1)}=J\mathbf 1\leq\mathbf 1=u^{(0)}$, on obtient par récurrence $0\leq u^{(m+1)}\leq u^{(m)}\leq\mathbf 1$ coordonnée par coordonnée. Soit $S_m=\{i:u^{(m)}_i<1\}$. L'ensemble $S_1$ est celui des sommets voisins du bord. Si $i$ a un voisin intérieur $j\in S_m$, ou si $i\in S_1$, alors
+\[
+  u^{(m+1)}_i=\sum_lJ_{il}u^{(m)}_l\leq\sum_lJ_{il}=s_i\leq1,
+\]
+et l'une des deux inégalités est stricte : la première si $J_{ij}>0$ et $u^{(m)}_j<1$, la seconde si $i\in S_1$. Ainsi $S_{m+1}$ contient $S_1$ et les voisins intérieurs des éléments de $S_m$. Par récurrence sur $r$, un sommet intérieur à distance $r$ du bord dans le graphe est dans $S_r$. Les ensembles $S_m$ croissent avec $m$, puisque la suite $u^{(m)}$ décroît, et toute distance au bord est au plus $n$ : $S_n$ contient donc tous les sommets intérieurs. La norme subordonnée à $\|\cdot\|_\infty$ d'une matrice positive est le maximum des sommes de ses lignes, donc $\|J^n\|_\infty=\max_iu^{(n)}_i<1$, et $\rho(J)^n=\rho(J^n)\leq\|J^n\|_\infty<1$.
+
+On en déduit que $I-J$ est inversible, d'inverse $\sum_{m\geq0}J^m$, donc $L=D(I-J)$ aussi. L'erreur de Jacobi vérifie $x^{(m)}-x=J^m(x^{(0)}-x)$, qui tend vers $0$ puisque $\rho(J)<1$.
+
+2. La solution est $x=Rx_B$, où $x_B$ est le vecteur des positions du bord et $R=(I-J)^{-1}D^{-1}A_B=\sum_{m\geq0}J^mD^{-1}A_B$, $A_B$ désignant la matrice d'adjacence entre sommets intérieurs et sommets de bord. Les coefficients de $R$ sont positifs ou nuls. Si tous les sommets de bord sont placés en un même point $c$, la configuration où tous les sommets intérieurs sont en $c$ est solution, donc la seule : les sommes des lignes de $R$ valent $1$. Chaque $x_i$ est donc une combinaison convexe des positions du bord.
+\end{proof}
+
+\begin{exemple}\label{ex:laplacien}
+Pour la triangulation de la figure \ref{fig:triangulation}, avec les sommets intérieurs dans l'ordre $p_1,p_2,p_3$, de degrés $6,6,5$ et deux à deux voisins,
+\[
+  J=\begin{pmatrix}0&\frac16&\frac16\\[2pt]\frac16&0&\frac16\\[2pt]\frac15&\frac15&0\end{pmatrix}.
+\]
+Le vecteur $(1,-1,0)$ est propre pour $-\frac16$ ; sur le plan engendré par $(1,1,0)$ et $(0,0,1)$, stable par $J$, celle-ci agit par la matrice $\begin{pmatrix}1/6&1/6\\2/5&0\end{pmatrix}$, de valeurs propres $\frac{5\pm\sqrt{265}}{60}$. Donc $\rho(J)=\frac{5+\sqrt{265}}{60}\approx0{,}355$ : l'erreur est divisée par environ $2{,}8$ à chaque itération, et vingt-deux itérations depuis les positions initiales suffisent pour qu'un pas déplace les sommets de moins de $10^{-10}$. La solution est $p_1\approx(1{,}491;1{,}731)$, $p_2\approx(3{,}605;1{,}617)$, $p_3\approx(2{,}839;3{,}070)$. Les triangles restent directs, comme le prévoit le théorème suivant ; mais la plus petite qualité passe de $0{,}828$ à $0{,}806$, et le plus petit angle de $35{,}1^\circ$ à $32{,}6^\circ$. Le lissage laplacien régularise l'espacement des sommets ; il n'améliore pas forcément la qualité.
+\end{exemple}
+
+Dans l'exemple, aucun triangle ne s'est retourné, et le théorème de Tutte, sous la forme générale que lui a donnée Floater, dit pourquoi. On l'admet.
+
+\begin{theoreme}[Tutte \cite{tutte}, Floater \cite{floater}]\label{thm:tutte}
+On suppose que les sommets de bord sont placés, dans leur ordre cyclique, sur un polygone convexe, et que chaque sommet intérieur est un barycentre à poids strictement positifs de ses voisins. Alors tous les triangles sont directs, et ils forment une triangulation de ce polygone convexe.
+\end{theoreme}
+
+La convexité du bord est indispensable. L'exemple \ref{ex:etoile}, vu comme une triangulation à un seul sommet intérieur, est un contre-exemple : le lissage global y est le lissage local, et il retourne deux triangles.
+
+% ==========================================================
+\section{Bascules et triangulation de Delaunay}
+% ==========================================================
+
+\subsection{Le critère du cercle vide}
+
+Soit $S$ un ensemble fini de points du plan, dont trois ne sont jamais alignés et quatre jamais cocycliques (on dit qu'il est \emph{en position générale}). On considère les triangulations de $\conv(S)$ dont l'ensemble des sommets est exactement $S$ ; il en existe (exercice \ref{exo:existence}), et il y en a un nombre fini.
+
+\begin{definition}\label{def:delaunay}
+Une telle triangulation est \emph{de Delaunay} si aucun point de $S$ n'est strictement à l'intérieur du cercle circonscrit à l'un de ses triangles.
+\end{definition}
+
+Si une arête intérieure $[ac]$ est commune aux triangles $abc$ et $acd$, et si le quadrilatère $abcd$ est convexe, on peut la \emph{basculer} : remplacer $abc$ et $acd$ par $abd$ et $bcd$, qui recouvrent le même quadrilatère. C'est l'opération topologique la plus simple. Le critère pour basculer est donné par un relèvement sur un paraboloïde.
+
+Posons $\phi(x)=\|x\|^2=x_1^2+x_2^2$. Pour un triangle $abc$, notons $\pi_{abc}$ l'unique fonction affine qui coïncide avec $\phi$ en $a$, $b$ et $c$ : son graphe est le plan passant par les points relevés $(a,\phi(a))$, $(b,\phi(b))$, $(c,\phi(c))$.
+
+\begin{lemme}[relèvement]\label{lem:relevement}
+Soit $abc$ un triangle direct, de centre circonscrit $o$ et de rayon $r$. Pour tout $d\in\R^2$, $\phi(d)-\pi_{abc}(d)=\|d-o\|^2-r^2$, et
+\[
+  \Delta(a,b,c,d):=\det\begin{pmatrix}a_1-d_1&a_2-d_2&\|a-d\|^2\\ b_1-d_1&b_2-d_2&\|b-d\|^2\\ c_1-d_1&c_2-d_2&\|c-d\|^2\end{pmatrix}=2\aire(a,b,c)\big(\pi_{abc}(d)-\phi(d)\big).
+\]
+Ainsi $d$ est strictement à l'intérieur du cercle circonscrit à $abc$ si et seulement si $\phi(d)<\pi_{abc}(d)$, si et seulement si $\Delta(a,b,c,d)>0$ : le point relevé est sous le plan des trois autres.
+\end{lemme}
+
+\begin{proof}
+La fonction $x\mapsto\|x-o\|^2-r^2=\phi(x)-2\langle o,x\rangle+\|o\|^2-r^2$ diffère de $\phi$ d'une fonction affine, et s'annule en $a,b,c$. Donc $\phi-\big(\|\cdot-o\|^2-r^2\big)$ est une fonction affine qui coïncide avec $\phi$ en $a,b,c$ : c'est $\pi_{abc}$, d'où la première formule. Pour le déterminant, on écrit $\|a-d\|^2=\phi(a)-\phi(d)-2\langle d,a-d\rangle$ ; le dernier terme est une combinaison, à coefficients indépendants de la ligne, des deux premières colonnes, et on peut le retirer. Puis $\phi(a)=\pi_{abc}(a)$, et $\pi_{abc}(a)-\pi_{abc}(d)=\langle g,a-d\rangle$ où $g$ est le gradient de $\pi_{abc}$ : on retire de même ce terme. Il reste
+\[
+  \Delta=\det\begin{pmatrix}a-d&\pi_{abc}(d)-\phi(d)\\ b-d&\pi_{abc}(d)-\phi(d)\\ c-d&\pi_{abc}(d)-\phi(d)\end{pmatrix}
+  =\big(\pi_{abc}(d)-\phi(d)\big)\det\begin{pmatrix}a-d&1\\ b-d&1\\ c-d&1\end{pmatrix},
+\]
+et le dernier déterminant vaut $\det(b-a,c-a)=2\aire(a,b,c)$, en retranchant la première ligne des deux autres.
+\end{proof}
+
+\begin{definition}\label{def:legale}
+Une arête intérieure $[ac]$, commune aux triangles $abc$ et $acd$, est \emph{localement de Delaunay} si $d$ n'est pas strictement à l'intérieur du cercle circonscrit à $abc$. Sinon, elle est \emph{illégale}.
+\end{definition}
+
+Pour voir que cette définition est symétrique en $b$ et $d$, et pour comparer des angles, on utilise le théorème de l'angle inscrit, sous la forme suivante, que l'on rappelle sans démonstration.
+
+\begin{lemme}[angle inscrit]\label{lem:inscrit}
+Soit $\Gamma$ un cercle, $[uv]$ une corde, et $P$ l'un des deux demi-plans ouverts limités par $(uv)$. Tous les points $y\in\Gamma\cap P$ voient $[uv]$ sous le même angle $\alpha=\widehat{uyv}$, et les points de $\Gamma$ situés dans l'autre demi-plan sous l'angle $\pi-\alpha$. Un point $z\in P$ voit $[uv]$ sous un angle strictement plus grand que $\alpha$, égal à $\alpha$ ou strictement plus petit selon qu'il est à l'intérieur du disque, sur $\Gamma$ ou à l'extérieur.
+\end{lemme}
+
+\begin{corollaire}\label{cor:quadrilatere}
+Soit $[ac]$ une arête commune à $abc$ et $acd$, de sorte que $b$ et $d$ sont de part et d'autre de $(ac)$.
+\begin{enumerate}[nosep]
+\item $d$ est strictement intérieur au cercle circonscrit à $abc$ si et seulement si $\widehat{abc}+\widehat{adc}>\pi$, si et seulement si $b$ est strictement intérieur au cercle circonscrit à $acd$.
+\item Si l'arête $[ac]$ est illégale, le quadrilatère $abcd$ est convexe : on peut la basculer.
+\end{enumerate}
+\end{corollaire}
+
+\begin{proof}
+1. Par le lemme \ref{lem:inscrit} appliqué au cercle circonscrit à $abc$ et à la corde $[ac]$, les points de ce cercle situés du côté de $d$ voient $[ac]$ sous l'angle $\pi-\widehat{abc}$ ; $d$ est intérieur si et seulement si $\widehat{adc}>\pi-\widehat{abc}$. Cette condition est symétrique en $b$ et $d$.
+
+2. Les angles du quadrilatère en $b$ et en $d$ sont $\widehat{abc}<\pi$ et $\widehat{adc}<\pi$. Comme la somme des quatre angles vaut $2\pi$ et que $\widehat{abc}+\widehat{adc}>\pi$, les angles en $a$ et en $c$ ont une somme inférieure à $\pi$, donc chacun est inférieur à $\pi$. Les quatre angles étant inférieurs à $\pi$, le quadrilatère est convexe.
+\end{proof}
+
+\begin{exemple}\label{ex:bascule}
+Soit $a=(0,0)$, $b=(2,-1)$, $c=(4,0)$, $d=(2;1{,}2)$. Le cercle circonscrit à $abc$ a pour centre $o=(2;1{,}5)$ et pour rayon $2{,}5$ ; $\|d-o\|^2-r^2=0{,}09-6{,}25=-6{,}16$, donc $d$ est à l'intérieur, et le lemme \ref{lem:relevement} donne $\Delta(a,b,c,d)=-2\cdot2\cdot(-6{,}16)=24{,}64>0$, ce que confirme le calcul direct du déterminant. L'arête $[ac]$ est illégale. Les triangles $abc$ et $acd$ ont pour plus petits angles $26{,}6^\circ$ et $31{,}0^\circ$, et pour qualités $0{,}533$ et $0{,}619$. Après bascule, $abd$ et $bcd$ sont symétriques l'un de l'autre, d'angles $57{,}5^\circ$, $63{,}4^\circ$ et $59{,}0^\circ$, et de qualité $0{,}998$ (figure \ref{fig:bascule}).
+\end{exemple}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.8]
+  \draw[gray,dashed] (2,1.5) circle (2.5);
+  \draw[thick] (0,0) -- (2,-1) -- (4,0) -- (2,1.2) -- cycle;
+  \draw[thick,accent2] (0,0) -- (4,0);
+  \fill (2,1.5) circle (1.2pt) node[right,font=\small] {$o$};
+  \node[left,font=\small] at (0,0) {$a$};
+  \node[below,font=\small] at (2,-1) {$b$};
+  \node[right,font=\small] at (4,0) {$c$};
+  \node[below,font=\small] at (2,1.2) {$d$};
+  \draw[->,thick] (5.2,0.4) -- (6.4,0.4);
+  \begin{scope}[xshift=7.4cm]
+    \draw[thick] (0,0) -- (2,-1) -- (4,0) -- (2,1.2) -- cycle;
+    \draw[thick,accent] (2,-1) -- (2,1.2);
+    \node[left,font=\small] at (0,0) {$a$};
+    \node[below,font=\small] at (2,-1) {$b$};
+    \node[right,font=\small] at (4,0) {$c$};
+    \node[above,font=\small] at (2,1.2) {$d$};
+  \end{scope}
+\end{tikzpicture}
+\caption{La bascule de l'exemple \ref{ex:bascule}. À gauche, $d$ est à l'intérieur du cercle circonscrit à $abc$ : l'arête $[ac]$ est illégale. À droite, après bascule, le plus petit angle passe de $26{,}6^\circ$ à $57{,}5^\circ$.}\label{fig:bascule}
+\end{figure}
+
+\subsection{Du local au global}
+
+À une triangulation $\mathcal T$ de $\conv(S)$ de sommets $S$, associons la fonction $f_{\mathcal T}:\conv(S)\to\R$, continue, affine sur chaque triangle, et égale à $\phi$ en chaque point de $S$ : sur le triangle $abc$, $f_{\mathcal T}=\pi_{abc}$. Son graphe est la surface polyédrale obtenue en relevant les sommets sur le paraboloïde.
+
+\begin{lemme}\label{lem:pli}
+Soit $[ac]$ une arête intérieure, commune à $abc$ et $acd$. L'arête est localement de Delaunay si et seulement si $\pi_{abc}\leq\pi_{acd}$ sur le demi-plan fermé limité par $(ac)$ qui contient $d$ ; on dit alors que $f_{\mathcal T}$ est \emph{convexe à travers} $[ac]$.
+\end{lemme}
+
+\begin{proof}
+La fonction $\pi_{acd}-\pi_{abc}$ est affine et nulle sur la droite $(ac)$ ; elle est donc de signe constant sur chacun des deux demi-plans ouverts, et ce signe, du côté de $d$, est celui de $\pi_{acd}(d)-\pi_{abc}(d)=\phi(d)-\pi_{abc}(d)$. Par le lemme \ref{lem:relevement}, celui-ci est positif ou nul si et seulement si $d$ n'est pas strictement intérieur au cercle circonscrit à $abc$.
+\end{proof}
+
+\begin{theoreme}\label{thm:local-global}
+Une triangulation $\mathcal T$ de $\conv(S)$ de sommets $S$ est de Delaunay si et seulement si toutes ses arêtes intérieures sont localement de Delaunay. Dans ce cas $f_{\mathcal T}$ est convexe.
+\end{theoreme}
+
+\begin{proof}
+Si $\mathcal T$ est de Delaunay, chaque arête est localement de Delaunay, puisque le point $d$ de la définition \ref{def:legale} est un point de $S$.
+
+Réciproquement, supposons toutes les arêtes intérieures localement de Delaunay, et montrons d'abord que $f=f_{\mathcal T}$ est convexe. Soit $x,y\in\conv(S)$. Supposons d'abord que le segment $[x,y]$ ne passe par aucun point de $S$ et ne contient aucun morceau d'arête. Il traverse alors une suite finie de triangles, en franchissant chaque fois une arête transversalement, et $h(s)=f(x+s(y-x))$ est affine par morceaux sur $[0,1]$. Au point de franchissement $m$ d'une arête $[ac]$, du triangle $abc$ vers le triangle $acd$, la fonction affine $\pi_{acd}-\pi_{abc}$ est nulle en $m$ et positive ou nulle au-delà, du côté de $d$ (lemme \ref{lem:pli}) : sa dérivée dans la direction $y-x$ est positive ou nulle, c'est-à-dire que la pente de $h$ augmente en ce point. Une fonction continue, affine par morceaux et à pentes croissantes, est convexe, donc $f(tx+(1-t)y)\leq tf(x)+(1-t)f(y)$ pour $t\in[0,1]$. Dans le cas général, on approche $x$ et $y$ par des points $x_n,y_n$ de $\conv(S)$ pour lesquels le segment évite ces situations (les couples à éviter forment une réunion finie de parties d'intérieur vide), et l'on passe à la limite grâce à la continuité de $f$.
+
+Soit maintenant un triangle $abc$ de $\mathcal T$ et un point $p\in S$. Choisissons $z$ à l'intérieur de $abc$. La fonction $s\mapsto f(z+s(p-z))$ est convexe sur $[0,1]$ et coïncide avec la fonction affine $s\mapsto\pi_{abc}(z+s(p-z))$ pour $s$ petit ; une fonction convexe d'une variable reste au-dessus de sa tangente, donc $f(p)\geq\pi_{abc}(p)$. Comme $f(p)=\phi(p)$, le lemme \ref{lem:relevement} dit que $p$ n'est pas strictement intérieur au cercle circonscrit à $abc$.
+\end{proof}
+
+\begin{corollaire}\label{cor:enveloppe}
+Si $\mathcal T$ est de Delaunay, $f_{\mathcal T}$ est la plus grande fonction convexe $g$ sur $\conv(S)$ vérifiant $g\leq\phi$ sur $S$ : son graphe est la face inférieure de l'enveloppe convexe des points relevés $(p,\phi(p))$, $p\in S$. En position générale, la triangulation de Delaunay est unique.
+\end{corollaire}
+
+\begin{proof}
+La fonction $f_{\mathcal T}$ est convexe et vaut $\phi$ sur $S$. Si $g$ est convexe et $g\leq\phi$ sur $S$, et si $x=\lambda_aa+\lambda_bb+\lambda_cc$ est dans un triangle $abc$ de $\mathcal T$ (lemme \ref{lem:barycentriques}), alors $g(x)\leq\lambda_ag(a)+\lambda_bg(b)+\lambda_cg(c)\leq\lambda_a\phi(a)+\lambda_b\phi(b)+\lambda_c\phi(c)=f_{\mathcal T}(x)$. Donc $f_{\mathcal T}$ est cette plus grande fonction, qui ne dépend que de $S$. Si $\mathcal T'$ est une autre triangulation de Delaunay, $f_{\mathcal T}=f_{\mathcal T'}$. Soit $abc$ un triangle de $\mathcal T$, et $z$ un point intérieur à $abc$ qui n'est sur aucune arête de $\mathcal T'$ ; il est intérieur à un triangle $a'b'c'$ de $\mathcal T'$. Au voisinage de $z$, la fonction $f_{\mathcal T}=f_{\mathcal T'}$ est égale à la fois à $\pi_{abc}$ et à $\pi_{a'b'c'}$ : ces deux fonctions affines coïncident. Les sommets $p$ de $a'b'c'$ vérifient donc $\phi(p)=\pi_{abc}(p)$, donc sont sur le cercle circonscrit à $abc$ (lemme \ref{lem:relevement}), donc sont parmi $a,b,c$ puisque quatre points de $S$ ne sont jamais cocycliques. Ainsi $abc\in\mathcal T'$, et $\mathcal T\subset\mathcal T'$ ; par symétrie, $\mathcal T=\mathcal T'$.
+\end{proof}
+
+\subsection{L'algorithme de Lawson}
+
+Le théorème \ref{thm:local-global} suggère un algorithme : partir d'une triangulation quelconque, et basculer les arêtes illégales tant qu'il y en a. Rien ne dit a priori qu'il s'arrête : une bascule peut rendre illégales des arêtes voisines. Le relèvement donne une quantité qui décroît.
+
+\begin{theoreme}[Lawson \cite{lawson}]\label{thm:lawson}
+Partant d'une triangulation de $\conv(S)$ de sommets $S$, l'algorithme qui bascule une arête illégale tant qu'il en existe s'arrête après un nombre fini de bascules, sur la triangulation de Delaunay de $S$.
+\end{theoreme}
+
+\begin{proof}
+Soit $[ac]$ une arête illégale, commune à $abc$ et $acd$. Par le corollaire \ref{cor:quadrilatere}, le quadrilatère $Q=abcd$ est convexe, et ses diagonales se coupent en un point $o$ intérieur aux deux : $o=(1-s)a+sc=(1-u)b+ud$ avec $s,u\in\,]0,1[$. Soit $\mathcal T'$ la triangulation obtenue par bascule, et $g=f_{\mathcal T}-f_{\mathcal T'}$. Les deux fonctions sont égales hors de $Q$ et sur le bord de $Q$ ; sur chacun des quatre triangles $abo$, $bco$, $cdo$, $dao$, elles sont toutes deux affines. Donc $g$ est affine sur chacun d'eux, nulle en $a,b,c,d$ : $g$ est le produit de $g(o)$ par la fonction « chapeau » qui vaut $1$ en $o$, $0$ sur le bord de $Q$, et qui est affine sur chacun des quatre triangles. Calculons $g(o)$. Sur $[ac]$, $f_{\mathcal T}$ est affine et vaut $\phi$ en $a$ et $c$, donc $f_{\mathcal T}(o)=\pi_{abc}(o)$. Sur $[bd]$, $f_{\mathcal T'}(o)=(1-u)\phi(b)+u\phi(d)$, alors que, $\pi_{abc}$ étant affine, $\pi_{abc}(o)=(1-u)\pi_{abc}(b)+u\pi_{abc}(d)=(1-u)\phi(b)+u\pi_{abc}(d)$. Donc
+\[
+  g(o)=u\big(\pi_{abc}(d)-\phi(d)\big)>0,
+\]
+par le lemme \ref{lem:relevement}, puisque $d$ est strictement intérieur au cercle circonscrit à $abc$. Ainsi $f_{\mathcal T'}\leq f_{\mathcal T}$, avec inégalité stricte à l'intérieur de $Q$, et la quantité $W(\mathcal T)=\int_{\conv(S)}f_{\mathcal T}$ décroît strictement à chaque bascule. L'algorithme ne repasse donc jamais par la même triangulation ; comme il n'y en a qu'un nombre fini, il s'arrête. À l'arrêt, aucune arête n'est illégale, et la triangulation est de Delaunay par le théorème \ref{thm:local-global}.
+\end{proof}
+
+La bascule d'une arête illégale fait aussi croître le plus petit angle des deux triangles concernés (exercice \ref{exo:angles}). On en déduit que la triangulation de Delaunay maximise le plus petit angle parmi toutes les triangulations de $S$ \cite[chapitre 9]{deberg} : partant d'une triangulation quelconque, chaque bascule de l'algorithme de Lawson ne modifie que deux triangles et fait croître leur plus petit angle, donc le plus petit angle de la triangulation ne décroît pas, et l'algorithme aboutit à la triangulation de Delaunay, qui est unique. D'où sa place dans les mailleurs : parmi toutes les façons de relier les points donnés, elle évite le mieux les triangles aplatis, ceux dont la qualité est faible.
+
+% ==========================================================
+\section{Exercices}
+% ==========================================================
+
+\begin{exercice}\label{exo:quad}
+\begin{enumerate}[nosep]
+\item Montrer qu'on découpe un triangle en trois quadrangles convexes en joignant son centre de gravité aux milieux des côtés.
+\item En déduire que tout polygone admet un maillage conforme par des quadrangles, dont le bord a $2V_b$ arêtes si l'on part d'une triangulation à $V_b$ sommets de bord. Est-ce compatible avec la proposition \ref{prop:quad} ?
+\end{enumerate}
+\end{exercice}
+
+\begin{exercice}\label{exo:existence}
+Soit $S$ un ensemble fini de points en position générale, non tous alignés. On range les points de $S$ par abscisse croissante (puis par ordonnée), et l'on part du triangle formé par les trois premiers. Montrer qu'en ajoutant les points un à un, et en reliant chaque nouveau point aux sommets de l'enveloppe convexe courante qu'il « voit », on obtient une triangulation de $\conv(S)$ de sommets $S$.
+\end{exercice}
+
+\begin{exercice}\label{exo:angles}
+Soit $[ac]$ une arête illégale, commune à $abc$ et $acd$. Montrer que chacun des six angles des triangles $abd$ et $bcd$ est strictement plus grand que l'un des six angles des triangles $abc$ et $acd$. En déduire que la bascule fait croître strictement le plus petit angle.
+\end{exercice}
+
+\begin{exercice}\label{exo:sphere}
+On admet que pour une triangulation d'une surface homéomorphe à la sphère, $V-E+T=2$. Montrer que $\sum_s(6-d(s))=12$. En déduire qu'une telle triangulation a au moins quatre sommets de degré au plus $5$, et au moins douze si tous les degrés sont au moins égaux à $5$. Donner des exemples où ces bornes sont atteintes.
+\end{exercice}
+
+% ==========================================================
+\section{Corrigés}
+% ==========================================================
+
+\paragraph{Exercice 1.} 1. Soit $abc$ un triangle, $g$ son centre de gravité, $m_{ab}$, $m_{bc}$, $m_{ca}$ les milieux des côtés. Les quadrangles $a\,m_{ab}\,g\,m_{ca}$, $b\,m_{bc}\,g\,m_{ab}$ et $c\,m_{ca}\,g\,m_{bc}$ recouvrent le triangle, car les trois segments $[g\,m]$ le découpent en trois secteurs autour de $g$. Le premier est convexe : en coordonnées barycentriques, $a=(1,0,0)$, $m_{ab}=(\frac12,\frac12,0)$, $g=(\frac13,\frac13,\frac13)$, $m_{ca}=(\frac12,0,\frac12)$, et c'est l'ensemble des points où $\lambda_a\geq\lambda_b$, $\lambda_a\geq\lambda_c$, intersection du triangle et de deux demi-plans, donc convexe. De même pour les deux autres. 2. On triangule le polygone, puis on découpe chaque triangle. Le maillage est conforme : sur une arête intérieure commune à deux triangles, les deux découpages ajoutent le même milieu. Chaque arête de bord est coupée en deux par son milieu, d'où $2V_b$ arêtes de bord, nombre pair : c'est compatible avec la proposition \ref{prop:quad}. On vérifie aussi que $Q=3T=3(2V_i+V_b-2)$ vaut bien $V_i'+V_b'/2-1$, avec $V_b'=2V_b$ et $V_i'=V_i+E_{\text{int}}+T$, où $E_{\text{int}}=3V_i+V_b-3$ est le nombre d'arêtes intérieures.
+
+\paragraph{Exercice 2.} Au moment d'ajouter le point $p$, il est d'abscisse maximale (au sens lexicographique), donc hors de l'enveloppe convexe courante $C$, polygone convexe dont tous les sommets sont des points déjà insérés. Une arête $[uv]$ du bord de $C$ est \emph{vue} de $p$ si $p$ est strictement du côté extérieur de $(uv)$. Il y en a au moins une, sinon $p$ serait dans $C$, intersection des demi-plans intérieurs. Elles forment une chaîne consécutive $u_0u_1\cdots u_m$ : les deux droites issues de $p$ qui touchent $C$ sans le traverser le touchent en $u_0$ et $u_m$, et les arêtes vues sont celles de l'arc de $u_0$ à $u_m$ tourné vers $p$. Les triangles $pu_ju_{j+1}$ sont non aplatis (position générale), ont des intérieurs disjoints entre eux et de $C$, et leur réunion avec $C$ est $\conv(C\cup\{p\})$. L'intersection d'un nouveau triangle avec un ancien est contenue dans une arête $[u_ju_{j+1}]$ ou réduite à un sommet, ce qui conserve la conformité. Par récurrence, on obtient une triangulation de $\conv(S)$, et tout point de $S$ en est un sommet.
+
+\paragraph{Exercice 3.} Par le corollaire \ref{cor:quadrilatere}, $abcd$ est convexe, $d$ est intérieur au cercle $\Gamma_1$ circonscrit à $abc$ et $b$ intérieur au cercle $\Gamma_2$ circonscrit à $acd$. On applique le lemme \ref{lem:inscrit}, en notant que, dans le quadrilatère convexe, deux sommets non reliés par la corde considérée sont du même côté de celle-ci.
+\begin{itemize}[nosep]
+\item En $a$ : $\widehat{bad}=\widehat{bac}+\widehat{cad}>\widehat{bac}$. En $c$ : $\widehat{bcd}=\widehat{bca}+\widehat{acd}>\widehat{acd}$.
+\item En $d$ dans $abd$ : $d$ et $c$ sont du même côté de $(ab)$, et $d$ est intérieur à $\Gamma_1$ qui passe par $c$, donc $\widehat{adb}>\widehat{acb}$. En $d$ dans $bcd$ : de même, avec la corde $[bc]$, $\widehat{bdc}>\widehat{bac}$.
+\item En $b$ dans $abd$ : $b$ et $c$ sont du même côté de $(ad)$, et $b$ est intérieur à $\Gamma_2$ qui passe par $c$, donc $\widehat{abd}>\widehat{acd}$. En $b$ dans $bcd$ : avec la corde $[cd]$, $\widehat{cbd}>\widehat{cad}$.
+\end{itemize}
+Chaque nouvel angle majore strictement un ancien angle, donc le plus petit des nouveaux est strictement plus grand que le plus petit des anciens. Dans l'exemple \ref{ex:bascule}, on passe de $26{,}6^\circ$ à $57{,}5^\circ$.
+
+\paragraph{Exercice 4.} On a toujours $\sum_sd(s)=2E$ et, chaque arête étant dans deux triangles, $3T=2E$. Donc $E=3T/2$, $V=2+E-T=2+T/2$, et $\sum_s(6-d(s))=6V-2E=12+3T-3T=12$. Les termes $6-d(s)$ sont des entiers au plus égaux à $3$, car les voisins d'un sommet forment un cycle, de longueur au moins $3$. Les termes strictement positifs sont ceux des $N$ sommets de degré au plus $5$ ; leur somme est au moins $12$, et chacun vaut au plus $3$, donc $N\geq4$. Si tous les degrés sont au moins égaux à $5$, chaque terme positif vaut exactement $1$, donc $N\geq12$. Le tétraèdre (quatre sommets de degré $3$) atteint la première borne, l'icosaèdre (douze sommets de degré $5$) la seconde. C'est pourquoi un maillage de la sphère par des triangles presque équilatéraux, comme ceux qu'on obtient en subdivisant l'icosaèdre, garde toujours douze sommets de degré $5$.
+
+\begin{thebibliography}{9}
+\bibitem{freygeorge} P. J. Frey, P.-L. George, \emph{Maillages. Applications aux éléments finis}, Hermès Science, 1999.
+\bibitem{qmorph} S. J. Owen, M. L. Staten, S. A. Canann, S. Saigal, \emph{Advancing front quadrilateral meshing using triangle transformations}, Proceedings of the 7th International Meshing Roundtable, Dearborn, 1998, pp. 409-428.
+\bibitem{canann} S. A. Canann, S. N. Muthukrishnan, R. K. Phillips, \emph{Topological refinement procedures for triangular finite element meshes}, Engineering with Computers 12 (1996), pp. 243-255.
+\bibitem{kinney} P. Kinney, \emph{CleanUp: improving quadrilateral finite element meshes}, Proceedings of the 6th International Meshing Roundtable, 1997.
+\bibitem{mukherjee} N. Mukherjee, \emph{A hybrid, variational 3D smoother for orphaned shell meshes}, Proceedings of the 11th International Meshing Roundtable, 2002, pp. 379-390.
+\bibitem{ciarlet} P. G. Ciarlet, \emph{The Finite Element Method for Elliptic Problems}, North-Holland, 1978.
+\bibitem{knupp} P. M. Knupp, \emph{Algebraic mesh quality metrics}, SIAM Journal on Scientific Computing 23 (2001), pp. 193-218.
+\bibitem{tutte} W. T. Tutte, \emph{How to draw a graph}, Proceedings of the London Mathematical Society 13 (1963), pp. 743-767.
+\bibitem{floater} M. S. Floater, \emph{One-to-one piecewise linear mappings over triangulations}, Mathematics of Computation 72 (2003), pp. 685-696.
+\bibitem{lawson} C. L. Lawson, \emph{Software for $C^1$ surface interpolation}, dans J. R. Rice (éd.), Mathematical Software III, Academic Press, 1977, pp. 161-194.
+\bibitem{deberg} M. de Berg, O. Cheong, M. van Kreveld, M. Overmars, \emph{Computational Geometry: Algorithms and Applications}, 3e édition, Springer, 2008.
+\end{thebibliography}
+
+\paragraph{Source.} Cette fiche part d'un stage de master consacré aux maillages surfaciques (2010) : elle reprend les notions de son chapitre théorique (méthode frontale, indicateurs de qualité, opérations topologiques et lissage) et les articles publics qu'il cite, et en développe les mathématiques. Les exemples numériques ont été calculés pour la fiche.
+
+\end{document}

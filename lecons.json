@@ -32,6 +32,18 @@
     "intitule": "Matrices symétriques réelles, matrices hermitiennes."
   },
   {
+    "numero": "162",
+    "intitule": "Systèmes d'équations linéaires ; opérations élémentaires, aspects algorithmiques et conséquences théoriques."
+  },
+  {
+    "numero": "181",
+    "intitule": "Convexité dans ℝⁿ. Applications en algèbre et en géométrie."
+  },
+  {
+    "numero": "190",
+    "intitule": "Méthodes combinatoires, problèmes de dénombrement."
+  },
+  {
     "numero": "191",
     "intitule": "Exemples d'utilisation de techniques d'algèbre en géométrie."
   },
@@ -110,5 +122,9 @@
   {
     "numero": "246",
     "intitule": "Séries de Fourier. Exemples et applications."
+  },
+  {
+    "numero": "253",
+    "intitule": "Utilisation de la notion de convexité en analyse."
   }
 ]

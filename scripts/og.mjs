@@ -48,7 +48,8 @@ function group(s, i) {
 
 /** L'intitulé court d'une leçon : ce qui précède le premier « : » ou le premier point. */
 function shortIntitule(intitule) {
-  return intitule.split(/\s:\s|\.\s|\.$/)[0].trim();
+  return intitule.split(/\s:\s|\.\s|\.$/)[0].trim().replace(/[ℕℤℚℝℂ][ⁿ²³]?/g, (m) =>
+    `$\\mathbb{${'NZQRC'['ℕℤℚℝℂ'.indexOf(m[0])]}}${m[1] ? `^{${{ 'ⁿ': 'n', '²': '2', '³': '3' }[m[1]]}}` : ''}$`);
 }
 
 function body({ title, subtitle, kicker, macros, picture }) {
