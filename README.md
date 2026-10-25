@@ -41,6 +41,8 @@ npm run dev
 
 Les figures sont écrites en TikZ dans les `.tex`, avec les réglages communs de `lecons/figures/tikz-setup.tex`. `npm run tikz` compile chacune en SVG (Tectonic et pdftocairo), dans `lecons/figures/`, sous un nom tiré d'une empreinte de sa source. Ces SVG sont versionnés : le site se construit sans TeX, et une figure modifiée sans `npm run tikz` fait échouer le rendu.
 
+Chaque page porte des balises Open Graph (titre, description, image), pour qu'un lien partagé sur LinkedIn ou ailleurs s'affiche avec un aperçu. `npm run og` compile l'image d'aperçu de chaque fiche (1200 × 630 px : leçon, titre, sous-titre et première figure) et celle de l'accueil, dans `lecons/figures/og/`. Comme les SVG, ces PNG sont versionnés et nommés par une empreinte : un titre modifié sans `npm run og` fait échouer le rendu.
+
 ### Commenter un passage
 
 Sur chaque vue de lecture, sélectionner un passage fait apparaître « Commenter ». Le commentaire peut rester comme note dans le navigateur, ou devenir une issue GitHub pré-remplie : le passage cité (formules en TeX), le lien vers l'endroit exact, le fichier source et le commentaire. Rien n'est publié tant que le lecteur ne valide pas l'issue sur GitHub.

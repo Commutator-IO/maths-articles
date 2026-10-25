@@ -28,10 +28,13 @@ import { basename, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import katex from 'katex';
 import { FIGURES, PICTURE, pictureHash } from './tikz.mjs';
+import { cardFor, OG, OG_HEIGHT, OG_WIDTH } from './og.mjs';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const SOURCE = resolve(ROOT, 'lecons');
 const OUT = resolve(ROOT, 'dist');
+// L'adresse publique du site, pour les balises Open Graph, qui veulent des URL absolues.
+const SITE = `https://${readFileSync(resolve(ROOT, 'public', 'CNAME'), 'utf8').trim()}`;
 
 /** Le dépôt GitHub où ouvrir les issues de relecture, lu dans package.json. */
 const REPO = /github\.com[/:]([^/]+\/[^/.]+)/.exec(
@@ -722,7 +725,10 @@ export function render(tex, file, rootRel = '../../') {
   const plainTitle = pre.title.split(/\\\\/)[0].replace(/\$([^$]*)\$/g, '$1')
     .replace(/\\([a-zA-Z]+)/g, (_, c) => (c === 'sqrt' ? '√' : pre.macros[`\\${c}`] ?? '').replace(/\\mathbb\{(.)\}/, '$1'))
     .replace(/[{}]/g, '').replace(/\s+/g, ' ').trim();
-  return { html, title: plainTitle, macros: pre.macros };
+  const plainSubtitle = (pre.title.split(/\\\\(?:\[[^\]]*\])?/)[1] ?? '')
+    .replace(/\\(large|Large|small|normalsize)\b/g, '').replace(/\$([^$]*)\$/g, '$1')
+    .replace(/[{}]/g, '').replace(/\s+/g, ' ').trim();
+  return { html, title: plainTitle, subtitle: plainSubtitle, macros: pre.macros };
 }
 
 // ---------------------------------------------------------------------------
@@ -787,6 +793,40 @@ const STYLE = `
   @media (max-width: 40rem) { body, .ltx_p { font-size: 16px; } .ltx_title_document { font-size: 1.5rem; } }
 `;
 
+/**
+ * Copie l'image d'aperçu d'une carte dans dist/og/ et rend son URL absolue.
+ * Comme pour les figures, une image absente arrête le rendu.
+ */
+function ogImage(card) {
+  const png = resolve(OG, `${card.hash}.png`);
+  if (!existsSync(png)) throw new Error(`image d'aperçu ${card.hash} absente — lancer \`npm run og\``);
+  mkdirSync(resolve(OUT, 'og'), { recursive: true });
+  copyFileSync(png, resolve(OUT, 'og', `${card.hash}.png`));
+  return `${SITE}/og/${card.hash}.png`;
+}
+
+/** Les balises Open Graph et Twitter : titre, description et image des aperçus de partage. */
+function metaTags({ title, description, path, image, type = 'article' }) {
+  const a = escapeAttr;
+  return `<meta name="description" content="${a(description)}">
+<link rel="canonical" href="${a(`${SITE}/${path}`)}">
+<meta property="og:type" content="${type}">
+<meta property="og:site_name" content="Leçons d'agrégation">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:title" content="${a(title)}">
+<meta property="og:description" content="${a(description)}">
+<meta property="og:url" content="${a(`${SITE}/${path}`)}">
+<meta property="og:image" content="${a(image)}">
+<meta property="og:image:width" content="${OG_WIDTH}">
+<meta property="og:image:height" content="${OG_HEIGHT}">
+<meta property="og:image:alt" content="${a(title)}">
+${type === 'article' ? '<meta property="article:author" content="Michel Hua">\n' : ''}<meta name="author" content="Michel Hua">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${a(title)}">
+<meta name="twitter:description" content="${a(description)}">
+<meta name="twitter:image" content="${a(image)}">`;
+}
+
 function nav(rootRel, crumb, links) {
   return `<header class="ma-nav"><div class="ma-nav-in">
 <span class="ma-crumb"><a href="${rootRel}index.html">Leçons</a> / ${crumb}</span>
@@ -794,13 +834,14 @@ ${links.map(([href, text]) => `<a href="${href}">${text}</a>`).join('\n')}
 </div></header>`;
 }
 
-function readingPage({ title, html, macros, rootRel, crumb, links, lecon, source }) {
+function readingPage({ title, html, macros, rootRel, crumb, links, lecon, source, meta }) {
   return `<!doctype html>
 <html lang="fr" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escapeHtml(title)}</title>
+${meta}
 <link rel="stylesheet" href="${rootRel}vendor/ar5iv.css">
 <link rel="stylesheet" href="${rootRel}vendor/katex/katex.min.css">
 <link rel="stylesheet" href="${rootRel}notes.css">
@@ -874,7 +915,7 @@ function citedLecons(tex) {
   return m ? [...new Set([...m[1].matchAll(/\b([12]\d\d)\b/g)].map((x) => x[1]))] : [];
 }
 
-function indexPage({ lecons, folders, missing }) {
+function indexPage({ lecons, folders, missing, meta }) {
   const byNum = Object.fromEntries(lecons.map((l) => [l.numero, l]));
   const uses = {};
   for (const f of folders) {
@@ -913,6 +954,7 @@ function indexPage({ lecons, folders, missing }) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Leçons d'agrégation</title>
+${meta}
 <style>${STYLE}
   .ix-main { max-width: 52rem; margin: 0 auto; padding: 2.2rem 1rem 4rem; font-family: var(--sans); }
   .ix-main h1 { font-family: var(--serif); font-size: 2rem; font-weight: 600; margin: 0 0 .4rem; }
@@ -964,6 +1006,7 @@ async function main() {
 
   // lecons/figures/ tient les SVG et le réglage TikZ communs, pas une leçon.
   await rm(resolve(OUT, 'figures'), { recursive: true, force: true });
+  await rm(resolve(OUT, 'og'), { recursive: true, force: true });
   const dirs = (await readdir(SOURCE, { withFileTypes: true }))
     .filter((d) => d.isDirectory() && d.name !== 'figures').map((d) => d.name).sort();
   const folders = [];
@@ -999,9 +1042,16 @@ async function main() {
         ...lean.map((l) => [`${l.name}.html`, 'Lean']),
       ];
       try {
-        const { html, title, macros } = render(tex, `${dir}/${f}`, rootRel);
+        const { html, title, subtitle, macros } = render(tex, `${dir}/${f}`, rootRel);
+        const intitule = lecons.find((l) => l.numero === numero).intitule;
+        const meta = metaTags({
+          title,
+          description: `${subtitle ? `${subtitle}. ` : ''}Leçon ${numero} de l'agrégation externe de mathématiques : ${intitule}`,
+          path: `lecons/${dir}/${stem}.html`,
+          image: ogImage(cardFor({ tex, numero, intitule })),
+        });
         await writeFile(resolve(out, `${stem}.html`),
-          readingPage({ title, html, macros, rootRel, crumb, links, lecon: numero, source: `lecons/${dir}/${f}` }));
+          readingPage({ title, html, macros, rootRel, crumb, links, lecon: numero, source: `lecons/${dir}/${f}`, meta }));
         await copyFile(resolve(SOURCE, dir, f), resolve(out, f));
         await writeFile(resolve(out, `${f}.html`), sourcePage({
           text: tex, file: f, rootRel, crumb, kind: 'LaTeX',
@@ -1024,7 +1074,14 @@ async function main() {
     if (docs.length) folders.push({ numero, dir, docs });
   }
 
-  await writeFile(resolve(OUT, 'index.html'), indexPage({ lecons, folders, missing: refused }));
+  const meta = metaTags({
+    title: 'Leçons d\'agrégation',
+    description: 'Fiches pour les leçons de l\'agrégation externe de mathématiques : cours rigoureux, figures TikZ et preuves vérifiées en Lean avec Mathlib.',
+    path: '',
+    image: ogImage(cardFor()),
+    type: 'website',
+  });
+  await writeFile(resolve(OUT, 'index.html'), indexPage({ lecons, folders, missing: refused, meta }));
   await writeFile(resolve(OUT, '.nojekyll'), '');
   process.stdout.write(`${folders.reduce((n, f) => n + f.docs.length, 0)} documents → dist/\n`);
 
