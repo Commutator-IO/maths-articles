@@ -1,0 +1,501 @@
+% Le théorème de Hille-Yosida
+% Compile avec pdflatex, xelatex ou lualatex.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+  \IfFileExists{lmodern.sty}{\usepackage{lmodern}}{}
+  \usepackage[french]{babel}
+\else
+  \usepackage{fontspec}
+  \usepackage{polyglossia}
+  \setdefaultlanguage{french}
+\fi
+\usepackage[margin=2.6cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{tikz}
+\input{../figures/tikz-setup.tex}
+\usepackage[hidelinks]{hyperref}
+
+% ---------- Environnements ----------
+\theoremstyle{plain}
+\newtheorem{theoreme}{Théorème}[section]
+\newtheorem{proposition}[theoreme]{Proposition}
+\newtheorem{lemme}[theoreme]{Lemme}
+\newtheorem{corollaire}[theoreme]{Corollaire}
+\theoremstyle{definition}
+\newtheorem{definition}[theoreme]{Définition}
+\newtheorem{exemple}[theoreme]{Exemple}
+\newtheorem{exercice}{Exercice}
+\theoremstyle{remark}
+\newtheorem{remarque}[theoreme]{Remarque}
+
+% ---------- Notations ----------
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Id}{I}
+\newcommand{\dt}{\frac{\mathrm{d}}{\mathrm{d}t}}
+\DeclareMathOperator{\Ima}{Im}
+
+\title{Le théorème de Hille-Yosida\\[2pt]
+\large Résoudre une équation d'évolution en résolvant des équations stationnaires}
+\author{Michel Hua, d'après une note écrite avec Bertrand Cloez (décembre 2009)}
+\date{Octobre 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Le problème de Dirichlet $-\Delta u+\lambda u=f$ se résout par le théorème de Lax-Milgram ; une équation différentielle $u'=F(u)$ à second membre lipschitzien, par celui de Cauchy-Lipschitz. L'équation de la chaleur $\partial_tu-\Delta u=0$ échappe aux deux : elle n'est pas stationnaire, et le laplacien n'est pas lipschitzien, ni même borné. Le théorème de Hille-Yosida la résout en combinant les deux idées. On demande à l'opérateur $A$ d'être monotone et de rendre solubles les équations stationnaires $u+\lambda Au=f$, ce que Lax-Milgram fournit en pratique ; on remplace $A$ par une famille d'opérateurs bornés qui l'approchent, ses régularisées de Yosida, auxquelles Cauchy-Lipschitz s'applique ; et des estimations d'énergie, indépendantes de l'approximation, permettent de passer à la limite. On suit le chapitre VII du livre de Brezis \cite{brezis}, en détaillant toutes les preuves, puis on applique le résultat à l'équation de la chaleur.
+\end{abstract}
+
+\paragraph{Leçons concernées.} 222 (Exemples d'équations aux dérivées partielles linéaires), 213 (Espaces de Hilbert. Exemples d'applications), 205 (Espaces complets. Exemples et applications), 208 (Espaces vectoriels normés, applications linéaires continues), 220 (Équations différentielles ordinaires).
+
+\paragraph{Développements possibles.} Le théorème de Hille-Yosida \ref{thm:hy}, avec les estimations du lemme \ref{lem:decroissance} et de la proposition \ref{prop:cauchy} ; la proposition \ref{prop:maxmono}, où le point fixe de Banach propage la surjectivité de $I+\lambda A$ à tout $\lambda>0$ ; la résolution de l'équation de la chaleur (théorème \ref{thm:chaleur}). Le fichier \texttt{HilleYosida.lean} vérifie avec Mathlib les points 1 à 4 de la proposition \ref{prop:maxmono} (le point 4 est pris comme donnée du modèle), les points 1 à 3 de la proposition \ref{prop:yosida}, et le fait que la convergence $J_\lambda v\to v$ pour tout $v\in H$ force la densité de $D(A)$.
+
+\paragraph{Prérequis.} Espaces de Hilbert, théorème de représentation de Riesz, théorème du point fixe de Banach ; pour la dernière section, espaces de Sobolev $H^1_0(\Omega)$ et $H^2(\Omega)$ et formule de Green.
+
+\paragraph{Notations.} $H$ est un espace de Hilbert réel, de produit scalaire $(\cdot,\cdot)$ et de norme $|\cdot|$. Un opérateur linéaire non borné est une application linéaire $A : D(A)\to H$ définie sur un sous-espace $D(A)\subset H$, son \emph{domaine}. On munit $D(A)$ de la norme du graphe $|v|+|Av|$. On note $\|T\|$ la norme d'un opérateur borné $T$ de $H$ dans $H$.
+
+\tableofcontents
+
+% ==========================================================
+\section{Deux théorèmes, et une équation qui leur échappe}
+% ==========================================================
+
+\paragraph{Lax-Milgram pour le problème de Dirichlet.} Soit $\Omega$ un ouvert de $\R^n$, $f\in L^2(\Omega)$ et $\lambda\geq0$. On cherche $u$ telle que $-\Delta u+\lambda u=f$ dans $\Omega$ et $u=0$ sur $\partial\Omega$. En multipliant par une fonction test et en intégrant par parties, on obtient la formulation variationnelle : trouver $u\in H^1_0(\Omega)$ telle que
+\[
+  \int_\Omega\nabla u\cdot\nabla v+\lambda\int_\Omega uv=\int_\Omega fv\qquad\text{pour tout }v\in H^1_0(\Omega).
+\]
+
+\begin{theoreme}[Lax-Milgram]\label{thm:lm}
+Soit $a$ une forme bilinéaire continue sur un espace de Hilbert $V$, \emph{coercive} : il existe $C>0$ tel que $a(v,v)\geq C\|v\|_V^2$ pour tout $v\in V$. Pour toute forme linéaire continue $\ell$ sur $V$, il existe un unique $u\in V$ tel que $a(u,v)=\ell(v)$ pour tout $v\in V$, et $\|u\|_V\leq\frac1C\|\ell\|_{V'}$.
+\end{theoreme}
+
+La preuve combine le théorème de représentation de Riesz, qui transforme $a$ et $\ell$ en un opérateur et un vecteur, et le théorème du point fixe de Banach. Avec $V=H^1_0(\Omega)$, la coercivité de $a(u,v)=\int\nabla u\cdot\nabla v+\lambda\int uv$ est immédiate si $\lambda>0$ ; pour $\lambda=0$ et $\Omega$ borné, elle découle de l'inégalité de Poincaré. Le problème de Dirichlet a donc une unique solution faible.
+
+\paragraph{L'équation de la chaleur.} Elle s'écrit
+\[
+  \frac{\partial u}{\partial t}-\Delta u=0\quad\text{dans }]0,+\infty[\times\Omega,\qquad u=0\ \text{sur }\partial\Omega,\qquad u(0,\cdot)=u_0 .
+\]
+C'est un problème de Cauchy, avec une donnée initiale, et non plus un problème stationnaire. La formulation variationnelle ne marche plus : le terme $\int\frac{\partial v}{\partial t}v$ n'est pas un carré, et la coercivité de Lax-Milgram disparaît.
+
+On peut aussi voir l'équation comme une équation différentielle ordinaire $u'=\Delta u$, à valeurs dans un espace de fonctions. Le théorème de Cauchy-Lipschitz demande alors que $u\mapsto\Delta u$ soit lipschitzienne, c'est-à-dire, pour un opérateur linéaire, borné. Or le laplacien ne l'est pas : sur $]0,\pi[$, $|\Delta\sin(kx)|=k^2|\sin(kx)|$, et $k$ est arbitraire.
+
+\paragraph{Le cadre abstrait.} On cherche donc à résoudre, pour un opérateur linéaire non borné $A$ de $H$,
+\begin{equation}\label{eq:evol}
+  \frac{\mathrm{d}u}{\mathrm{d}t}+Au=0\quad\text{sur }[0,+\infty[,\qquad u(0)=u_0 ,
+\end{equation}
+l'équation de la chaleur correspondant à $H=L^2(\Omega)$ et $A=-\Delta$. En dimension finie, la solution est $u(t)=e^{-tA}u_0$. Mais la série de l'exponentielle n'a aucun sens pour un opérateur non borné, puisqu'elle demande d'appliquer $A^k$ à $u_0$ pour tout $k$.
+
+Le théorème de Hille-Yosida dit quelles hypothèses sur $A$ remplacent la coercivité et le caractère lipschitzien. Elles sont de deux natures : une inégalité, la \emph{monotonie} $(Av,v)\geq0$, qui joue le rôle de la coercivité ; et la possibilité de résoudre les équations stationnaires $u+\lambda Au=f$, qui est exactement ce que Lax-Milgram sait faire. La section 2 étudie ces opérateurs, la section 3 construit leurs approximations bornées, la section 4 démontre le théorème, et la section 5 l'applique à la chaleur.
+
+% ==========================================================
+\section{Opérateurs maximaux monotones}
+% ==========================================================
+
+\begin{definition}
+Un opérateur linéaire $A : D(A)\subset H\to H$ est \emph{monotone} si $(Av,v)\geq0$ pour tout $v\in D(A)$. Il est \emph{maximal monotone} si de plus $\Ima(I+A)=H$, c'est-à-dire si pour tout $f\in H$ l'équation stationnaire $u+Au=f$ a une solution $u\in D(A)$.
+\end{definition}
+
+En dimension finie, une matrice $A$ telle que $(Av,v)\geq0$ est automatiquement maximale monotone. En effet $I+A$ est injective, car $v+Av=0$ entraîne $|v|^2+(Av,v)=0$, donc $v=0$ ; et une application linéaire injective d'un espace de dimension finie dans lui-même est surjective. En dimension infinie, la surjectivité est une vraie hypothèse : c'est elle qui contient l'existence de solutions.
+
+L'inégalité $(Av,v)\geq0$ se lit comme une estimation d'énergie. Si $u$ est une solution régulière de \eqref{eq:evol}, alors
+\[
+  \frac12\dt|u(t)|^2=\Big(\frac{\mathrm{d}u}{\mathrm{d}t},u\Big)=-(Au,u)\leq0 :
+\]
+la norme de la solution décroît. Pour l'équation de la chaleur, c'est la décroissance de $\int u^2$, une forme de dissipation de l'énergie thermique.
+
+\begin{proposition}[Brezis, proposition VII.1]\label{prop:maxmono}
+Soit $A$ un opérateur maximal monotone.
+\begin{enumerate}[nosep]
+\item $D(A)$ est dense dans $H$.
+\item Pour tout $f\in H$, l'équation $u+Au=f$ a une unique solution $u\in D(A)$, et $|u|\leq|f|$.
+\item $A$ est fermé : si $u_n\in D(A)$, $u_n\to u$ et $Au_n\to f$, alors $u\in D(A)$ et $Au=f$.
+\item Pour tout $\lambda>0$, $\lambda A$ est maximal monotone : $I+\lambda A$ est une bijection de $D(A)$ sur $H$, et son inverse $J_\lambda=(I+\lambda A)^{-1}$ est un opérateur borné de norme $\|J_\lambda\|\leq1$.
+\end{enumerate}
+\end{proposition}
+
+Dans chaque point, la monotonie sert de la même façon : on prend le produit scalaire de l'équation avec l'inconnue, et le terme $(Av,v)$, positif, se laisse oublier. Seul le point 4 demande une idée de plus, le point fixe de Banach.
+
+\begin{proof}
+1. Soit $f\in H$ orthogonal à $D(A)$. Par maximalité, il existe $v_0\in D(A)$ tel que $v_0+Av_0=f$. Alors $0=(f,v_0)=|v_0|^2+(Av_0,v_0)\geq|v_0|^2$, donc $v_0=0$, puis $f=0$.
+
+2. Si $u$ et $\bar u$ sont deux solutions, $w=u-\bar u$ vérifie $w+Aw=0$, d'où $|w|^2+(Aw,w)=0$ et $w=0$. Et $|u|^2+(Au,u)=(f,u)$ donne $|u|^2\leq|f|\,|u|$, soit $|u|\leq|f|$.
+
+3. On a $u_n+Au_n\to u+f$. D'après le point 2, $J_1=(I+A)^{-1}$ est linéaire et de norme au plus $1$, donc continu, et $u_n=J_1(u_n+Au_n)\to J_1(u+f)$. Ainsi $u=J_1(u+f)$ : $u\in D(A)$ et $u+Au=u+f$, c'est-à-dire $Au=f$.
+
+4. La monotonie de $\lambda A$ est claire, et le point 2 s'applique à $\lambda A$ dès que $\lambda A$ est maximal : $J_\lambda$ existe et $\|J_\lambda\|\leq1$. Reste la surjectivité de $I+\lambda A$. Supposons-la acquise pour un $\lambda_0>0$, et montrons-la pour tout $\lambda>\lambda_0/2$. L'équation $u+\lambda Au=f$ équivaut, en multipliant par $\lambda_0/\lambda$, à
+\[
+  u+\lambda_0Au=\frac{\lambda_0}\lambda f+\Big(1-\frac{\lambda_0}\lambda\Big)u,
+  \qquad\text{soit}\qquad
+  u=J_{\lambda_0}\Big[\frac{\lambda_0}\lambda f+\Big(1-\frac{\lambda_0}\lambda\Big)u\Big].
+\]
+Le membre de droite est une application de $H$ dans $H$, lipschitzienne de constante $\big|1-\frac{\lambda_0}\lambda\big|\,\|J_{\lambda_0}\|\leq\big|1-\frac{\lambda_0}\lambda\big|$. Cette constante est $<1$ dès que $\lambda>\lambda_0/2$. Le théorème du point fixe de Banach donne alors un point fixe $u$, qui est dans $D(A)$ puisque $J_{\lambda_0}$ est à valeurs dans $D(A)$, et qui résout l'équation. Partant de $\lambda_0=1$, on obtient la surjectivité pour $\lambda>\frac12$, puis pour $\lambda>\frac14$, et par récurrence pour tout $\lambda>0$.
+\end{proof}
+
+\begin{remarque}
+Le point 4 est le seul endroit où intervient la complétude de $H$, à travers le point fixe de Banach. C'est aussi lui qui rend la définition commode : il suffit de résoudre une seule équation stationnaire, $u+Au=f$, pour savoir résoudre toutes les équations $u+\lambda Au=f$.
+\end{remarque}
+
+\begin{exemple}\label{ex:diag}
+Soit $H=\ell^2(\N)$ et $(a_k)$ une suite de réels positifs, non bornée, par exemple $a_k=k^2$. L'opérateur diagonal $A(x_k)=(a_kx_k)$, de domaine $D(A)=\{x\in\ell^2 : \sum a_k^2x_k^2<\infty\}$, est monotone, puisque $(Ax,x)=\sum a_kx_k^2\geq0$. Il est maximal : l'équation $x+Ax=f$ a pour solution $x_k=f_k/(1+a_k)$, qui est bien dans $D(A)$ puisque $a_k|x_k|\leq|f_k|$. Il n'est pas borné, puisque $|Ae_k|=a_k$ pour le $k$-ième vecteur de base. Cet exemple est l'équation de la chaleur sur $]0,\pi[$ vue dans la base des $\sin(kx)$ (section 5).
+\end{exemple}
+
+% ==========================================================
+\section{La régularisée de Yosida}
+% ==========================================================
+
+On voudrait approcher $A$ par des opérateurs bornés, pour pouvoir leur appliquer Cauchy-Lipschitz. La résolvante $J_\lambda=(I+\lambda A)^{-1}$ est bornée, et $\frac1\lambda(I-J_\lambda)$ ressemble formellement à $A$ : si $\lambda A$ était petit, on aurait $J_\lambda\approx I-\lambda A$.
+
+\begin{definition}
+Soit $A$ maximal monotone et $\lambda>0$. On appelle \emph{résolvante} de $A$ l'opérateur $J_\lambda=(I+\lambda A)^{-1}$, et \emph{régularisée de Yosida} de $A$ l'opérateur
+\[
+  A_\lambda=\frac1\lambda(I-J_\lambda) .
+\]
+\end{definition}
+
+Pour l'opérateur diagonal de l'exemple \ref{ex:diag}, $J_\lambda$ et $A_\lambda$ sont diagonaux, de coefficients $\frac1{1+\lambda a_k}$ et
+\[
+  \frac1\lambda\Big(1-\frac1{1+\lambda a_k}\Big)=\frac{a_k}{1+\lambda a_k} .
+\]
+La régularisée garde les petits coefficients presque intacts et écrase les grands sous le plafond $\frac1\lambda$ (figure \ref{fig:yosida}). Quand $\lambda\to0$, le plafond monte et $A_\lambda$ rejoint $A$ coefficient par coefficient.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.85,>={Stealth[length=2.4mm]}]
+  \draw[->,gray] (0,0) -- (6.4,0) node[below] {$a$};
+  \draw[->,gray] (0,0) -- (0,4.6);
+  \draw[dashed,gray] (0,0) -- (4.4,4.4) node[above right] {$a$};
+  \foreach \l/\c in {1/accent, 0.5/accent2, 0.25/black} {
+    \draw[\c,thick,domain=0:6.2,samples=80] plot (\x,{\x/(1+\l*\x)});
+    \draw[\c,dotted] (0,1/\l) -- (6.2,1/\l);
+  }
+  \node[accent,right] at (6.2,0.86) {$\lambda=1$};
+  \node[accent2,right] at (6.2,1.51) {$\lambda=\frac12$};
+  \node[right] at (6.2,2.4) {$\lambda=\frac14$};
+  \node[left] at (0,1) {$1$};
+  \node[left] at (0,2) {$2$};
+  \node[left] at (0,4) {$4$};
+\end{tikzpicture}
+\caption{Pour un opérateur diagonal de coefficients $a\geq0$, la régularisée de Yosida a pour coefficients $\frac{a}{1+\lambda a}$. Ils restent sous le plafond $\frac1\lambda$ (en pointillé), ce qui rend $A_\lambda$ borné, et tendent vers $a$ quand $\lambda\to0$.}\label{fig:yosida}
+\end{figure}
+
+La proposition suivante dit que ce comportement est général.
+
+\begin{proposition}[Brezis, proposition VII.2]\label{prop:yosida}
+Soit $A$ maximal monotone et $\lambda>0$.
+\begin{enumerate}[nosep]
+\item $A_\lambda v=A(J_\lambda v)$ pour tout $v\in H$, et $A_\lambda v=J_\lambda(Av)$ pour tout $v\in D(A)$.
+\item $|A_\lambda v|\leq|Av|$ pour tout $v\in D(A)$.
+\item $J_\lambda v\to v$ quand $\lambda\to0$, pour tout $v\in H$.
+\item $A_\lambda v\to Av$ quand $\lambda\to0$, pour tout $v\in D(A)$.
+\item $(A_\lambda v,v)\geq\lambda|A_\lambda v|^2\geq0$ pour tout $v\in H$ : $A_\lambda$ est monotone.
+\item $\|A_\lambda\|\leq\frac1\lambda$.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+1. Par définition de $J_\lambda$, on a $v=J_\lambda v+\lambda A(J_\lambda v)$, soit $A(J_\lambda v)=\frac1\lambda(v-J_\lambda v)=A_\lambda v$. Si de plus $v\in D(A)$, on écrit $Av=\frac1\lambda\big[(I+\lambda A)v-v\big]$, et l'on applique $J_\lambda$ : $J_\lambda Av=\frac1\lambda(v-J_\lambda v)=A_\lambda v$.
+
+2. Découle de $A_\lambda v=J_\lambda(Av)$ et de $\|J_\lambda\|\leq1$.
+
+3. Si $v\in D(A)$, alors $|v-J_\lambda v|=\lambda|A_\lambda v|\leq\lambda|Av|\to0$. Dans le cas général, on utilise la densité de $D(A)$ (proposition \ref{prop:maxmono}). Soit $\varepsilon>0$ et $v_1\in D(A)$ tel que $|v-v_1|<\varepsilon$. Alors
+\[
+  |J_\lambda v-v|\leq|J_\lambda v-J_\lambda v_1|+|J_\lambda v_1-v_1|+|v_1-v|\leq2\varepsilon+|J_\lambda v_1-v_1| ,
+\]
+donc $\limsup_{\lambda\to0}|J_\lambda v-v|\leq2\varepsilon$ pour tout $\varepsilon>0$.
+
+4. On applique le point 3 à $Av$, puisque $A_\lambda v=J_\lambda(Av)$.
+
+5. On découpe $v=(v-J_\lambda v)+J_\lambda v=\lambda A_\lambda v+J_\lambda v$, d'où, avec le point 1,
+\[
+  (A_\lambda v,v)=\lambda|A_\lambda v|^2+(A(J_\lambda v),J_\lambda v)\geq\lambda|A_\lambda v|^2 .
+\]
+
+6. Par Cauchy-Schwarz et le point 5, $\lambda|A_\lambda v|^2\leq|A_\lambda v|\,|v|$, donc $|A_\lambda v|\leq\frac1\lambda|v|$.
+\end{proof}
+
+\begin{remarque}
+Le point 3 est le seul qui demande la densité de $D(A)$. La note de 2009 dont cette fiche est issue l'affirmait pour tout $v\in H$ sans cet argument ; le calcul direct n'y suffit pas, car $Av$ n'a de sens que pour $v\in D(A)$. La densité ne peut d'ailleurs pas être évitée : comme $J_\lambda v$ est toujours dans $D(A)$, la convergence $J_\lambda v\to v$ pour tout $v\in H$ entraîne que $D(A)$ est dense. Le point 3 est donc équivalent au point 1 de la proposition \ref{prop:maxmono}, et le fichier Lean le vérifie.
+\end{remarque}
+
+Ainsi $(A_\lambda)_{\lambda>0}$ est une famille d'opérateurs bornés et monotones qui converge simplement vers $A$ sur $D(A)$. Leur norme explose quand $\lambda\to0$, comme le plafond de la figure \ref{fig:yosida}, mais pour chaque $\lambda$ fixé le théorème de Cauchy-Lipschitz s'applique.
+
+\begin{theoreme}[Cauchy-Lipschitz]\label{thm:cl}
+Soit $E$ un espace de Banach et $F : E\to E$ une application $L$-lipschitzienne. Pour tout $u_0\in E$, il existe une unique $u\in C^1([0,+\infty[;E)$ telle que $u'=F(u)$ et $u(0)=u_0$.
+\end{theoreme}
+
+Avec $F=-A_\lambda$, linéaire et de norme au plus $\frac1\lambda$, on obtient pour chaque $\lambda>0$ une unique solution $u_\lambda\in C^1([0,+\infty[;H)$ du problème approché
+\begin{equation}\label{eq:approche}
+  \frac{\mathrm{d}u_\lambda}{\mathrm{d}t}+A_\lambda u_\lambda=0,\qquad u_\lambda(0)=u_0 .
+\end{equation}
+Comme $A_\lambda$ est borné, c'est simplement $u_\lambda(t)=e^{-tA_\lambda}u_0$. Il reste à faire tendre $\lambda$ vers $0$, et tout le travail consiste à obtenir des estimations qui ne dépendent pas de $\lambda$.
+
+% ==========================================================
+\section{Le théorème de Hille-Yosida}
+% ==========================================================
+
+\begin{theoreme}[Hille-Yosida ; Brezis, théorème VII.4]\label{thm:hy}
+Soit $A$ un opérateur maximal monotone dans un espace de Hilbert $H$. Pour tout $u_0\in D(A)$, il existe une unique fonction
+\[
+  u\in C^1([0,+\infty[;H)\cap C([0,+\infty[;D(A))
+\]
+solution de \eqref{eq:evol}. De plus, pour tout $t\geq0$,
+\[
+  |u(t)|\leq|u_0|\qquad\text{et}\qquad\Big|\frac{\mathrm{d}u}{\mathrm{d}t}(t)\Big|=|Au(t)|\leq|Au_0| .
+\]
+\end{theoreme}
+
+\begin{remarque}
+La note de 2009 énonçait le théorème pour tout $u_0\in H$. C'est trop demander : si $u\in C([0,+\infty[;D(A))$, alors $u_0=u(0)\in D(A)$, et la borne $|Au(t)|\leq|Au_0|$ n'a de sens que si $u_0\in D(A)$. Pour $u_0\in H$ quelconque, on obtient une solution en un sens affaibli (remarque \ref{rem:semigroupe}).
+\end{remarque}
+
+L'intérêt du théorème est de ramener un problème d'évolution à la vérification de deux propriétés de $A$, dont l'une est une équation \emph{stationnaire}. On le démontre en six étapes, comme Brezis.
+
+\paragraph{Étape 1 : unicité.} Si $u$ et $\bar u$ sont deux solutions, $w=u-\bar u$ vérifie $w'+Aw=0$ et $w(0)=0$. Comme $w\in C^1([0,+\infty[;H)$, la fonction $|w|^2$ est dérivable, et
+\[
+  \frac12\dt|w(t)|^2=(w'(t),w(t))=-(Aw(t),w(t))\leq0 .
+\]
+Donc $|w(t)|$ décroît ; nulle en $t=0$, elle reste nulle.
+
+L'existence est la partie délicate. On note $u_\lambda$ la solution du problème approché \eqref{eq:approche}, avec $u_0\in D(A)$.
+
+\paragraph{Étape 2 : estimations uniformes.}
+
+\begin{lemme}[Brezis, lemme VII.1]\label{lem:decroissance}
+Soit $w\in C^1([0,+\infty[;H)$ telle que $w'+A_\lambda w=0$. Alors les fonctions $t\mapsto|w(t)|$ et $t\mapsto|w'(t)|=|A_\lambda w(t)|$ sont décroissantes sur $[0,+\infty[$.
+\end{lemme}
+
+\begin{proof}
+On a $\frac12\dt|w|^2=(w',w)=-(A_\lambda w,w)\leq0$ par la monotonie de $A_\lambda$ (proposition \ref{prop:yosida}, point 5). Comme $A_\lambda$ est borné, $w=e^{-tA_\lambda}w(0)$ est de classe $C^\infty$, et $w'$ vérifie la même équation $(w')'+A_\lambda w'=0$ ; ce qui précède s'applique à $w'$.
+\end{proof}
+
+Appliqué à $u_\lambda$, avec le point 2 de la proposition \ref{prop:yosida}, ce lemme donne, pour tous $t\geq0$ et $\lambda>0$,
+\begin{equation}\label{eq:estim}
+  |u_\lambda(t)|\leq|u_0|,\qquad
+  \Big|\frac{\mathrm{d}u_\lambda}{\mathrm{d}t}(t)\Big|=|A_\lambda u_\lambda(t)|\leq|A_\lambda u_0|\leq|Au_0| .
+\end{equation}
+C'est ici que sert l'hypothèse $u_0\in D(A)$ : la vitesse de $u_\lambda$ est contrôlée par $|Au_0|$, indépendamment de $\lambda$.
+
+\paragraph{Étape 3 : la famille $(u_\lambda)$ est de Cauchy.}
+
+\begin{proposition}\label{prop:cauchy}
+Pour tous $\lambda,\mu>0$ et $t\geq0$,
+\[
+  |u_\lambda(t)-u_\mu(t)|\leq\sqrt{2(\lambda+\mu)t}\;|Au_0| .
+\]
+\end{proposition}
+
+L'idée est d'écrire l'équation vérifiée par $u_\lambda-u_\mu$ et d'estimer sa norme comme à l'étape 1. Le terme $(A_\lambda u_\lambda-A_\mu u_\mu,u_\lambda-u_\mu)$ n'a plus de signe, puisque deux opérateurs différents interviennent ; mais on peut le ramener à $A$, qui est le même pour les deux, à une erreur près de taille $\lambda+\mu$.
+
+\begin{proof}
+On soustrait les deux équations et l'on prend le produit scalaire avec $u_\lambda-u_\mu$ :
+\[
+  \frac12\dt|u_\lambda-u_\mu|^2=-(A_\lambda u_\lambda-A_\mu u_\mu,\,u_\lambda-u_\mu) .
+\]
+Notons $a=A_\lambda u_\lambda$ et $b=A_\mu u_\mu$. Par définition de $A_\lambda$, $u_\lambda=J_\lambda u_\lambda+\lambda a$, et de même $u_\mu=J_\mu u_\mu+\mu b$. Donc
+\[
+  (a-b,\,u_\lambda-u_\mu)=(a-b,\,\lambda a-\mu b)+(a-b,\,J_\lambda u_\lambda-J_\mu u_\mu) .
+\]
+Le second terme est positif : d'après la proposition \ref{prop:yosida}, $a=A(J_\lambda u_\lambda)$ et $b=A(J_\mu u_\mu)$, donc il vaut $\big(A(J_\lambda u_\lambda-J_\mu u_\mu),J_\lambda u_\lambda-J_\mu u_\mu\big)\geq0$ par monotonie de $A$. Le premier vaut $\lambda|a|^2+\mu|b|^2-(\lambda+\mu)(a,b)\geq-(\lambda+\mu)|a|\,|b|$. Avec \eqref{eq:estim}, $|a|,|b|\leq|Au_0|$, d'où
+\[
+  \frac12\dt|u_\lambda-u_\mu|^2\leq(\lambda+\mu)|Au_0|^2 .
+\]
+On intègre de $0$ à $t$, en utilisant $u_\lambda(0)=u_\mu(0)=u_0$ : $|u_\lambda(t)-u_\mu(t)|^2\leq2(\lambda+\mu)t\,|Au_0|^2$.
+\end{proof}
+
+Brezis obtient la constante $2\sqrt{(\lambda+\mu)t}$, en majorant le premier terme plus grossièrement ; la valeur de la constante ne joue aucun rôle. Pour chaque $t$, $(u_\lambda(t))$ est de Cauchy quand $\lambda\to0$ et converge vers une limite $u(t)$. En faisant tendre $\mu$ vers $0$, on obtient $|u_\lambda(t)-u(t)|\leq\sqrt{2\lambda t}\,|Au_0|$ : la convergence est uniforme sur tout intervalle $[0,T]$, et $u\in C([0,+\infty[;H)$.
+
+\paragraph{Étape 4 : convergence des dérivées, si $u_0\in D(A^2)$.} On suppose de plus $Au_0\in D(A)$. Posons $v_\lambda=u_\lambda'$. Elle vérifie la même équation $v_\lambda'+A_\lambda v_\lambda=0$, avec la donnée initiale $v_\lambda(0)=-A_\lambda u_0$, qui dépend de $\lambda$. Le calcul de l'étape 3 n'utilisait l'égalité des données initiales qu'au moment d'intégrer ; il donne ici
+\[
+  \frac12\dt|v_\lambda-v_\mu|^2\leq(\lambda+\mu)\,|A_\lambda v_\lambda|\,|A_\mu v_\mu| .
+\]
+Par le lemme \ref{lem:decroissance}, $|A_\lambda v_\lambda(t)|\leq|A_\lambda v_\lambda(0)|=|A_\lambda A_\lambda u_0|$. Or $A_\lambda u_0=J_\lambda Au_0$, et comme $A_\lambda$ commute avec $J_\lambda$ et $Au_0\in D(A)$, on a $A_\lambda A_\lambda u_0=J_\lambda A_\lambda Au_0=J_\lambda J_\lambda A^2u_0$, de norme au plus $|A^2u_0|$. En intégrant,
+\[
+  |v_\lambda(t)-v_\mu(t)|^2\leq|A_\lambda u_0-A_\mu u_0|^2+2(\lambda+\mu)t\,|A^2u_0|^2 ,
+\]
+et le premier terme tend vers $0$ (proposition \ref{prop:yosida}, point 4). Les dérivées $u_\lambda'$ convergent donc uniformément sur tout $[0,T]$.
+
+\paragraph{Étape 5 : existence, si $u_0\in D(A^2)$.} Par les étapes 3 et 4, $u_\lambda\to u$ et $u_\lambda'$ converge, uniformément sur tout $[0,T]$ ; donc $u\in C^1([0,+\infty[;H)$ et $u_\lambda'\to u'$. On écrit le problème approché sous la forme $u_\lambda'(t)+A(J_\lambda u_\lambda(t))=0$. Or $J_\lambda u_\lambda(t)\to u(t)$, car
+\[
+  |J_\lambda u_\lambda(t)-u(t)|\leq|J_\lambda u_\lambda(t)-J_\lambda u(t)|+|J_\lambda u(t)-u(t)|\leq|u_\lambda(t)-u(t)|+|J_\lambda u(t)-u(t)|\longrightarrow0 ,
+\]
+et $A(J_\lambda u_\lambda(t))=-u_\lambda'(t)\to-u'(t)$. Comme $A$ est fermé, $u(t)\in D(A)$ et $Au(t)=-u'(t)$. Enfin $t\mapsto Au(t)=-u'(t)$ est continue, donc $u\in C([0,+\infty[;D(A))$. Les estimations \eqref{eq:estim} passent à la limite et donnent $|u(t)|\leq|u_0|$ et $|u'(t)|\leq|Au_0|$.
+
+\paragraph{Étape 6 : existence pour $u_0\in D(A)$.} On approche $u_0$ par des données de $D(A^2)$.
+
+\begin{lemme}[Brezis, lemme VII.2]\label{lem:densite}
+$D(A^2)$ est dense dans $D(A)$ pour la norme du graphe.
+\end{lemme}
+
+\begin{proof}
+Soit $u_0\in D(A)$ et $\lambda>0$. Le vecteur $\tilde u_0=J_\lambda u_0$ est dans $D(A)$, et $A\tilde u_0=A_\lambda u_0=J_\lambda Au_0$ est encore dans $D(A)$ : donc $\tilde u_0\in D(A^2)$. Quand $\lambda\to0$, $\tilde u_0=J_\lambda u_0\to u_0$ et $A\tilde u_0=J_\lambda Au_0\to Au_0$, par le point 3 de la proposition \ref{prop:yosida}.
+\end{proof}
+
+Soit $(u_{0n})$ une suite de $D(A^2)$ telle que $u_{0n}\to u_0$ et $Au_{0n}\to Au_0$, et $u_n$ la solution donnée par l'étape 5. Pour deux indices $m$ et $n$, $u_n-u_m$ est la solution de donnée initiale $u_{0n}-u_{0m}\in D(A^2)$ ; les estimations de l'étape 5 donnent, pour tout $t\geq0$,
+\[
+  |u_n(t)-u_m(t)|\leq|u_{0n}-u_{0m}|,\qquad|u_n'(t)-u_m'(t)|\leq|Au_{0n}-Au_{0m}| .
+\]
+Les suites $(u_n)$ et $(u_n')$ sont donc de Cauchy uniformément sur $[0,+\infty[$ : $u_n\to u$ et $u_n'\to u'$ uniformément, avec $u\in C^1([0,+\infty[;H)$. Comme $Au_n=-u_n'\to-u'$ et $A$ est fermé, $u(t)\in D(A)$ et $u'+Au=0$ ; les estimations passent à la limite. Cela termine la preuve du théorème \ref{thm:hy}. \qed
+
+\begin{remarque}[semi-groupe de contractions]\label{rem:semigroupe}
+Pour $t\geq0$, notons $S(t)u_0=u(t)$ la solution issue de $u_0\in D(A)$. L'application $S(t)$ est linéaire, par unicité, et $|S(t)u_0|\leq|u_0|$. Comme $D(A)$ est dense, elle se prolonge en un opérateur continu de $H$ dans $H$, de norme au plus $1$. La famille $(S(t))_{t\geq0}$ vérifie $S(0)=I$, $S(t+s)=S(t)S(s)$, et $S(t)u_0\to u_0$ quand $t\to0$, pour tout $u_0\in H$ : c'est un \emph{semi-groupe continu de contractions}, l'analogue de $e^{-tA}$. Pour $u_0\in H\setminus D(A)$, $t\mapsto S(t)u_0$ est continue mais n'est en général dérivable en aucun point : c'est une solution « généralisée » de \eqref{eq:evol}. Réciproquement, tout semi-groupe continu de contractions provient d'un unique opérateur maximal monotone ; c'est la forme complète du théorème de Hille-Yosida (Brezis, remarque VII.5).
+\end{remarque}
+
+\begin{remarque}[effet régularisant]\label{rem:regularisant}
+Si $A$ est de plus autoadjoint, la situation est bien meilleure : pour tout $u_0\in H$, la solution généralisée vérifie
+\[
+  u\in C([0,+\infty[;H)\cap C^1(]0,+\infty[;H)\cap C(]0,+\infty[;D(A)) ,
+\]
+et $|Au(t)|\leq\frac1t|u_0|$ pour $t>0$ (Brezis, théorème VII.7, que nous admettons). La solution est régulière dès que $t>0$, même si la donnée ne l'est pas. Le laplacien de Dirichlet est autoadjoint, et c'est l'effet régularisant bien connu de l'équation de la chaleur.
+\end{remarque}
+
+% ==========================================================
+\section{Application à l'équation de la chaleur}
+% ==========================================================
+
+Soit $\Omega$ un ouvert borné de $\R^n$, de frontière de classe $C^2$. On prend $H=L^2(\Omega)$, et
+\[
+  Au=-\Delta u,\qquad D(A)=H^2(\Omega)\cap H^1_0(\Omega) .
+\]
+La condition $u\in H^1_0(\Omega)$ contient la condition au bord $u=0$ sur $\partial\Omega$.
+
+\begin{proposition}\label{prop:laplacien}
+L'opérateur $A=-\Delta$ de domaine $H^2(\Omega)\cap H^1_0(\Omega)$ est maximal monotone dans $L^2(\Omega)$.
+\end{proposition}
+
+\begin{proof}
+\emph{Monotonie.} Pour $v\in D(A)$, la formule de Green donne $(Av,v)=-\int_\Omega v\Delta v=\int_\Omega|\nabla v|^2\geq0$, le terme de bord disparaissant puisque $v=0$ sur $\partial\Omega$.
+
+\emph{Maximalité.} Soit $f\in L^2(\Omega)$. On résout $u-\Delta u=f$ en deux temps. D'abord, par le théorème de Lax-Milgram dans $V=H^1_0(\Omega)$ avec $a(u,v)=\int\nabla u\cdot\nabla v+\int uv$, qui est coercive de constante $1$ pour la norme de $H^1$, il existe un unique $u\in H^1_0(\Omega)$ solution faible. Ensuite, le théorème de régularité elliptique (Brezis, théorème IX.25, que nous admettons) montre que $u\in H^2(\Omega)$, et l'équation $u-\Delta u=f$ a alors lieu presque partout. Donc $u\in D(A)$ et $u+Au=f$.
+\end{proof}
+
+On voit sur cette preuve le rôle de chaque théorème. La maximalité de $A$ est exactement le problème de Dirichlet de la section 1, avec $\lambda=1$, et c'est Lax-Milgram qui la fournit ; la coercivité ne demande même pas l'inégalité de Poincaré, puisque le terme $\int uv$ est présent.
+
+\begin{theoreme}\label{thm:chaleur}
+Pour tout $u_0\in H^2(\Omega)\cap H^1_0(\Omega)$, il existe une unique fonction
+\[
+  u\in C^1\big([0,+\infty[;L^2(\Omega)\big)\cap C\big([0,+\infty[;H^2(\Omega)\cap H^1_0(\Omega)\big)
+\]
+telle que $\partial_tu-\Delta u=0$ et $u(0)=u_0$. De plus $\|u(t)\|_{L^2}\leq\|u_0\|_{L^2}$ et $\|\Delta u(t)\|_{L^2}\leq\|\Delta u_0\|_{L^2}$ pour tout $t\geq0$.
+\end{theoreme}
+
+\begin{proof}
+On applique le théorème \ref{thm:hy} à l'opérateur de la proposition \ref{prop:laplacien}.
+\end{proof}
+
+Comme $A$ est autoadjoint, la remarque \ref{rem:regularisant} s'applique : pour une donnée initiale seulement dans $L^2(\Omega)$, la solution généralisée est dans $H^2(\Omega)\cap H^1_0(\Omega)$ dès que $t>0$.
+
+\begin{exemple}\label{ex:intervalle}
+Sur $\Omega=]0,\pi[$, les fonctions $e_k(x)=\sqrt{2/\pi}\,\sin(kx)$, $k\geq1$, forment une base hilbertienne de $L^2(]0,\pi[)$, et $-e_k''=k^2e_k$. Dans cette base, $A$ est l'opérateur diagonal de l'exemple \ref{ex:diag} avec $a_k=k^2$. Si $u_0=\sum_kb_ke_k$, la solution est
+\[
+  u(t,x)=\sum_{k\geq1}b_k\,e^{-k^2t}\,e_k(x) .
+\]
+Chaque mode décroît d'autant plus vite que sa fréquence est grande : les oscillations s'effacent d'abord (figure \ref{fig:chaleur}). La régularisée de Yosida remplace $e^{-k^2t}$ par $e^{-tk^2/(1+\lambda k^2)}$ : elle amortit à peine les hautes fréquences, ce qui est le prix de la bornitude.
+\end{exemple}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[xscale=2,yscale=1.9]
+  \draw[->,gray] (0,0) -- (3.4,0) node[below] {$x$};
+  \draw[->,gray] (0,-0.2) -- (0,1.6);
+  \node[below] at (3.1416,0) {$\pi$};
+  \node[left] at (0,1) {$1$};
+  \draw[gray!50] (-0.04,1) -- (0.04,1);
+  \foreach \t/\c/\y/\lab in {0/black/1.45/{t=0}, 0.05/accent2/1.2/{t=0{,}05}, 0.2/accent/0.95/{t=0{,}2}, 0.6/gray/0.7/{t=0{,}6}} {
+    \draw[\c,thick,domain=0:3.1416,samples=90] plot (\x,{exp(-\t)*sin(\x r)+0.5*exp(-9*\t)*sin(3*\x r)});
+    \draw[\c,thick] (3.55,\y) -- (3.8,\y) node[right,black] {$\lab$};
+  }
+\end{tikzpicture}
+\caption{Solution de l'équation de la chaleur sur $]0,\pi[$ pour $u_0(x)=\sin x+\frac12\sin3x$ : $u(t,x)=e^{-t}\sin x+\frac12e^{-9t}\sin3x$. Le mode $\sin3x$ décroît neuf fois plus vite que $\sin x$, et le profil s'arrondit avant de s'éteindre.}\label{fig:chaleur}
+\end{figure}
+
+\begin{remarque}[l'équation de la chaleur rétrograde]
+Le signe de $A$ n'est pas un détail. Pour $\partial_tu+\Delta u=0$, c'est-à-dire $A=\Delta$, qui n'est pas monotone, la donnée $u_0=\frac1k\sin(kx)$ donne la solution $u(t,x)=\frac1ke^{k^2t}\sin(kx)$. Quand $k\to\infty$, la donnée tend vers $0$ dans $L^2$, mais pour tout $t>0$ fixé, $\|u(t)\|_{L^2}\to\infty$ : la solution ne dépend pas continûment de la donnée. Le problème est mal posé au sens d'Hadamard, et aucun théorème du type Hille-Yosida ne peut le résoudre.
+\end{remarque}
+
+% ==========================================================
+\section{Bilan}
+% ==========================================================
+
+L'équation de la chaleur échappait à Lax-Milgram, faute d'être stationnaire, et à Cauchy-Lipschitz, faute de second membre borné. Le théorème de Hille-Yosida prend à chacun ce dont il a besoin.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{3.2cm}p{3.6cm}p{3.6cm}p{4.2cm}@{}}
+\toprule
+\textbf{Théorème} & \textbf{Problème} & \textbf{Hypothèse} & \textbf{Outil de preuve} \\
+\midrule
+Lax-Milgram & stationnaire, $a(u,v)=\ell(v)$ & coercivité & Riesz et point fixe de Banach \\
+Cauchy-Lipschitz & évolution, $u'=F(u)$ & $F$ lipschitzienne & point fixe de Banach \\
+Hille-Yosida & évolution, $u'+Au=0$ & $A$ monotone et $I+A$ surjectif & régularisée de Yosida, estimations d'énergie, $A$ fermé \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+La monotonie joue le rôle de la coercivité : c'est elle qui donne les estimations d'énergie, de l'unicité à la proposition \ref{prop:cauchy}. La maximalité est une équation stationnaire, résolue en pratique par Lax-Milgram. Et la régularisée de Yosida permet d'utiliser Cauchy-Lipschitz à $\lambda$ fixé, avant de passer à la limite.
+
+% ==========================================================
+\section{Exercices}
+% ==========================================================
+
+\begin{exercice}\label{exo:dimfinie}
+Soit $A\in M_n(\R)$ telle que $(Av,v)\geq0$ pour tout $v\in\R^n$. Montrer que $\|e^{-tA}\|\leq1$ pour tout $t\geq0$, pour la norme d'opérateur associée à la norme euclidienne. Calculer $J_\lambda$ et $A_\lambda$ pour $A=\begin{pmatrix}0&1\\-1&0\end{pmatrix}$, et vérifier que $A_\lambda\to A$.
+\end{exercice}
+
+\begin{exercice}\label{exo:transport}
+Soit $H=L^2(\R)$ et $Au=u'$, de domaine $D(A)=H^1(\R)$. Montrer que $A$ est maximal monotone, en résolvant explicitement $u+u'=f$. Vérifier que la solution de \eqref{eq:evol} est $u(t,x)=u_0(x-t)$, et que $|u(t)|=|u_0|$ pour tout $t$.
+\end{exercice}
+
+\begin{exercice}\label{exo:yosida}
+Dans l'exemple \ref{ex:intervalle}, on note $u_\lambda$ la solution du problème approché \eqref{eq:approche}. Montrer que $|u_\lambda(t)-u(t)|\to0$ pour tout $t\geq0$ et tout $u_0\in L^2(]0,\pi[)$, en travaillant mode par mode.
+\end{exercice}
+
+\begin{exercice}\label{exo:decalage}
+Soit $A$ maximal monotone et $c\in\R$. Résoudre $u'+Au+cu=0$, $u(0)=u_0\in D(A)$, en posant $v(t)=e^{ct}u(t)$.
+\end{exercice}
+
+% ==========================================================
+\section{Corrigés}
+% ==========================================================
+
+\paragraph{Exercice 1.} Soit $u(t)=e^{-tA}u_0$. Alors $\frac12\dt|u|^2=-(Au,u)\leq0$, donc $|e^{-tA}u_0|\leq|u_0|$ pour tout $u_0$. Pour $A=\begin{pmatrix}0&1\\-1&0\end{pmatrix}$, on a $(Av,v)=0$ et $A^2=-I$. Donc $(I+\lambda A)(I-\lambda A)=I-\lambda^2A^2=(1+\lambda^2)I$, et
+\[
+  J_\lambda=\frac{I-\lambda A}{1+\lambda^2},\qquad
+  A_\lambda=\frac1\lambda(I-J_\lambda)=\frac{\lambda I+A}{1+\lambda^2}\xrightarrow[\lambda\to0]{}A .
+\]
+Ici $A$ est antisymétrique, et $e^{-tA}$ est une rotation : la norme est conservée, pas seulement contrôlée.
+
+\paragraph{Exercice 2.} Pour $u\in H^1(\R)$, $(Au,u)=\int_\R uu'=\frac12\big[u^2\big]_{-\infty}^{+\infty}=0$, car une fonction de $H^1(\R)$ tend vers $0$ à l'infini. Pour $f\in L^2(\R)$, la fonction
+\[
+  u(x)=\int_{-\infty}^xe^{-(x-y)}f(y)\,\mathrm{d}y
+\]
+est la convolution de $f$ avec $g(x)=e^{-x}\mathbf{1}_{x>0}$, qui est intégrable. Par l'inégalité de Young, $u\in L^2(\R)$ et $|u|\leq|f|$ ; puis $u'=f-u\in L^2(\R)$, donc $u\in H^1(\R)$ et $u+u'=f$. Enfin $u(t,x)=u_0(x-t)$ vérifie $\partial_tu+\partial_xu=0$, et la translation conserve la norme $L^2$. Comme à l'exercice 1, $(Au,u)=0$ donne une évolution qui conserve la norme.
+
+\paragraph{Exercice 3.} Dans la base $(e_k)$, $A_\lambda$ est diagonal de coefficients $\frac{k^2}{1+\lambda k^2}$, donc
+\[
+  u_\lambda(t)=\sum_kb_k\,e^{-tk^2/(1+\lambda k^2)}\,e_k ,
+\]
+et
+\[
+  |u_\lambda(t)-u(t)|^2=\sum_kb_k^2\Big(e^{-tk^2/(1+\lambda k^2)}-e^{-tk^2}\Big)^2 .
+\]
+Chaque terme tend vers $0$ quand $\lambda\to0$ et est majoré par $b_k^2$, terme général d'une série convergente. Par convergence dominée pour les séries, la somme tend vers $0$. On n'a pas eu besoin de $u_0\in D(A)$ ; en revanche, la convergence n'est pas uniforme en $u_0$, puisque pour $u_0=e_k$ l'écart à $t=1$ vaut $e^{-k^2/(1+\lambda k^2)}-e^{-k^2}$, proche de $e^{-1/\lambda}$ quand $k$ est grand.
+
+\paragraph{Exercice 4.} Si $u$ est une solution, $v(t)=e^{ct}u(t)$ vérifie $v'=e^{ct}(u'+cu)=-e^{ct}Au=-Av$ et $v(0)=u_0$. Réciproquement, le théorème \ref{thm:hy} donne une unique $v$, et $u(t)=e^{-ct}v(t)$ est l'unique solution, avec $|u(t)|\leq e^{-ct}|u_0|$. Le cas $c<0$ autorise une croissance exponentielle contrôlée ; c'est le cadre des opérateurs « $\omega$-monotones », $(Av,v)\geq-\omega|v|^2$.
+
+\begin{thebibliography}{9}
+\bibitem{brezis} H. Brezis, \emph{Analyse fonctionnelle. Théorie et applications}, Masson, 1983, chapitre VII (pp. 101-110) pour le théorème de Hille-Yosida, chapitre X pour l'équation de la chaleur. Version anglaise augmentée : \emph{Functional Analysis, Sobolev Spaces and Partial Differential Equations}, Springer, 2011, chapitre 7.
+\bibitem{ciarlet} P. Ciarlet, É. Lunéville, \emph{La méthode des éléments finis : de la théorie à la pratique. I. Concepts généraux}, Les Presses de l'ENSTA. Le théorème de Lax-Milgram et le problème de Dirichlet.
+\bibitem{pazy} A. Pazy, \emph{Semigroups of Linear Operators and Applications to Partial Differential Equations}, Springer, 1983. La théorie des semi-groupes dans un espace de Banach, et la forme générale du théorème de Hille-Yosida.
+\end{thebibliography}
+
+\paragraph{Source.} Note « Le théorème d'Hille-Yosida », écrite avec Bertrand Cloez en décembre 2009 d'après le chapitre VII du livre de Brezis. La note s'arrêtait avant la preuve de l'existence ; cette fiche complète la preuve (étapes 2 à 6), corrige l'énoncé (donnée initiale dans $D(A)$ et non dans $H$) et ajoute l'application à l'équation de la chaleur.
+
+\end{document}

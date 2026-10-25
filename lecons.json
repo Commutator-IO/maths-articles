@@ -1,22 +1,98 @@
 [
-  { "numero": "102", "intitule": "Groupe des nombres complexes de module 1. Sous-groupes des racines de l'unité. Applications." },
-  { "numero": "120", "intitule": "Anneaux Z/nZ. Applications." },
-  { "numero": "121", "intitule": "Nombres premiers. Applications." },
-  { "numero": "122", "intitule": "Anneaux principaux. Exemples et applications." },
-  { "numero": "126", "intitule": "Exemples d'équations en arithmétique." },
-  { "numero": "142", "intitule": "PGCD et PPCM, algorithmes de calcul. Applications." },
-  { "numero": "156", "intitule": "Exponentielle de matrices. Applications." },
-  { "numero": "191", "intitule": "Exemples d'utilisation de techniques d'algèbre en géométrie." },
-  { "numero": "218", "intitule": "Formules de Taylor. Exemples et applications." },
-  { "numero": "220", "intitule": "Illustrer par des exemples la théorie des équations différentielles ordinaires." },
-  { "numero": "221", "intitule": "Équations différentielles linéaires. Systèmes d'équations différentielles linéaires. Exemples et applications." },
-  { "numero": "223", "intitule": "Suites numériques. Convergence, valeurs d'adhérence. Exemples et applications." },
-  { "numero": "224", "intitule": "Exemples de développements asymptotiques de suites et de fonctions." },
-  { "numero": "228", "intitule": "Continuité, dérivabilité des fonctions réelles d'une variable réelle. Exemples et applications." },
-  { "numero": "229", "intitule": "Fonctions monotones. Fonctions convexes. Exemples et applications." },
-  { "numero": "230", "intitule": "Séries de nombres réels ou complexes. Convergence des séries à termes réels ou complexes. Exemples et applications." },
-  { "numero": "235", "intitule": "Problèmes d'interversion de symboles en analyse." },
-  { "numero": "236", "intitule": "Illustrer par des exemples quelques méthodes de calcul d'intégrales de fonctions d'une ou plusieurs variables." },
-  { "numero": "239", "intitule": "Fonctions définies par une intégrale dépendant d'un paramètre. Exemples et applications." },
-  { "numero": "246", "intitule": "Séries de Fourier. Exemples et applications." }
+  {
+    "numero": "102",
+    "intitule": "Groupe des nombres complexes de module 1. Sous-groupes des racines de l'unité. Applications."
+  },
+  {
+    "numero": "120",
+    "intitule": "Anneaux Z/nZ. Applications."
+  },
+  {
+    "numero": "121",
+    "intitule": "Nombres premiers. Applications."
+  },
+  {
+    "numero": "122",
+    "intitule": "Anneaux principaux. Exemples et applications."
+  },
+  {
+    "numero": "126",
+    "intitule": "Exemples d'équations en arithmétique."
+  },
+  {
+    "numero": "142",
+    "intitule": "PGCD et PPCM, algorithmes de calcul. Applications."
+  },
+  {
+    "numero": "156",
+    "intitule": "Exponentielle de matrices. Applications."
+  },
+  {
+    "numero": "191",
+    "intitule": "Exemples d'utilisation de techniques d'algèbre en géométrie."
+  },
+  {
+    "numero": "205",
+    "intitule": "Espaces complets. Exemples et applications."
+  },
+  {
+    "numero": "208",
+    "intitule": "Espaces vectoriels normés, applications linéaires continues. Exemples."
+  },
+  {
+    "numero": "213",
+    "intitule": "Espaces de Hilbert. Bases hilbertiennes. Exemples et applications."
+  },
+  {
+    "numero": "218",
+    "intitule": "Formules de Taylor. Exemples et applications."
+  },
+  {
+    "numero": "220",
+    "intitule": "Illustrer par des exemples la théorie des équations différentielles ordinaires."
+  },
+  {
+    "numero": "221",
+    "intitule": "Équations différentielles linéaires. Systèmes d'équations différentielles linéaires. Exemples et applications."
+  },
+  {
+    "numero": "222",
+    "intitule": "Exemples d'équations aux dérivées partielles linéaires."
+  },
+  {
+    "numero": "223",
+    "intitule": "Suites numériques. Convergence, valeurs d'adhérence. Exemples et applications."
+  },
+  {
+    "numero": "224",
+    "intitule": "Exemples de développements asymptotiques de suites et de fonctions."
+  },
+  {
+    "numero": "228",
+    "intitule": "Continuité, dérivabilité des fonctions réelles d'une variable réelle. Exemples et applications."
+  },
+  {
+    "numero": "229",
+    "intitule": "Fonctions monotones. Fonctions convexes. Exemples et applications."
+  },
+  {
+    "numero": "230",
+    "intitule": "Séries de nombres réels ou complexes. Convergence des séries à termes réels ou complexes. Exemples et applications."
+  },
+  {
+    "numero": "235",
+    "intitule": "Problèmes d'interversion de symboles en analyse."
+  },
+  {
+    "numero": "236",
+    "intitule": "Illustrer par des exemples quelques méthodes de calcul d'intégrales de fonctions d'une ou plusieurs variables."
+  },
+  {
+    "numero": "239",
+    "intitule": "Fonctions définies par une intégrale dépendant d'un paramètre. Exemples et applications."
+  },
+  {
+    "numero": "246",
+    "intitule": "Séries de Fourier. Exemples et applications."
+  }
 ]

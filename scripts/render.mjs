@@ -279,6 +279,7 @@ const BRACED2 = {
 /** Macros sans argument, sur du texte déjà échappé. */
 const TOKENS = [
   [/\\ldots(\{\})?|\\dots(\{\})?|\\textellipsis(\{\})?/g, '…'],
+  [/\\qed(?![a-zA-Z])/g, '<span class="ltx_qed">∎</span>'],
   [/\\og\{?\}?\s*/g, '« '],
   [/\s*\\fg\{?\}?/g, ' »'],
   [/\\S(?![a-zA-Z])\s*/g, '§&#8239;'],
