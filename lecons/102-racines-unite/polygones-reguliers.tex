@@ -1,0 +1,412 @@
+% Polygones réguliers et polynômes cyclotomiques, d'après le dossier 78 de Grothendieck
+% Compile avec pdflatex, xelatex ou lualatex.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+  \IfFileExists{lmodern.sty}{\usepackage{lmodern}}{}
+  \usepackage[french]{babel}
+\else
+  \usepackage{fontspec}
+  \usepackage{polyglossia}
+  \setdefaultlanguage{french}
+\fi
+\usepackage[margin=2.6cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{tikz}
+\input{../figures/tikz-setup.tex}
+\usepackage[hidelinks]{hyperref}
+\emergencystretch=1.5em
+
+% ---------- Environnements ----------
+\theoremstyle{plain}
+\newtheorem{theoreme}{Théorème}[section]
+\newtheorem{proposition}[theoreme]{Proposition}
+\newtheorem{lemme}[theoreme]{Lemme}
+\newtheorem{corollaire}[theoreme]{Corollaire}
+\theoremstyle{definition}
+\newtheorem{definition}[theoreme]{Définition}
+\newtheorem{exemple}[theoreme]{Exemple}
+\newtheorem{exercice}{Exercice}
+\theoremstyle{remark}
+\newtheorem{remarque}[theoreme]{Remarque}
+
+% ---------- Notations ----------
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\F}{\mathbb{F}}
+
+\title{Polygones réguliers et polynômes cyclotomiques\\[2pt]
+\large Un cours de Grothendieck sur les polygones sans règle ni compas}
+\author{Michel Hua, d'après le dossier 78 des archives de Grothendieck}
+\date{Octobre 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+En 1977-1978, Grothendieck consacre son cours de DEA à une question d'allure naïve : qu'est-ce qu'un polygone régulier quand on n'a plus ni longueurs, ni angles, ni même nombres réels ? Il répond par les symétries. Un polygone est régulier si toute symétrie de son dessin combinatoire est réalisée par une transformation affine. Un seul nombre, l'invariant $\alpha$, décrit alors le polygone ; dans le plan réel, c'est $2\cos(2\pi k/n)$. Sur n'importe quel anneau, le polygone d'invariant $\alpha$ se referme après $n$ pas si et seulement si $F_n(\alpha)=0$, pour un polynôme $F_n$ à coefficients entiers qui est, au fond, un produit de polynômes minimaux des $2\cos(2\pi/d)$. Cette fiche suit les notes de Grothendieck (pages 109 à 120 du dossier 78), puis démontre ce qu'elles utilisent : l'irréductibilité des polynômes cyclotomiques, le degré de $2\cos(2\pi/n)$, et leur réduction modulo $p$. Elle en tire que le triangle, le carré et l'hexagone sont les seuls polygones réguliers définis sur $\Q$, et qu'en caractéristique $p$ le cercle circonscrit peut devenir une parabole.
+\end{abstract}
+
+\paragraph{Leçons concernées.} 102 (Groupe des nombres complexes de module $1$. Sous-groupes des racines de l'unité. Applications), et en partie 141 (Polynômes irréductibles à une indéterminée. Corps de rupture. Exemples et applications), 120 (Anneaux $\Z/n\Z$. Applications) et 191 (Exemples d'utilisation de techniques d'algèbre en géométrie).
+
+\paragraph{Développements possibles.} Irréductibilité des polynômes cyclotomiques sur $\Q$ (théorème \ref{thm:irred}) ; polynôme minimal de $2\cos(2\pi/n)$ et restriction cristallographique (théorème \ref{thm:psi} et corollaire \ref{cor:rationnel}) ; le critère de fermeture de Grothendieck (théorème \ref{thm:fermeture}). Le fichier \texttt{PolygonesReguliers.lean} vérifie avec Mathlib les propriétés des $F_n$ (définition \ref{def:F}, proposition \ref{prop:identite}, corollaire \ref{cor:bezout}), la proposition \ref{prop:sommets}, le théorème \ref{thm:fermeture} sur tout anneau commutatif, l'exemple \ref{ex:petits}, la remarque \ref{rem:conique} (conique invariante, parabole en caractéristique $p$), le théorème \ref{thm:irred} et la proposition \ref{prop:modp}.
+
+\paragraph{Prérequis.} Géométrie affine plane (repères, applications affines), racines de l'unité, polynômes à coefficients entiers et lemme de Gauss, degré d'une extension de corps et multiplicativité des degrés.
+
+\paragraph{Notations.} $\varphi$ est l'indicatrice d'Euler. Pour $n\geq1$, $\mu_n^*\subset\C$ est l'ensemble des racines primitives $n$-ièmes de l'unité. On note $U=T+T^{-1}$ dans l'anneau $\Z[T,T^{-1}]$ des polynômes de Laurent.
+
+\tableofcontents
+
+% ==========================================================
+\section{Polygones réguliers sans longueurs ni angles}
+% ==========================================================
+
+D'habitude, un polygone régulier a des côtés égaux et des angles égaux. Dans un plan affine sur un corps quelconque, par exemple $\F_7^2$, ces mots n'ont plus de sens. Grothendieck part donc d'une autre propriété du polygone régulier usuel : ses symétries. Tourner le dessin d'un cran, ou le retourner, le laisse inchangé.
+
+\begin{definition}\label{def:regulier}
+Soit $E$ un plan affine sur un corps $k$ et $n\geq3$. Un \emph{$n$-gone} est une suite $(s_i)_{i\in\Z/n\Z}$ de points de $E$. Il est \emph{régulier} s'il existe deux transformations affines $u$ et $\sigma$ de $E$ telles que $u(s_i)=s_{i+1}$ et $\sigma(s_i)=s_{-i}$ pour tout $i$. On le dit \emph{non dégénéré} si trois sommets consécutifs ne sont jamais alignés.
+\end{definition}
+
+La définition est plus généreuse qu'on ne pourrait le croire. Une transformation affine envoie n'importe quel triangle non aplati sur n'importe quel autre : dans le plan affine, \emph{tout} triangle est régulier, et de même tout parallélogramme (exercice \ref{exo:triangle}). Ce qui reste du polygone régulier, une fois les longueurs oubliées, est sa forme à transformation affine près.
+
+\begin{exemple}\label{ex:reels}
+Dans $\R^2=\C$, soit $\zeta=e^{2i\pi k/n}$ avec $k$ premier à $n$. Les points $s_j=\zeta^j$ forment un $n$-gone régulier : $u$ est la rotation $z\mapsto\zeta z$ et $\sigma$ la conjugaison $z\mapsto\bar z$. Pour $k=\pm1$, c'est le polygone convexe ; pour les autres $k$, c'est un polygone étoilé, comme le pentagramme ($n=5$, $k=2$). La rotation $u$ a pour trace
+\[
+  \alpha=\zeta+\zeta^{-1}=2\cos\frac{2\pi k}n .
+\]
+Toute image de ce polygone par une bijection affine est encore régulière, avec le même $\alpha$ : c'est la trace de la partie linéaire de $u$, qui ne change pas par conjugaison.
+\end{exemple}
+
+Grothendieck montre que ce nombre $\alpha$ suffit à tout décrire. On se limite ici aux polygones \emph{unimodulaires}, ceux où la partie linéaire de $u$ est de déterminant $1$, comme dans l'exemple \ref{ex:reels} ; il étudie aussi l'autre cas (page 85 du dossier).
+
+\begin{proposition}\label{prop:universel}
+Soit $(s_i)$ un $n$-gone régulier non dégénéré et unimodulaire, et $\alpha$ la trace de la partie linéaire $L$ de $u$. Dans le repère affine d'origine $s_0$ où $s_1=(1,0)$ et $s_{-1}=(0,1)$,
+\[
+  u(x,y)=(1-y+\alpha x,\ x),\qquad \sigma(x,y)=(y,x).
+\]
+\end{proposition}
+
+\begin{proof}
+Les points $s_{-1},s_0,s_1$ ne sont pas alignés : ils forment bien un repère affine, et une application affine est déterminée par leurs images. Comme $\det L=1$, le théorème de Cayley-Hamilton donne $L^2-\alpha L+I=0$. Or $L(s_{-1}-s_0)=s_0-s_1$, c'est-à-dire $L(0,1)=(-1,0)$. En appliquant $L^2-\alpha L+I=0$ au vecteur $(0,1)$, on trouve $L(-1,0)-\alpha(-1,0)+(0,1)=0$, donc $L(1,0)=(\alpha,1)$. Avec $u(0,0)=s_1=(1,0)$, on obtient $u(x,y)=(1,0)+x(\alpha,1)+y(-1,0)$. Enfin $\sigma$ fixe $s_0$ et échange $s_1$ et $s_{-1}$ : c'est l'échange des coordonnées.
+\end{proof}
+
+Les formules ont un sens sur n'importe quel anneau commutatif, et c'est là que Grothendieck les prend.
+
+\begin{definition}\label{def:universel}
+Soit $k$ un anneau commutatif et $\alpha\in k$. Le \emph{polygone universel} d'invariant $\alpha$ est la suite $s_n=u_\alpha^n(0,0)$, $n\in\Z$, où $u_\alpha$ est la bijection $(x,y)\mapsto(1-y+\alpha x,\ x)$ de $k^2$, de réciproque $(x,y)\mapsto(y,\ 1-x+\alpha y)$.
+\end{definition}
+
+Avec $\sigma(x,y)=(y,x)$, on vérifie directement que $\sigma u_\alpha\sigma=u_\alpha^{-1}$ : les deux transformations engendrent une action du groupe diédral infini, et $\sigma(s_n)=s_{-n}$. Ce polygone est infini a priori. La question devient : quand se referme-t-il, c'est-à-dire quand a-t-on $u_\alpha^n=\mathrm{id}$ ?
+
+% ==========================================================
+\section{Les polynômes \texorpdfstring{$F_n$}{Fn}}
+% ==========================================================
+
+\begin{definition}\label{def:F}
+Pour $n\geq1$, soit $\varepsilon=1$ si $n$ est impair et $\varepsilon=2$ si $n$ est pair. On définit $F_n$ par
+\[
+  F_n(T+T^{-1})=\frac{T^n-1}{T^\varepsilon-1}\,T^{-(n-\varepsilon)/2},
+\]
+et l'on pose $F_0=0$, $F_{-n}=-F_n$.
+\end{definition}
+
+Explicitement, $F_{2m+1}(U)=T^{-m}+T^{-m+1}+\dots+T^m$ et $F_{2m}(U)=T^{-(m-1)}+T^{-(m-3)}+\dots+T^{m-1}$ (exposants de deux en deux).
+
+\begin{lemme}\label{lem:F}
+\begin{enumerate}[nosep]
+\item $F_n$ est un polynôme unitaire de $\Z[U]$, de degré $\lfloor\frac{n-1}2\rfloor$ pour $n\geq1$.
+\item $F_{n+4}=U\,F_{n+2}-F_n$ pour tout $n$ ; les premiers sont $F_1=F_2=1$, $F_3=U+1$, $F_4=U$, $F_5=U^2+U-1$, $F_6=U^2-1$.
+\item Pour $n\geq1$, $F_n=\prod(U-\zeta-\zeta^{-1})$, le produit portant sur les paires $\{\zeta,\zeta^{-1}\}$ de racines $n$-ièmes de l'unité distinctes de $\pm1$, chaque paire comptée une fois.
+\end{enumerate}
+\end{lemme}
+
+\begin{proof}
+1. Posons $S_j(U)=T^j+T^{-j}$ pour $j\geq1$. Par récurrence, $S_j\in\Z[U]$ est unitaire de degré $j$, car $S_1=U$, $S_2=U^2-2$ et $S_{j+1}=U\,S_j-S_{j-1}$ (avec $S_0=2$). Un polynôme de Laurent symétrique, invariant par $T\mapsto T^{-1}$, est une combinaison entière de $1$ et des $S_j$ : c'est un polynôme en $U$. Les formules explicites de $F_n$ sont symétriques, de plus haut terme $T^{\lfloor(n-1)/2\rfloor}$, d'où l'énoncé.
+
+2. Pour $n=2m+1$, en multipliant $T^{-m}+\dots+T^m$ par $T+T^{-1}$, on obtient $(T^{-m-1}+\dots+T^{m+1})+(T^{-m+1}+\dots+T^{m-1})$, soit $U\,F_{2m+1}=F_{2m+3}+F_{2m-1}$. Le cas pair est identique, avec des exposants de deux en deux. Les valeurs initiales se lisent sur les formules.
+
+3. D'après la définition, $F_n(\zeta+\zeta^{-1})=0$ pour toute racine $n$-ième $\zeta$ qui n'est pas racine de $T^\varepsilon-1$, c'est-à-dire $\zeta\neq\pm1$. La valeur $\zeta+\zeta^{-1}$ détermine la paire $\{\zeta,\zeta^{-1}\}$, racines de $T^2-(\zeta+\zeta^{-1})T+1$ ; les paires distinctes donnent donc des racines distinctes de $F_n$. Il y a $\frac{n-1}2$ paires pour $n$ impair et $\frac{n-2}2$ pour $n$ pair, soit exactement le degré de $F_n$.
+\end{proof}
+
+Tout le calcul de Grothendieck repose sur une identité entre trois produits consécutifs. Posons $X_n=F_nF_{n+1}$.
+
+\begin{proposition}[Grothendieck, page 109]\label{prop:identite}
+Pour tout $n\in\Z$,
+\[
+  F_nF_{n+1}-U\,F_{n-1}F_n+F_{n-2}F_{n-1}=1 .
+\]
+\end{proposition}
+
+\begin{proof}
+Pour $n=1$, le membre de gauche vaut $F_1F_2-U\cdot0+F_{-1}F_0=1$. Pour $n\geq2$, posons $P_n=(T^n-1)(T^{n+1}-1)$. D'après la définition, quelle que soit la parité de $n$,
+\[
+  (T-1)(T^2-1)\,T^{n-1}\,X_n(U)=P_n ,
+\]
+car l'un des deux facteurs $F_n$, $F_{n+1}$ porte le dénominateur $T-1$ et l'autre $T^2-1$, et les exposants $\frac{n-\varepsilon}2$ des deux facteurs ont pour somme $n-1$. Multiplions l'identité à démontrer par $D=(T-1)(T^2-1)T^{n-1}$ ; comme $U\,T=T^2+1$, elle devient
+\[
+  P_n-(T^2+1)\,P_{n-1}+T^2P_{n-2}=D .
+\]
+On développe : les termes en $T^{2n+1}$ et $T^{2n-1}$ se compensent, les constantes aussi ($1-(T^2+1)+T^2=0$), et il reste $T^{n+2}-T^{n+1}-T^n+T^{n-1}=T^{n-1}(T-1)(T^2-1)=D$. Le cas $n\leq0$ s'en déduit avec $F_{-n}=-F_n$.
+\end{proof}
+
+\begin{corollaire}\label{cor:bezout}
+Pour tout $n$, $(F_{n-2}-U\,F_n)\,F_{n-1}+F_n\,F_{n+1}=1$. En particulier $F_{n-1}$ et $F_{n+1}$ sont premiers entre eux dans $\Z[U]$, et ne peuvent s'annuler simultanément en aucun élément d'un anneau non nul.
+\end{corollaire}
+
+\begin{remarque}
+La page 113 du dossier écrit le coefficient $F_{n-2}-U\,F_{n-1}$, ce qui ne donne pas de relation de Bézout : pour $n=4$, on trouve $1-U-U^2$ au lieu de $1$. La lecture moderne du dossier a relevé ce lapsus, et le coefficient correct se lit directement sur la proposition \ref{prop:identite}.
+\end{remarque}
+
+% ==========================================================
+\section{Le critère de fermeture}
+% ==========================================================
+
+\begin{proposition}[les sommets]\label{prop:sommets}
+Sur tout anneau commutatif, les sommets du polygone universel sont
+\[
+  s_n=\big(F_nF_{n+1}(\alpha),\ F_{n-1}F_n(\alpha)\big)=\big(X_n(\alpha),\ X_{n-1}(\alpha)\big),\qquad n\in\Z .
+\]
+\end{proposition}
+
+\begin{proof}
+Si $s_n=(x_n,y_n)$, la formule de $u_\alpha$ donne $y_{n+1}=x_n$ et $x_{n+1}=1-x_{n-1}+\alpha x_n$. La suite $(X_n(\alpha))$ vérifie la même récurrence d'ordre $2$, par la proposition \ref{prop:identite} évaluée en $\alpha$ et au rang $n+1$, et les mêmes valeurs initiales : $X_0=0$ et $X_{-1}=0$, puisque $F_0=0$. Les deux suites coïncident donc, dans les deux sens.
+\end{proof}
+
+\begin{theoreme}[Grothendieck, page 112]\label{thm:fermeture}
+Soit $k$ un anneau commutatif, $\alpha\in k$ et $n\in\Z$. Les conditions suivantes sont équivalentes :
+\begin{enumerate}[label=\alph*),nosep]
+\item $u_\alpha^n=\mathrm{id}$ ;
+\item $s_n=s_0$ ;
+\item $u_\alpha^n(s_i)=s_i$ pour un indice $i$ donné ;
+\item $F_n(\alpha)=0$.
+\end{enumerate}
+\end{theoreme}
+
+\begin{proof}
+a) $\Rightarrow$ b) est immédiat. b) $\Leftrightarrow$ c) : $u_\alpha^n(s_i)=u_\alpha^i\big(u_\alpha^n(s_0)\big)$, et $u_\alpha^i$ est injective. b) $\Rightarrow$ a) : si $u_\alpha^n$ fixe $s_0$, il fixe tous les $s_i=u_\alpha^i(s_0)$, en particulier $s_0$, $s_1=(1,0)$ et $s_{-1}=(0,1)$, et une application affine de $k^2$ qui fixe ces trois points est l'identité. b) $\Leftrightarrow$ d) : par la proposition \ref{prop:sommets}, $s_n=(0,0)$ signifie $F_nF_{n+1}(\alpha)=F_{n-1}F_n(\alpha)=0$. Si $F_n(\alpha)=0$, c'est clair. Réciproquement, le corollaire \ref{cor:bezout} donne
+\[
+  F_n(\alpha)=F_n(\alpha)\big((F_{n-2}-UF_n)F_{n-1}+F_nF_{n+1}\big)(\alpha)=0 .\qedhere
+\]
+\end{proof}
+
+Le théorème vaut sur un anneau quelconque, sans hypothèse d'intégrité. Grothendieck peut donc parler de l'anneau « sur lequel s'écrit » le $n$-gone régulier le plus général : $\Z[U]/(\Psi_n)$, à quelques inversions près.
+
+\begin{exemple}\label{ex:petits}
+Sur tout anneau commutatif, $\alpha=-1$ donne un triangle ($F_3(-1)=0$), $\alpha=0$ un carré ($F_4(0)=0$) et $\alpha=1$ un hexagone ($F_6(1)=0$). Si $\alpha^2+\alpha-1=0$, on obtient un pentagone. Dans $\R$, les deux racines sont $2\cos\frac{2\pi}5=\frac{\sqrt5-1}2$, qui donne le pentagone convexe, et $2\cos\frac{4\pi}5=-\frac{\sqrt5+1}2$, qui donne le pentagramme. Dans les coordonnées de la proposition \ref{prop:universel}, les sommets du pentagone convexe sont $(0,0)$, $(1,0)$, $(\phi,1)$, $(1,\phi)$, $(0,1)$, où $\phi=\frac{1+\sqrt5}2$ est le nombre d'or (figure \ref{fig:pentagones}).
+\end{exemple}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=2.1,pt/.style={circle,fill,inner sep=1.2pt},every label/.style={font=\small}]
+  \begin{scope}
+    \draw[->,gray] (-0.3,0) -- (1.95,0) node[right] {$x$};
+    \draw[->,gray] (0,-0.3) -- (0,1.95) node[above] {$y$};
+    \draw[accent,dashed] (0.7236,0.7236) [rotate around={45:(0.7236,0.7236)}] ellipse (1.0233 and 0.7435);
+    \draw[thick] (0,0) -- (1,0) -- (1.618,1) -- (1,1.618) -- (0,1) -- cycle;
+    \foreach \p/\l/\pos in {{(0,0)}/s_0/below left,{(1,0)}/s_1/below,{(1.618,1)}/s_2/right,{(1,1.618)}/s_3/above,{(0,1)}/s_4=s_{-1}/left} \node[pt,label={\pos:$\l$}] at \p {};
+    \node[font=\small] at (0.85,-0.55) {$\alpha=2\cos\frac{2\pi}5$};
+  \end{scope}
+  \begin{scope}[xshift=3cm]
+    \draw[->,gray] (-0.9,0) -- (1.5,0) node[right] {$x$};
+    \draw[->,gray] (0,-0.9) -- (0,1.5) node[above] {$y$};
+    \draw[accent,dashed] (0.2764,0.2764) [rotate around={45:(0.2764,0.2764)}] ellipse (0.3909 and 1.203);
+    \draw[thick] (0,0) -- (1,0) -- (-0.618,1) -- (1,-0.618) -- (0,1) -- cycle;
+    \foreach \p/\l/\pos in {{(0,0)}/s_0/below left,{(1,0)}/s_1/above right,{(-0.618,1)}/s_2/left,{(1,-0.618)}/s_3/right,{(0,1)}/s_4/above right} \node[pt,label={\pos:$\l$}] at \p {};
+    \node[font=\small] at (0.3,-1.05) {$\alpha=2\cos\frac{4\pi}5$};
+  \end{scope}
+\end{tikzpicture}
+\caption{Le pentagone et le pentagramme réguliers dans les coordonnées de Grothendieck, $s_0=(0,0)$, $s_1=(1,0)$, $s_{-1}=(0,1)$. En pointillés, la conique invariante $f_\alpha=0$ de la remarque \ref{rem:conique}, image affine du cercle circonscrit.}\label{fig:pentagones}
+\end{figure}
+
+\begin{remarque}[la conique circonscrite]\label{rem:conique}
+La forme $f_\alpha(x,y)=x^2-x+y^2-y-\alpha xy$ vérifie $f_\alpha\circ u_\alpha=f_\alpha$, et $f_\alpha(s_0)=0$ : tous les sommets sont sur la conique $f_\alpha=0$. Dans le plan réel, pour $|\alpha|<2$, c'est une ellipse, l'image affine du cercle circonscrit. Sur un corps de caractéristique $p$ impaire, prenons $\alpha=2$. D'après la définition \ref{def:F}, $F_p(2)=p=0$ (faire $T=1$ dans $F_p(T+T^{-1})=T^{-(p-1)/2}(1+T+\dots+T^{p-1})$), donc $u_2^p=\mathrm{id}$ : on obtient un $p$-gone régulier, alors que $\alpha=2$ correspond en caractéristique nulle à une « rotation d'angle nul ». Sa conique est $f_2=(x-y)^2-(x+y)$, une \emph{parabole}, et $u_2$ y agit comme une translation le long de la parabole. Pour $\alpha=-2$, on trouve de même un $2p$-gone qui zigzague entre les deux droites parallèles $x+y=0$ et $x+y=1$. Ce sont, écrit Grothendieck, « les seuls cas vraiment nouveaux ».
+\end{remarque}
+
+% ==========================================================
+\section{Polynômes cyclotomiques}
+% ==========================================================
+
+Pour savoir quels polygones existent sur un corps donné, il faut connaître les facteurs irréductibles des $F_n$. Ils viennent des polynômes cyclotomiques.
+
+\begin{definition}
+Pour $n\geq1$, le $n$-ième \emph{polynôme cyclotomique} est $\Phi_n(X)=\prod_{\zeta\in\mu_n^*}(X-\zeta)$. Il est unitaire de degré $\varphi(n)$.
+\end{definition}
+
+\begin{proposition}\label{prop:cyclo}
+$X^n-1=\prod_{d\mid n}\Phi_d(X)$, et $\Phi_n\in\Z[X]$.
+\end{proposition}
+
+\begin{proof}
+Chaque racine $n$-ième de l'unité est primitive d'ordre exactement $d$ pour un unique diviseur $d$ de $n$, d'où la factorisation. Par récurrence forte sur $n$, $\Phi_n$ est le quotient de $X^n-1$ par le polynôme unitaire $\prod_{d\mid n,\,d<n}\Phi_d$, à coefficients entiers ; la division euclidienne par un polynôme unitaire de $\Z[X]$ reste dans $\Z[X]$.
+\end{proof}
+
+\begin{theoreme}\label{thm:irred}
+Pour tout $n\geq1$, $\Phi_n$ est irréductible sur $\Q$.
+\end{theoreme}
+
+\begin{proof}
+Soit $\zeta\in\mu_n^*$ et $f$ son polynôme minimal sur $\Q$. Il divise $\Phi_n$, et le lemme de Gauss montre que $f\in\Z[X]$ et que $\Phi_n=fg$ avec $g\in\Z[X]$ unitaire.
+
+Soit $p$ un nombre premier qui ne divise pas $n$. Montrons que $\zeta^p$ est racine de $f$. Sinon, $\zeta^p$, qui est dans $\mu_n^*$, est racine de $g$ ; alors $\zeta$ est racine de $g(X^p)$, et $f$ divise $g(X^p)$. Réduisons modulo $p$ : dans $\F_p[X]$, $g(X^p)=\bar g(X)^p$, car le Frobenius $a\mapsto a^p$ est un morphisme d'anneaux qui fixe $\F_p$. Donc $\bar f$ divise $\bar g^p$, et un facteur irréductible $h$ de $\bar f$ divise $\bar g$. Mais alors $h^2$ divise $\bar f\bar g=\bar\Phi_n$, qui divise $X^n-1$ dans $\F_p[X]$. C'est impossible : $X^n-1$ est premier avec sa dérivée $nX^{n-1}$ dans $\F_p[X]$, puisque $n\neq0$ dans $\F_p$, donc il n'a pas de facteur carré.
+
+Toute racine primitive $n$-ième s'écrit $\zeta^a$ avec $a$ premier à $n$, et $a$ est un produit de nombres premiers ne divisant pas $n$. En appliquant ce qui précède de proche en proche, $\zeta^a$ est racine de $f$. Ainsi $f$ a toutes les racines de $\Phi_n$, et $f=\Phi_n$.
+\end{proof}
+
+En particulier, $[\Q(\zeta):\Q]=\varphi(n)$ pour $\zeta\in\mu_n^*$.
+
+% ==========================================================
+\section{Le polynôme minimal de \texorpdfstring{$2\cos(2\pi/n)$}{2cos(2pi/n)}}
+% ==========================================================
+
+Pour $n\geq3$, les racines de $\Phi_n$ sont deux à deux inverses, et $\varphi(n)$ est pair. Le polynôme $T^{-\varphi(n)/2}\Phi_n(T)$ est un polynôme de Laurent symétrique, donc, comme au lemme \ref{lem:F}, un polynôme en $U$.
+
+\begin{definition}
+Pour $n\geq3$, le \emph{polynôme semi-cyclotomique} $\Psi_n\in\Z[U]$ est défini par $\Psi_n(T+T^{-1})=T^{-\varphi(n)/2}\,\Phi_n(T)$. Il est unitaire de degré $\varphi(n)/2$, de racines les $2\cos\frac{2\pi k}n$ pour $1\leq k<\frac n2$ premier à $n$.
+\end{definition}
+
+En regroupant les racines du lemme \ref{lem:F} selon leur ordre, on obtient la factorisation, qui n'est pas écrite telle quelle dans le dossier mais se lit sur ses tables :
+\[
+  F_n=\prod_{d\mid n,\ d\geq3}\Psi_d .
+\]
+Par exemple $F_6=U^2-1=(U+1)(U-1)=\Psi_3\Psi_6$.
+
+\begin{theoreme}\label{thm:psi}
+Pour $n\geq3$, $\Psi_n$ est le polynôme minimal de $2\cos\frac{2\pi}n$ sur $\Q$. En particulier, $2\cos\frac{2\pi}n$ est algébrique de degré $\varphi(n)/2$.
+\end{theoreme}
+
+\begin{proof}
+Soit $\zeta=e^{2i\pi/n}$ et $\alpha=\zeta+\zeta^{-1}=2\cos\frac{2\pi}n$. On a $\Q(\alpha)\subset\Q(\zeta)$, et $\zeta$ est racine de $T^2-\alpha T+1\in\Q(\alpha)[T]$. Comme $\Q(\alpha)\subset\R$ et $\zeta\notin\R$ (car $n\geq3$), $[\Q(\zeta):\Q(\alpha)]=2$. Le théorème \ref{thm:irred} et la multiplicativité des degrés donnent $[\Q(\alpha):\Q]=\varphi(n)/2$. Or $\Psi_n$ est unitaire, de ce degré, et annule $\alpha$ : c'est le polynôme minimal.
+\end{proof}
+
+\begin{corollaire}\label{cor:rationnel}
+$2\cos\frac{2\pi}n\in\Q$ si et seulement si $n\in\{1,2,3,4,6\}$.
+\end{corollaire}
+
+\begin{proof}
+Pour $n\leq2$, $2\cos\frac{2\pi}n=\pm2$. Pour $n\geq3$, il faut $\varphi(n)=2$. Si un premier $p\geq5$ divise $n$, $\varphi(n)\geq p-1\geq4$ ; si $8$ ou $9$ divise $n$, $\varphi(n)\geq4$. Il reste les diviseurs de $12$, et $\varphi(12)=4$ : on trouve $n=3,4,6$.
+\end{proof}
+
+Grothendieck en tire, page 120, que \emph{les seuls polygones réguliers définis sur $\Q$ sont le triangle, le carré et l'hexagone} : un $n$-gone régulier non dégénéré dont les sommets sont dans $\Q^2$ a une rotation $u$ à coefficients rationnels, donc un invariant $\alpha\in\Q$ (exercice \ref{exo:pentagone}). La même remarque est la \emph{restriction cristallographique} : une rotation d'ordre fini qui préserve un réseau du plan a, dans une base du réseau, une matrice entière, donc une trace $2\cos\theta$ entière, et son ordre vaut $1$, $2$, $3$, $4$ ou $6$. Il n'y a pas de cristal à symétrie d'ordre $5$, et pas de pentagone régulier à sommets entiers.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}ccl@{}}
+\toprule
+$\deg\Psi_n$ & $n$ & $\Psi_n(U)$ \\
+\midrule
+$1$ & $3$, $4$, $6$ & $U+1$, $U$, $U-1$ \\
+$2$ & $5$, $8$, $10$, $12$ & $U^2+U-1$, $U^2-2$, $U^2-U-1$, $U^2-3$ \\
+$3$ & $7$, $9$, $14$, $18$ & $U^3+U^2-2U-1$, $U^3-3U+1$, $U^3-U^2-2U+1$, $U^3-3U-1$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{remarque}
+Les polynômes de degré $3$ ont trois racines réelles et sont irréductibles sur $\Q$ : c'est le \emph{casus irreducibilis}, où l'on ne peut exprimer les racines par des radicaux réels, et une note à demi lisible du dossier semble le relever. Le théorème \ref{thm:psi} donne aussi une moitié du théorème de Gauss-Wantzel : si le $n$-gone régulier est constructible à la règle et au compas, $\varphi(n)/2$, donc $\varphi(n)$, est une puissance de $2$. L'heptagone et l'ennéagone ne sont pas constructibles.
+\end{remarque}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=2.2,pt/.style={circle,fill,inner sep=1.3pt}]
+  \draw[->,gray] (-1.35,0) -- (1.4,0);
+  \draw[->,gray] (0,-1.2) -- (0,1.25);
+  \draw (0,0) circle (1);
+  \foreach \k in {0,2,4,6} \node[pt] (z\k) at ({cos(45*\k)},{sin(45*\k)}) {};
+  \foreach \k in {1,3,5,7} \node[pt,accent] (z\k) at ({cos(45*\k)},{sin(45*\k)}) {};
+  \foreach \k in {1,3} {
+    \draw[accent,dashed] ({cos(45*\k)},{sin(45*\k)}) -- ({cos(45*\k)},{-sin(45*\k)});
+  }
+  \node[accent,above right,font=\small] at (z1) {$\zeta$};
+  \node[accent,below right,font=\small] at (z7) {$\zeta^{-1}$};
+  \node[accent,above left,font=\small] at (z3) {$\zeta^3$};
+  \node[accent,below left,font=\small] at (z5) {$\zeta^{-3}$};
+  \fill[accent] (0.7071,0) circle (0.9pt);
+  \fill[accent] (-0.7071,0) circle (0.9pt);
+  \node[accent,font=\small] at (0.55,-0.16) {$\frac{\sqrt2}2$};
+  \node[accent,font=\small] at (-0.5,-0.16) {$-\frac{\sqrt2}2$};
+\end{tikzpicture}
+\caption{Les racines huitièmes de l'unité. Les quatre racines primitives (en couleur) se regroupent en deux paires $\{\zeta,\zeta^{-1}\}$, de parties réelles $\pm\frac{\sqrt2}2$ : les racines de $\Psi_8(U)=U^2-2$ sont $\zeta+\zeta^{-1}=2\cos\frac{2\pi k}8=\pm\sqrt2$.}\label{fig:huit}
+\end{figure}
+
+% ==========================================================
+\section{Réduction modulo \texorpdfstring{$p$}{p}}
+% ==========================================================
+
+La remarque \ref{rem:conique} a montré qu'en caractéristique $p$ des polygones d'un nombre de côtés inattendu apparaissent. La raison est la réduction des polynômes cyclotomiques modulo $p$, que Grothendieck établit page 117.
+
+\begin{proposition}[Grothendieck, page 117]\label{prop:modp}
+Soit $p$ premier et $n=p^rn'$ avec $p\nmid n'$. Alors $\Phi_n\equiv\Phi_{n'}^{\varphi(p^r)}\pmod p$.
+\end{proposition}
+
+\begin{proof}
+Par récurrence sur $n$. Pour $r=0$, il n'y a rien à démontrer. Supposons l'énoncé vrai pour tous les diviseurs stricts de $n$. Les diviseurs de $n$ sont les $\delta=p^sd$ avec $0\leq s\leq r$ et $d\mid n'$, et, pour $\delta\neq n$, l'hypothèse de récurrence donne $\Phi_\delta\equiv\Phi_d^{\varphi(p^s)}$. Dans $\F_p[X]$, la proposition \ref{prop:cyclo} et l'identité $\sum_{s=0}^r\varphi(p^s)=p^r$ donnent
+\[
+  \Phi_{n'}^{\varphi(p^r)}\,(X^n-1)=\Phi_{n'}^{\varphi(p^r)}\prod_{\delta\mid n}\Phi_\delta
+  =\Phi_n\prod_{s=0}^r\Big(\prod_{d\mid n'}\Phi_d\Big)^{\varphi(p^s)}=\Phi_n\,(X^{n'}-1)^{p^r} .
+\]
+Or $X^n-1=(X^{n'})^{p^r}-1=(X^{n'}-1)^{p^r}$ dans $\F_p[X]$, par le Frobenius. On simplifie par ce polynôme non nul, dans l'anneau intègre $\F_p[X]$.
+\end{proof}
+
+\begin{corollaire}[Grothendieck, pages 118-119]\label{cor:ordre}
+Soit $k$ un corps de caractéristique $p$, $n\geq3$, $\alpha\in k$ tel que $\Psi_n(\alpha)=0$, et $n=p^rn'$ avec $p\nmid n'$. Le polygone universel d'invariant $\alpha$ a pour nombre de sommets $n'$ si $n'\geq3$, $2p$ si $n'=2$, $p$ si $n'=1$ et $p\neq2$, et $4$ si $n'=1$ et $p=2$.
+\end{corollaire}
+
+\begin{proof}
+Écrivons $\alpha=\xi+\xi^{-1}$ avec $\xi$ racine de $T^2-\alpha T+1$ dans une extension de $k$. Alors $\Phi_n(\xi)=0$, donc $\Phi_{n'}(\xi)=0$ par la proposition \ref{prop:modp} : $\xi$ est racine primitive $n'$-ième de l'unité, puisque $X^{n'}-1$ est séparable en caractéristique $p$. Si $n'\geq3$, $\alpha=\xi+\xi^{-1}$ est racine de $\Psi_{n'}$, et le théorème \ref{thm:fermeture} avec la factorisation de $F_m$ montre que l'ordre est $n'$. Si $n'=2$, $\xi=-1$ et $\alpha=-2$ ; si $n'=1$, $\xi=1$ et $\alpha=2$ : ce sont les polygones de la remarque \ref{rem:conique}, d'ordres $2p$ et $p$ ; pour $p=2$, $\alpha=2=0$ est l'invariant du carré.
+\end{proof}
+
+\begin{remarque}
+La page 118 écrit « d'ordre $p$ si $n'=1$ » sans exception ; pour $p=2$, l'invariant $\alpha=2=0$ est celui du carré, d'ordre $4$, comme Grothendieck l'avait lui-même établi page 95.
+\end{remarque}
+
+% ==========================================================
+\section{Exercices}
+% ==========================================================
+
+\begin{exercice}\label{exo:triangle}
+Montrer que, dans un plan affine réel, tout triangle non aplati est régulier au sens de la définition \ref{def:regulier}, ainsi que tout parallélogramme non aplati. Quels sont leurs invariants $\alpha$ ?
+\end{exercice}
+
+\begin{exercice}\label{exo:pentagone}
+Soit $(s_i)$ un $n$-gone régulier non dégénéré et unimodulaire de $\R^2$, à sommets distincts et à coordonnées rationnelles. Montrer que $n\in\{3,4,6\}$. En déduire qu'il n'existe pas de pentagone régulier (au sens usuel) à sommets dans $\Z^2$.
+\end{exercice}
+
+\begin{exercice}\label{exo:douze}
+Vérifier que $F_{12}=\Psi_3\Psi_4\Psi_6\Psi_{12}$ en calculant $F_{12}$ par la récurrence du lemme \ref{lem:F}.
+\end{exercice}
+
+\begin{exercice}\label{exo:ramification}
+Soit $p$ un nombre premier impair. Montrer que $\Psi_p(2)=p$, et en déduire que $\Psi_p\equiv(U-2)^{(p-1)/2}\pmod p$.
+\end{exercice}
+
+% ==========================================================
+\section{Corrigés}
+% ==========================================================
+
+\paragraph{Exercice 1.} Pour un triangle $(s_0,s_1,s_2)$, les points forment un repère affine, et il existe une unique transformation affine $u$ telle que $u(s_i)=s_{i+1}$, et une unique $\sigma$ qui fixe $s_0$ et échange $s_1$ et $s_2$. Pour un parallélogramme $s_0s_1s_2s_3$, la symétrie centrale de centre le milieu des diagonales envoie $s_i$ sur $s_{i+2}$, et l'application affine qui envoie $(s_0,s_1,s_3)$ sur $(s_1,s_2,s_0)$ envoie $s_2=s_1+s_3-s_0$ sur $s_2+s_0-s_1=s_3$ : elle convient pour $u$ ; $\sigma$ fixe $s_0$ et échange $s_1$ et $s_3$. Les invariants sont $\alpha=-1$ et $\alpha=0$, d'après l'exemple \ref{ex:petits}.
+
+\paragraph{Exercice 2.} La transformation affine $u$ envoie le repère $(s_{-1},s_0,s_1)$, à coordonnées rationnelles, sur $(s_0,s_1,s_2)$, à coordonnées rationnelles : sa matrice est rationnelle, et la trace $\alpha$ de sa partie linéaire est rationnelle. Comme les sommets sont distincts, $u$ est d'ordre exactement $n$. Sa partie linéaire $L$ est aussi d'ordre $n$ : si $L^d=I$ avec $d<n$, $u^d$ serait une translation d'ordre fini, donc l'identité en caractéristique nulle. Les valeurs propres de $L$ sont donc $\zeta^{\pm1}$ avec $\zeta$ d'ordre $n\geq3$. Donc $\alpha=2\cos\frac{2\pi k}n$ avec $k$ premier à $n$, qui est conjugué de $2\cos\frac{2\pi}n$ sur $\Q$ (même polynôme minimal $\Psi_n$) ; il est rationnel si et seulement si $\varphi(n)=2$, et le corollaire \ref{cor:rationnel} conclut. Un pentagone régulier usuel est régulier, unimodulaire et non dégénéré : il ne peut pas avoir ses sommets dans $\Z^2$.
+
+\paragraph{Exercice 3.} La récurrence $F_{n+4}=UF_{n+2}-F_n$ donne, dans la classe paire, $F_8=U\cdot F_6-F_4=U^3-2U$, $F_{10}=U\,F_8-F_6=U^4-3U^2+1$, puis $F_{12}=U\,F_{10}-F_8=U^5-4U^3+3U$. Et $\Psi_3\Psi_4\Psi_6\Psi_{12}=(U+1)\,U\,(U-1)(U^2-3)=U(U^2-1)(U^2-3)=U^5-4U^3+3U$.
+
+\paragraph{Exercice 4.} Pour $n=p$ premier, $\Phi_p=1+T+\dots+T^{p-1}$, donc $\Psi_p=F_p$, et $F_p(2)=p$ (faire $T=1$ dans la définition). Modulo $p$, la proposition \ref{prop:modp} avec $n'=1$ donne $\Phi_p\equiv(T-1)^{p-1}$, et $T^{-(p-1)/2}(T-1)^{p-1}=\big((T-1)^2/T\big)^{(p-1)/2}=(U-2)^{(p-1)/2}$. C'est la forme polynomiale du corollaire \ref{cor:ordre} : en caractéristique $p$, le $p$-gone n'a plus qu'un invariant, $\alpha=2$. Dans l'anneau $\Z[U]/\Psi_p$, l'élément $\alpha-2$ a pour norme $\pm\Psi_p(2)=\pm p$ : Grothendieck y lit, pages 125 à 127, la ramification totale de $p$.
+
+\begin{thebibliography}{9}
+\bibitem{g78} A. Grothendieck, \emph{Polygones réguliers et polynômes cyclotomiques}, dossier 78 des archives de Grothendieck (notes du cours de DEA 1977-1978), en particulier pages 109 à 120 ; transcription et lecture modernisée sur \url{https://grothendieck.commutator.io/#78/6/modern}.
+\bibitem{lehmer} D. H. Lehmer, \emph{A note on trigonometric algebraic numbers}, The American Mathematical Monthly 40 (1933), pp. 165-166.
+\bibitem{niven} I. Niven, \emph{Irrational Numbers}, Carus Mathematical Monographs 11, MAA, 1956, chapitre 3.
+\bibitem{perrin} D. Perrin, \emph{Cours d'algèbre}, Ellipses, 1996, chapitre III (polynômes cyclotomiques).
+\bibitem{ks} G. Korchmáros, T. Szőnyi, \emph{Affinely regular polygons in an affine plane}, Contributions to Discrete Mathematics 3 (2008), pp. 20-38.
+\end{thebibliography}
+
+\paragraph{Source.} Dossier 78 des archives de Grothendieck, d'après la transcription et la lecture modernisée du dépôt grothendieck-project, qui préviennent qu'elles n'ont pas encore été relues sur les pages par un humain. Les énoncés de Grothendieck sont repris avec leurs numéros de page ; la fiche corrige le coefficient de Bézout de la page 113 et l'exception $p=2$ de la page 118, et démontre ce que les notes supposent connu : l'irréductibilité des polynômes cyclotomiques et le degré de $2\cos(2\pi/n)$.
+
+\end{document}
