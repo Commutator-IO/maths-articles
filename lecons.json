@@ -134,5 +134,13 @@
   {
     "numero": "253",
     "intitule": "Utilisation de la notion de convexité en analyse."
+  },
+  {
+    "numero": "264",
+    "intitule": "Variables aléatoires discrètes. Exemples et applications."
+  },
+  {
+    "numero": "266",
+    "intitule": "Utilisation de la notion d'indépendance en probabilités."
   }
 ]

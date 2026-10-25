@@ -1,0 +1,341 @@
+% Partis, dés et loterie : un manuscrit du XVIIe siècle (BnF, NAF 5176)
+% Compile avec pdflatex, xelatex ou lualatex.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+  \IfFileExists{lmodern.sty}{\usepackage{lmodern}}{}
+  \usepackage[french]{babel}
+\else
+  \usepackage{fontspec}
+  \usepackage{polyglossia}
+  \setdefaultlanguage{french}
+\fi
+\usepackage[margin=2.6cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{tikz}
+\input{../figures/tikz-setup.tex}
+\usepackage[hidelinks]{hyperref}
+\emergencystretch=1.5em
+
+% ---------- Environnements ----------
+\theoremstyle{plain}
+\newtheorem{theoreme}{Théorème}[section]
+\newtheorem{proposition}[theoreme]{Proposition}
+\newtheorem{lemme}[theoreme]{Lemme}
+\newtheorem{corollaire}[theoreme]{Corollaire}
+\theoremstyle{definition}
+\newtheorem{definition}[theoreme]{Définition}
+\newtheorem{exemple}[theoreme]{Exemple}
+\newtheorem{exercice}{Exercice}
+\theoremstyle{remark}
+\newtheorem{remarque}[theoreme]{Remarque}
+
+% ---------- Notations ----------
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\E}{\mathbb{E}}
+
+\title{Partis, dés et loterie\\[2pt]
+\large Dénombrer pour partager : un manuscrit du XVII\textsuperscript{e} siècle}
+\author{Michel Hua, d'après des feuillets de la BnF (NAF 5176)}
+\date{Octobre 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Deux joueurs ont misé sur une partie en plusieurs manches et doivent l'interrompre avant la fin : comment partager les enjeux ? Ce « problème des partis », que Pascal et Fermat résolvent dans leur correspondance de 1654, ouvre le calcul des probabilités. Un recueil de la Bibliothèque nationale de France (nouvelles acquisitions françaises 5176) contient des feuillets anonymes du XVII\textsuperscript{e} siècle qui en donnent les règles, puis calculent des chances aux dés et l'avantage du banquier à la loterie de Gênes. Tous leurs calculs sont des dénombrements. On les reprend ici avec le langage d'aujourd'hui : l'espérance comme juste prix, la récurrence des partis et sa solution par les coefficients binomiaux, le pari du chevalier de Méré, la loi hypergéométrique et l'identité de Vandermonde. On signale aussi les quelques erreurs des feuillets.
+\end{abstract}
+
+\paragraph{Leçons concernées.} 190 (Méthodes combinatoires, problèmes de dénombrement), et en partie 264 (Variables aléatoires discrètes. Exemples et applications) et 266 (Utilisation de la notion d'indépendance en probabilités).
+
+\paragraph{Développements possibles.} La formule close des partis par le prolongement fictif de la partie (théorème \ref{thm:partis}) ; le pari de Méré et les seuils $4$, $24$ et $10$ (section \ref{sec:des}) ; la loterie de Gênes, loi hypergéométrique et identité de Vandermonde (section \ref{sec:loterie}). Le fichier \texttt{Partis.lean} vérifie avec Mathlib le théorème \ref{thm:partis} et les tables qui en découlent, la proposition \ref{prop:jamais}, les seuils de la section \ref{sec:des} et les dénombrements de la loterie.
+
+\paragraph{Prérequis.} Coefficients binomiaux et formule de Pascal, probabilité sur un univers fini, indépendance, espérance d'une variable aléatoire finie.
+
+\paragraph{Notations.} Pour une variable aléatoire $X$ à valeurs dans un ensemble fini, $\E[X]=\sum_xx\,\Prob(X=x)$. On note $\binom nk=0$ si $k<0$ ou $k>n$.
+
+\tableofcontents
+
+% ==========================================================
+\section{Les feuillets}
+% ==========================================================
+
+Le volume NAF 5176 de la BnF réunit des papiers de Mersenne et une liasse que le bibliophile Libri avait intitulée « Pascal, autographes et copies ». Les feuillets qui nous intéressent (vues 40 à 42 et 47 à 51 de la numérisation Gallica) ne portent aucun nom. Le mot « Pascal » n'est qu'une étiquette de séparation ajoutée au XIX\textsuperscript{e} siècle, et une note de 1962 rapproche la première main des propositions I à XII du traité de Huygens, \emph{De ratiociniis in ludo aleae} (1657). On les lit ici dans la transcription du dépôt germain-project.
+
+La première main écrit des « Règles auxquelles se peuvent rapporter les partis » : la valeur d'un hasard, le partage entre deux puis trois joueurs, des tables de dés. Une seconde main fait des dénombrements : intérêts composés, permutations, anagrammes, et les chances de la loterie de Gênes. On suit cet ordre.
+
+% ==========================================================
+\section{La valeur d'un hasard}
+% ==========================================================
+
+La première règle des feuillets dit ce que vaut une chance :
+
+\begin{quote}
+« Si mon hasard est égal d'y gagner (par ex.) 10, ou 12, cela me vaut 11, c'est-à-dire toujours la moitié des deux hasards ou espérances. »
+\end{quote}
+
+L'argument est celui d'un jeu équitable. Si je mise $11$ contre $11$, à condition que le gagnant donne $9$ au perdant, je repars avec $13$ ou avec $9$, avec des chances égales : avoir $9$ ou $13$ vaut donc ce que vaut une mise de $11$ dans un jeu égal, soit $11$. La seconde formulation du feuillet est la plus parlante : « j'ai déjà sûrement le moindre, et il n'y a qu'à partager par moitié l'excédant ». Une ligne ajoutée, peut-être d'une autre main, traite deux chances contre une : avoir $9$ ou $13$ avec ces chances vaut $9+\frac23(13-9)$.
+
+Le langage d'aujourd'hui fait de cette valeur une définition.
+
+\begin{definition}
+Soit $X$ un gain aléatoire prenant un nombre fini de valeurs. Son \emph{espérance} est $\E[X]=\sum_xx\,\Prob(X=x)$. Si $X$ prend les valeurs $x_1,\dots,x_n$ dans $n$ cas également possibles, $\E[X]=\frac{x_1+\dots+x_n}n$.
+\end{definition}
+
+C'est la « règle générale pour tout » du feuillet : à facilité égale d'avoir $A$, $B$, $C$ ou $D$, la chance vaut « le quart de $A+B+C+D$ », et trois cas pour $12$ contre trois pour $8$ valent $10$. L'argument du jeu équitable justifie cette définition : le juste prix d'un pari est la mise qui rend le jeu égal. La propriété dont tout dépend ensuite est la linéarité, $\E[a+bX]=a+b\,\E[X]$, qui contient « j'ai déjà sûrement le moindre ».
+
+% ==========================================================
+\section{Le partage entre deux joueurs}
+% ==========================================================
+
+Deux joueurs $A$ et $B$ jouent une suite de manches, chacune gagnée par l'un ou l'autre avec probabilité $\frac12$, indépendamment. Le premier qui a gagné un nombre convenu de manches emporte la mise totale, qu'on prend égale à $1$. On interrompt la partie quand il manque $i$ manches à $A$ et $j$ à $B$ : le partage équitable donne à $A$ la probabilité $P(i,j)$ qu'il aurait eue de gagner, c'est-à-dire l'espérance de son gain.
+
+\begin{proposition}\label{prop:recurrence}
+La fonction $P$ est définie sur $\N^2\setminus\{(0,0)\}$ par les conditions
+\[
+  P(0,j)=1\ (j\geq1),\qquad P(i,0)=0\ (i\geq1),\qquad P(i,j)=\tfrac12\big(P(i-1,j)+P(i,j-1)\big)\ (i,j\geq1),
+\]
+et ces conditions la déterminent.
+\end{proposition}
+
+\begin{proof}
+Les deux premières conditions disent qu'un joueur à qui il ne manque rien a gagné. Pour $i,j\geq1$, on joue une manche de plus : avec probabilité $\frac12$, $A$ la gagne et l'on passe à $(i-1,j)$ ; sinon on passe à $(i,j-1)$. La formule des probabilités totales donne la relation. Une fonction qui vérifie ces conditions est déterminée par récurrence sur $i+j$, puisque la relation exprime la valeur en $(i,j)$ à l'aide de valeurs où $i+j$ a diminué de $1$.
+\end{proof}
+
+C'est exactement la méthode du feuillet : on part de la fin, où le partage est évident, et l'on remonte. Sa deuxième règle en est le premier pas : s'il faut deux manches à l'un et une seule à l'autre, celui-ci « a les $\frac34$ de la somme ». Avec six écus misés de part et d'autre, cela fait $9$ contre $3$.
+
+\begin{exemple}\label{ex:table}
+Dans une partie en trois manches, les feuillets donnent à $A$, mené $1$ à $0$, les $\frac{11}{16}$ de la mise ; à $2$ à $0$, les $\frac{14}{16}$ ; à $2$ à $1$, les $\frac{12}{16}$. Chaque manche gagnée vaut donc successivement $\frac3{16}$, $\frac3{16}$ et $\frac2{16}$ de la mise, ce sont les $12$, $12$ et $8$ pistoles sur $64$ de la lettre de Pascal à Fermat du 29 juillet 1654. En quatre manches, la figure \ref{fig:partis} donne toutes les valeurs ; le feuillet en tire, en marge, qu'« il vaut mieux avoir 2 jeux à 0 de 4 qu'un à 0 de deux », et c'est juste : $\frac{13}{16}>\frac{12}{16}$.
+\end{exemple}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=1.55,
+  st/.style={draw,rounded corners=2pt,minimum width=9mm,minimum height=6mm,font=\small,fill=white},
+  fin/.style={font=\small}]
+  \foreach \a in {0,...,3} \foreach \b in {0,...,3} {
+    \draw[->,gray] (\a+0.32,\b) -- (\a+0.68,\b);
+    \draw[->,gray] (\a,\b+0.25) -- (\a,\b+0.75);
+  }
+  \foreach \a/\b/\v in {0/0/\frac12,1/0/\frac{21}{32},2/0/\frac{13}{16},3/0/\frac{15}{16},
+      0/1/\frac{11}{32},1/1/\frac12,2/1/\frac{11}{16},3/1/\frac78,
+      0/2/\frac3{16},1/2/\frac5{16},2/2/\frac12,3/2/\frac34,
+      0/3/\frac1{16},1/3/\frac18,2/3/\frac14,3/3/\frac12}
+    \node[st] at (\a,\b) {$\v$};
+  \foreach \b in {0,...,3} \node[fin,accent] at (4,\b) {$1$};
+  \foreach \a in {0,...,3} \node[fin,accent2] at (\a,4) {$0$};
+  \node[font=\small] at (1.5,-0.6) {manches gagnées par $A$ $\longrightarrow$};
+  \node[font=\small,rotate=90] at (-0.75,1.5) {manches gagnées par $B$ $\longrightarrow$};
+\end{tikzpicture}
+\caption{Part de $A$ dans une partie en quatre manches, selon le score. Chaque valeur est la moyenne de ses deux successeurs (à droite si $A$ gagne la manche, en haut si $B$ la gagne) ; on remplit le tableau à partir des bords, où la partie est finie.}\label{fig:partis}
+\end{figure}
+
+La récurrence se résout. L'idée, celle de Fermat, est de jouer toutes les manches qui restent, même quand la partie est déjà décidée : cela ne change pas le vainqueur, et rend le décompte simple.
+
+\begin{theoreme}\label{thm:partis}
+Pour $i+j\geq1$, posons $N=i+j-1$. Alors
+\[
+  P(i,j)=\frac1{2^N}\sum_{k=0}^{j-1}\binom Nk .
+\]
+\end{theoreme}
+
+\begin{proof}
+\emph{Par le dénombrement.} Prolongeons fictivement la partie jusqu'à $N=i+j-1$ manches. En $N$ manches, l'un des joueurs a forcément atteint son but : si $A$ en a gagné moins de $i$, alors $B$ en a gagné au moins $N-(i-1)=j$. Et $A$ gagne la vraie partie si et seulement si $B$ gagne au plus $j-1$ des $N$ manches fictives : le prolongement ne change pas le premier joueur qui atteint son but. Les $2^N$ suites de résultats sont équiprobables, et celles où $B$ gagne exactement $k$ manches sont au nombre de $\binom Nk$.
+
+\emph{Par la récurrence.} Notons $G(i,j)$ le membre de droite. On a $G(0,j)=2^{-(j-1)}\sum_{k<j}\binom{j-1}k=1$ et $G(i,0)=0$ (somme vide). Pour $i,j\geq1$, avec $n=i+j-2$, la formule de Pascal donne
+\[
+  \sum_{k=0}^{j-1}\binom{n+1}k=1+\sum_{k=1}^{j-1}\Big(\binom nk+\binom n{k-1}\Big)=\sum_{k=0}^{j-1}\binom nk+\sum_{k=0}^{j-2}\binom nk ,
+\]
+c'est-à-dire $2^{n+1}G(i,j)=2^nG(i-1,j)+2^nG(i,j-1)$. La fonction $G$ vérifie donc les conditions de la proposition \ref{prop:recurrence}, et $G=P$.
+\end{proof}
+
+\begin{remarque}
+La remarque « Autre » du feuillet dit que, dans une partie en deux manches, la première manche « vaudra $\frac34$ ». C'est la part du joueur qui l'a gagnée ; la valeur de la manche, au sens que le feuillet donne lui-même à ce mot dans l'exemple \ref{ex:table}, est $\frac34-\frac12=\frac14$.
+\end{remarque}
+
+% ==========================================================
+\section{Trois joueurs}
+% ==========================================================
+
+Le raisonnement s'étend sans changement : avec trois joueurs à chances égales, chaque manche mène, avec probabilité $\frac13$, à l'un des trois états où l'un des besoins a diminué de $1$. Pour une partie en deux manches, notons $(a,b,c)$ les manches qui manquent à $A$, $B$, $C$.
+
+\begin{exemple}\label{ex:trois}
+En $(1,1,2)$, $A$ gagne tout de suite avec probabilité $\frac13$, et l'on passe en $(1,1,1)$ avec probabilité $\frac13$, où chacun a $\frac13$. La part de $A$ est $\frac13+\frac13\cdot\frac13=\frac4{9}=\frac{12}{27}$, celle de $B$ aussi, et celle de $C$ est $\frac19=\frac3{27}$. En $(1,2,2)$, $A$ gagne tout de suite avec probabilité $\frac13$ et passe sinon en $(1,1,2)$ ou en $(1,2,1)$, où il a $\frac4{9}$ : sa part est $\frac13+\frac23\cdot\frac49=\frac{17}{27}$, et celles de $B$ et $C$ valent $\frac{5}{27}$. Ce sont les nombres du feuillet.
+\end{exemple}
+
+Le prolongement fictif marche encore : en $(1,2,2)$, on joue $1+1+1=3$ manches fictives, et $A$ perd seulement si $B$ ou $C$ gagne deux manches avant que $A$ n'en gagne une. On laisse ce décompte en exercice (exercice \ref{exo:trois}).
+
+% ==========================================================
+\section{Les dés}\label{sec:des}
+% ==========================================================
+
+Le feuillet de la vue 42 commence par les tables de dés : avec deux dés, les sommes $2,3,\dots,7$ se font de $1,2,\dots,6$ façons ; avec trois dés, les sommes $3,4,\dots,10$ de $1,3,6,10,15,21,25,27$ façons, puis symétriquement (figure \ref{fig:troisdes}). Ces nombres sont des dénombrements de solutions d'équations en entiers.
+
+\begin{proposition}\label{prop:troisdes}
+Le nombre de façons d'obtenir la somme $s$ avec trois dés est
+\[
+  \binom{s-1}2-3\binom{s-7}2+3\binom{s-13}2 ,\qquad 3\leq s\leq18 .
+\]
+\end{proposition}
+
+\begin{proof}
+On compte les triplets $(a,b,c)$ d'entiers de $\{1,\dots,6\}$ de somme $s$. Sans la borne $6$, les solutions en entiers $\geq1$ sont au nombre de $\binom{s-1}2$ : on choisit deux séparations parmi les $s-1$ intervalles entre $s$ unités alignées. Celles où $a\geq7$ correspondent, par $a\mapsto a-6$, aux solutions de somme $s-6$, au nombre de $\binom{s-7}2$, et de même pour $b$ et $c$ ; celles où deux variables dépassent $6$ sont au nombre de $\binom{s-13}2$, et trois ne peuvent pas dépasser $6$ à la fois pour $s\leq18$. La formule du crible conclut.
+\end{proof}
+
+Pour $s=10$, on trouve $\binom92-3\binom32=36-9=27$, la valeur du feuillet.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[xscale=0.48,yscale=0.1]
+  \draw[->,gray] (2.3,0) -- (18.9,0);
+  \foreach \s/\c in {3/1,4/3,5/6,6/10,7/15,8/21,9/25,10/27,11/27,12/25,13/21,14/15,15/10,16/6,17/3,18/1} {
+    \fill[accent!70] (\s-0.38,0) rectangle (\s+0.38,\c);
+    \node[font=\scriptsize,above] at (\s,\c) {$\c$};
+    \node[font=\scriptsize,below] at (\s,0) {$\s$};
+  }
+\end{tikzpicture}
+\caption{Nombre de façons d'obtenir chaque somme avec trois dés, sur $6^3=216$ issues. Le feuillet donne la moitié gauche du tableau, de $3$ à $10$.}\label{fig:troisdes}
+\end{figure}
+
+Vient ensuite la question qui avait occupé le chevalier de Méré : en combien de coups peut-on parier, à jeu égal, d'amener un six ?
+
+\begin{proposition}\label{prop:six}
+La probabilité d'amener au moins un six en $n$ coups d'un dé est $1-\big(\frac56\big)^n$. Elle vaut $\frac{11}{36}$, $\frac{91}{216}$, $\frac{671}{1296}$, $\frac{4651}{7776}$ pour $n=2,3,4,5$ : le pari est désavantageux en trois coups, avantageux en quatre.
+\end{proposition}
+
+\begin{proof}
+L'événement contraire, n'amener aucun six, est l'intersection de $n$ événements indépendants de probabilité $\frac56$. Le reste est un calcul.
+\end{proof}
+
+Le feuillet en tire une remarque fine : « on ne peut jamais trouver un nombre de coups pour jouer jeu égal ».
+
+\begin{proposition}\label{prop:jamais}
+Pour aucun $n$, la probabilité d'amener au moins un six en $n$ coups ne vaut exactement $\frac12$.
+\end{proposition}
+
+\begin{proof}
+L'égalité $1-\big(\frac56\big)^n=\frac12$ s'écrit $6^n=2\cdot5^n$. Pour $n=0$, $1\neq2$. Pour $n\geq1$, $3$ divise $6^n$ mais pas $2\cdot5^n$, puisque $3$ est premier et ne divise ni $2$ ni $5$.
+\end{proof}
+
+Pour le double six avec deux dés, la probabilité de succès en $n$ coups est $1-\big(\frac{35}{36}\big)^n$. Le feuillet donne $\frac{71}{1296}$, $\frac{3781}{46656}$ et $\frac{178991}{1679616}$ pour $2$, $3$, $4$ coups, puis conclut : « en 24 coups, un peu de désavantage ; en 25 coups, un peu d'avantage ». En effet $1-\big(\frac{35}{36}\big)^{24}\approx0{,}4914$ et $1-\big(\frac{35}{36}\big)^{25}\approx0{,}5055$ (figure \ref{fig:mere}). C'est le paradoxe du chevalier de Méré : la « règle de proportion », qui passe de $4$ coups pour une chance sur $6$ à $24$ coups pour une chance sur $36$, se trompe d'un coup.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[xscale=0.27,yscale=4.2]
+  \draw[->,gray] (0,0) -- (41,0) node[right,font=\small] {$n$};
+  \draw[->,gray] (0,0) -- (0,0.85);
+  \foreach \n in {10,20,30,40} \node[below,font=\scriptsize] at (\n,0) {$\n$};
+  \foreach \y in {0.25,0.5,0.75} \node[left,font=\scriptsize] at (0,\y) {$\y$};
+  \draw[gray,dashed] (0,0.5) -- (40,0.5);
+  \draw[accent,thick] plot[domain=1:40,samples=40] (\x,{1-pow(35/36,\x)});
+  \draw[accent2,thick] plot[domain=1:12,samples=12] (\x,{1-pow(5/6,\x)});
+  \node[circle,fill=accent,inner sep=1.1pt] at (24,{1-pow(35/36,24)}) {};
+  \node[circle,fill=accent,inner sep=1.1pt] at (25,{1-pow(35/36,25)}) {};
+  \draw[accent,thin] (24,0.49) -- (24,0.3) node[below,font=\scriptsize] {$24$};
+  \draw[accent,thin] (25,0.506) -- (27,0.62) node[right,font=\scriptsize] {$25$};
+  \node[accent2,font=\scriptsize,above left] at (4,0.6) {un six};
+  \node[accent,font=\scriptsize,right] at (32,0.6) {double six};
+\end{tikzpicture}
+\caption{Probabilité de réussir en $n$ coups : au moins un six avec un dé ($1-(5/6)^n$, seuil entre $3$ et $4$), au moins un double six avec deux dés ($1-(35/36)^n$, seuil entre $24$ et $25$).}\label{fig:mere}
+\end{figure}
+
+Le feuillet s'arrête sur une question sans réponse : « avec combien de dés entreprendre de faire du premier coup deux six ». Avec $n$ dés, le nombre de six suit la loi binomiale $\mathcal B(n,\frac16)$, et la probabilité d'en avoir au moins deux est $1-\big(\frac56\big)^n-n\cdot\frac16\big(\frac56\big)^{n-1}$. Elle vaut environ $0{,}457$ pour $9$ dés et $0{,}515$ pour $10$ : il faut $10$ dés.
+
+% ==========================================================
+\section{Dénombrements}
+% ==========================================================
+
+La seconde main fait des comptes de rangements, qu'elle appelle « combinaisons d'ordre » et « de variété ». On y lit $6!=720$ ordres pour six objets ; $\frac{6!}{3!}=120$ ; $\frac{6!}{2!\,2!\,2!}=90$ façons d'ordonner six lettres formant trois paires ; et le nombre d'anagrammes des huit lettres $a,b,c,d,e,i,o,s$ où $b$, $c$, $d$ ne sont jamais ensemble.
+
+\begin{proposition}
+Le nombre de mots formés des huit lettres distinctes $a,b,c,d,e,i,o,s$ où les trois lettres $b,c,d$ ne sont pas consécutives est $8!-6!\cdot3!=36\,000$.
+\end{proposition}
+
+\begin{proof}
+On retire des $8!$ mots ceux où $b,c,d$ forment un bloc. On compte ceux-ci en collant le bloc : il reste six objets, soit $6!$ ordres, et $3!$ ordres à l'intérieur du bloc.
+\end{proof}
+
+\begin{remarque}
+D'autres comptes de cette main sont moins sûrs. Le nombre d'ancêtres à la trentième génération est bien $2^{30}$, mais ce n'est pas le total des trente générations, qui est $2^{31}-2$ ; et le nombre de positions de huit pions, $8!\cdot2^8=10\,321\,920$, ignore que les pions se bloquent.
+\end{remarque}
+
+% ==========================================================
+\section{La loterie de Gênes}\label{sec:loterie}
+% ==========================================================
+
+À la loterie de Gênes du feuillet, on tire $5$ numéros parmi $100$. Le joueur a choisi $5$ numéros, et reçoit, pour une pistole misée, $20\,000$, $5\,000$, $300$ ou $4$ pistoles s'il en a $5$, $4$, $3$ ou $2$ parmi les numéros tirés. Le feuillet compte les tirages :
+\[
+  \binom{100}5=75\,287\,520,
+\]
+« en multipliant seulement $80$ par $97$, $98$ et $99$ », puisque $\binom{100}5=\frac{100\cdot99\cdot98\cdot97\cdot96}{120}$ et $\frac{100\cdot96}{120}=80$.
+
+\begin{proposition}\label{prop:hyper}
+Le nombre de tirages qui contiennent exactement $k$ des numéros du joueur est $\binom5k\binom{95}{5-k}$. Ces nombres valent $1$, $475$, $44\,650$, $1\,384\,150$, $15\,917\,725$ et $57\,940\,519$ pour $k=5,4,3,2,1,0$, et leur somme est $\binom{100}5$ (identité de Vandermonde).
+\end{proposition}
+
+\begin{proof}
+Un tel tirage s'obtient en choisissant $k$ numéros parmi les $5$ du joueur et $5-k$ parmi les $95$ autres. La somme sur $k$ compte chaque tirage une fois, selon son nombre de numéros communs avec le choix du joueur : c'est $\sum_k\binom5k\binom{95}{5-k}=\binom{100}5$.
+\end{proof}
+
+Le feuillet écrit ces nombres à l'aide des nombres figurés : $\binom{95}2$, $\binom{95}3$, $\binom{95}4$ sont le « triangle de $94$ », le « tétraèdre de $93$ » et le « triangle-triangle de $92$ ». Il en donne le « fondement », $\binom{95}2=94+93+\dots+1$, cas particulier de l'identité $\binom{n+1}{k+1}=\sum_{m=k}^n\binom mk$, qu'on démontre en itérant la formule de Pascal.
+
+La variable aléatoire $X$, nombre de numéros gagnants, suit la \emph{loi hypergéométrique} : $\Prob(X=k)=\binom5k\binom{95}{5-k}\big/\binom{100}5$. Le gain $g(X)$ du joueur a pour espérance
+\[
+  \E[g(X)]=\frac{20\,000\cdot1+5\,000\cdot475+300\cdot44\,650+4\cdot1\,384\,150}{75\,287\,520}=\frac{21\,326\,600}{75\,287\,520}\approx0{,}283 .
+\]
+Pour une pistole misée, le joueur n'en récupère en moyenne qu'un peu plus du quart : la mise vaut « comme $1$ à un peu plus de $3\frac12$ », dit le feuillet, et sans le paiement de deux numéros, « un peu plus de $4\frac34$ ». Les deux rapports sont justes ($\approx3{,}53$ et $\approx4{,}77$).
+
+\begin{remarque}
+Le feuillet commet deux petites erreurs d'arithmétique dans la suite de ce calcul ($3764\frac34$ pour $3764\frac38$, et $13\frac12$ pour $13\frac13$), et une soustraction en cascade qui n'a pas de sens probabiliste net. Ces écarts ne touchent pas la conclusion.
+\end{remarque}
+
+% ==========================================================
+\section{Exercices}
+% ==========================================================
+
+\begin{exercice}\label{exo:valeurs}
+Calculer $P(i,j)$ par le théorème \ref{thm:partis} pour la partie en quatre manches, et retrouver la valeur de chaque manche : $\frac5{32}$, $\frac5{32}$, $\frac4{32}$, $\frac2{32}$ quand $A$ mène successivement $1$-$0$, $2$-$0$, $3$-$0$, puis gagne.
+\end{exercice}
+
+\begin{exercice}\label{exo:trois}
+Retrouver les parts $\frac{17}{27}$, $\frac5{27}$, $\frac5{27}$ de l'exemple \ref{ex:trois} par le prolongement fictif : on joue trois manches, et l'on compte les $27$ suites de vainqueurs.
+\end{exercice}
+
+\begin{exercice}\label{exo:esperance}
+Montrer que, à la loterie de Gênes, le nombre moyen de numéros gagnants est $\E[X]=\frac{5\cdot5}{100}=\frac14$, sans calculer la loi de $X$.
+\end{exercice}
+
+\begin{exercice}\label{exo:somme}
+Montrer que le nombre de façons d'obtenir la somme $s$ avec deux dés est $6-|s-7|$ pour $2\leq s\leq12$.
+\end{exercice}
+
+% ==========================================================
+\section{Corrigés}
+% ==========================================================
+
+\paragraph{Exercice 1.} On trouve $P(4,4)=\frac12$, $P(3,4)=\frac{21}{32}$, $P(2,4)=\frac{13}{16}$, $P(1,4)=\frac{15}{16}$, et $1$ pour la victoire. Par exemple $P(3,4)=2^{-6}\big(\binom60+\binom61+\binom62+\binom63\big)=\frac{42}{64}$. Les écarts successifs sont $\frac{21}{32}-\frac{16}{32}=\frac5{32}$, $\frac{26}{32}-\frac{21}{32}=\frac5{32}$, $\frac{30}{32}-\frac{26}{32}=\frac4{32}$ et $\frac{32}{32}-\frac{30}{32}=\frac2{32}$, les nombres de la vue 41.
+
+\paragraph{Exercice 2.} $A$ perd si et seulement si, dans les trois manches fictives, $B$ ou $C$ gagne deux manches avant que $A$ n'en gagne une. Comme une seule manche suffit à $A$, $A$ perd exactement quand il ne gagne aucune des deux premières manches et que celles-ci sont gagnées par le même adversaire : $BB\ast$ ou $CC\ast$, soit $2\cdot3=6$ suites, plus les suites où $B$ et $C$ gagnent chacun une des deux premières et où la troisième n'est pas à $A$ : $BCB$, $BCC$, $CBB$, $CBC$, soit $4$ suites. $A$ perd dans $10$ cas sur $27$ et gagne dans $17$. Par symétrie, $B$ et $C$ se partagent les $10$ cas restants, soit $\frac5{27}$ chacun.
+
+\paragraph{Exercice 3.} Écrivons $X=\sum_{m=1}^5\mathbf 1_{E_m}$, où $E_m$ est l'événement « le $m$-ième numéro du joueur est tiré ». Chaque numéro est tiré avec probabilité $\frac5{100}$, puisqu'un tirage est une partie à $5$ éléments choisie uniformément. Par linéarité, $\E[X]=5\cdot\frac5{100}=\frac14$. Les événements $E_m$ ne sont pas indépendants, mais la linéarité de l'espérance n'en a pas besoin.
+
+\paragraph{Exercice 4.} On compte les couples $(a,b)\in\{1,\dots,6\}^2$ tels que $a+b=s$ : $a$ décrit les entiers de $\max(1,s-6)$ à $\min(6,s-1)$, soit $s-1$ valeurs pour $s\leq7$ et $13-s$ valeurs pour $s\geq7$, c'est-à-dire $6-|s-7|$.
+
+\begin{thebibliography}{9}
+\bibitem{naf} Bibliothèque nationale de France, Nouvelles acquisitions françaises 5176, vues 40 à 42 et 47 à 51 ; transcription et lecture modernisée sur \url{https://germain.commutator.io}.
+\bibitem{pf} B. Pascal, lettre à Fermat du 29 juillet 1654, dans \emph{Œuvres complètes}, éd. J. Mesnard, Desclée de Brouwer, t. II, 1970.
+\bibitem{huygens} C. Huygens, \emph{De ratiociniis in ludo aleae}, 1657, dans \emph{Œuvres complètes}, t. XIV, Société hollandaise des sciences, 1920.
+\bibitem{hald} A. Hald, \emph{A History of Probability and Statistics and Their Applications before 1750}, Wiley, 1990, chapitres 4 à 6.
+\bibitem{edwards} A. W. F. Edwards, \emph{Pascal's Arithmetical Triangle}, Griffin, 1987.
+\end{thebibliography}
+
+\paragraph{Source.} Feuillets anonymes du XVII\textsuperscript{e} siècle de la BnF (NAF 5176), lus dans la transcription du dépôt germain-project, qui en relève les erreurs et les rapprochements avec Huygens et Pascal. Tous les nombres de la fiche ont été recalculés. Elle corrige la valeur de la première manche d'une partie en deux, signale les erreurs d'arithmétique de la loterie et de quelques dénombrements, et répond à la dernière question du feuillet ($10$ dés pour amener deux six du premier coup).
+
+\end{document}
