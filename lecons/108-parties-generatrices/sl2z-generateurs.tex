@@ -1,0 +1,304 @@
+% SL2(Z), GL2(Z) : générateurs et présentations, d'après un formulaire de Grothendieck
+% Compile avec pdflatex, xelatex ou lualatex.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+  \IfFileExists{lmodern.sty}{\usepackage{lmodern}}{}
+  \usepackage[french]{babel}
+\else
+  \usepackage{fontspec}
+  \usepackage{polyglossia}
+  \setdefaultlanguage{french}
+\fi
+\usepackage[margin=2.6cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{tikz}
+\input{../figures/tikz-setup.tex}
+\usepackage[hidelinks]{hyperref}
+\emergencystretch=1.5em
+
+% ---------- Environnements ----------
+\theoremstyle{plain}
+\newtheorem{theoreme}{Théorème}[section]
+\newtheorem{proposition}[theoreme]{Proposition}
+\newtheorem{lemme}[theoreme]{Lemme}
+\newtheorem{corollaire}[theoreme]{Corollaire}
+\theoremstyle{definition}
+\newtheorem{definition}[theoreme]{Définition}
+\newtheorem{exemple}[theoreme]{Exemple}
+\newtheorem{exercice}{Exercice}
+\theoremstyle{remark}
+\newtheorem{remarque}[theoreme]{Remarque}
+
+% ---------- Notations ----------
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Hp}{\mathbb{H}}
+\newcommand{\SL}{\mathrm{SL}}
+\newcommand{\GL}{\mathrm{GL}}
+\newcommand{\PSL}{\mathrm{PSL}}
+
+\title{Engendrer et présenter \texorpdfstring{$\SL_2(\Z)$}{SL2(Z)}\\[2pt]
+\large L'algorithme d'Euclide, le ping-pong et un formulaire de Grothendieck}
+\author{Michel Hua, d'après le dossier 144 des archives de Grothendieck}
+\date{Octobre 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Le groupe $\SL_2(\Z)$ des matrices entières de déterminant $1$ est engendré par deux matrices très simples, et l'on sait écrire toutes les relations entre elles : $\SL_2(\Z)$ est le produit amalgamé $\Z/4*_{\Z/2}\Z/6$, et son quotient par $\pm I$ est le produit libre $\Z/2*\Z/3$. La première affirmation est l'algorithme d'Euclide, la seconde un argument de dynamique, le lemme du ping-pong, appliqué à l'action par homographies sur la droite réelle. Grothendieck a dressé en 1981 et 1982 un « formulaire » de ces matrices, parce que $\SL_2(\Z)$ et $\GL_2(\Z)$ sont, à $\pm I$ près, des groupes fondamentaux de la sphère privée de trois points, objets centraux de ses « Teichmülleries ». Cette fiche démontre les présentations, puis relit le formulaire, dont elle vérifie toutes les relations et corrige deux lignes.
+\end{abstract}
+
+\paragraph{Leçons concernées.} 108 (Exemples de parties génératrices d'un groupe. Applications), et en partie 101 (Groupe opérant sur un ensemble. Exemples et applications) et 106 (Groupe linéaire d'un espace vectoriel de dimension finie, sous-groupes de $\GL(E)$. Applications).
+
+\paragraph{Développements possibles.} $\SL_2(\Z)$ est engendré par $S$ et $T$ (théorème \ref{thm:generateurs}) ; $\PSL_2(\Z)\simeq\Z/2*\Z/3$ par le ping-pong (théorème \ref{thm:pingpong}) et la présentation de $\SL_2(\Z)$ qui s'en déduit (corollaire \ref{cor:presentation}) ; le théorème de Sanov (proposition \ref{prop:sanov}). Le fichier \texttt{SL2ZGenerateurs.lean} vérifie avec Mathlib le théorème \ref{thm:generateurs} et toutes les relations du formulaire de la section \ref{sec:formulaire}, y compris les deux lignes fausses.
+
+\paragraph{Prérequis.} Groupes, sous-groupe engendré, produit libre et présentation par générateurs et relations, action de groupe, division euclidienne.
+
+\paragraph{Notations.} On note $I$ la matrice identité, $\omega=-I$, et
+\[
+  S=\begin{pmatrix}0&-1\\1&0\end{pmatrix},\qquad T=\begin{pmatrix}1&1\\0&1\end{pmatrix}.
+\]
+Une matrice $\begin{pmatrix}a&b\\c&d\end{pmatrix}$ de $\SL_2(\R)$ agit sur $\R\cup\{\infty\}$ et sur le demi-plan de Poincaré $\Hp=\{z\in\C:\operatorname{Im}z>0\}$ par l'homographie $z\mapsto\frac{az+b}{cz+d}$ ; $I$ et $-I$ agissent de la même façon, et $\PSL_2(\Z)=\SL_2(\Z)/\{\pm I\}$.
+
+\tableofcontents
+
+% ==========================================================
+\section{Engendrer : l'algorithme d'Euclide}
+% ==========================================================
+
+La matrice $T$ ajoute la première colonne à la seconde quand on la multiplie à droite, et $T^n$ en ajoute $n$ fois : $\begin{pmatrix}a&b\\c&d\end{pmatrix}T^n=\begin{pmatrix}a&b+na\\c&d+nc\end{pmatrix}$. Multiplier à gauche par $T^n$ ajoute $n$ fois la seconde ligne à la première, et multiplier à gauche par $S$ échange les deux lignes au signe près. Ce sont les opérations de l'algorithme d'Euclide.
+
+\begin{theoreme}\label{thm:generateurs}
+Le groupe $\SL_2(\Z)$ est engendré par $S$ et $T$.
+\end{theoreme}
+
+\begin{proof}
+Soit $G$ le sous-groupe engendré par $S$ et $T$ ; il contient $S^2=\omega$. Soit $M=\begin{pmatrix}a&b\\c&d\end{pmatrix}\in\SL_2(\Z)$ ; montrons $M\in G$ par récurrence sur $|c|$.
+
+Si $c=0$, alors $ad=1$, donc $a=d=\pm1$ et $M=\pm\begin{pmatrix}1&\pm b\\0&1\end{pmatrix}=\pm T^{\pm b}$, qui est dans $G$.
+
+Si $c\neq0$, écrivons la division euclidienne $a=qc+r$ avec $0\leq r<|c|$. Alors
+\[
+  T^{-q}M=\begin{pmatrix}r&b-qd\\c&d\end{pmatrix},\qquad ST^{-q}M=\begin{pmatrix}-c&-d\\r&b-qd\end{pmatrix},
+\]
+et cette dernière matrice a un coefficient en bas à gauche $r$ de valeur absolue $<|c|$. Par récurrence, elle est dans $G$, donc $M=T^qS^{-1}(ST^{-q}M)$ aussi.
+\end{proof}
+
+\begin{exemple}
+Pour $M=\begin{pmatrix}4&9\\3&7\end{pmatrix}$, on calcule $T^{-1}M=\begin{pmatrix}1&2\\3&7\end{pmatrix}$, puis $ST^{-1}M=\begin{pmatrix}-3&-7\\1&2\end{pmatrix}$, puis $T^3ST^{-1}M=\begin{pmatrix}0&-1\\1&2\end{pmatrix}=ST^2$. Donc $M=TS^{-1}T^{-3}ST^2$. Les exposants de $T$ dans la réduction, $1$ puis $-3$, sont les quotients des divisions euclidiennes sur la première colonne : $4=1\cdot3+1$, puis $-3=(-3)\cdot1+0$. C'est l'algorithme d'Euclide appliqué au couple $(4,3)$.
+\end{exemple}
+
+Deux éléments d'ordre fini jouent un rôle particulier. Avec les notations de Grothendieck,
+\[
+  \sigma=\begin{pmatrix}0&1\\-1&0\end{pmatrix}=S^{-1},\qquad \rho=\begin{pmatrix}0&1\\-1&1\end{pmatrix}=(TS)^{-1},
+\]
+on a $\sigma^2=\rho^3=\omega$, donc $\sigma$ est d'ordre $4$ et $\rho$ d'ordre $6$. Comme $S=\sigma^{-1}$ et $T=\rho^{-1}S^{-1}=\rho^{-1}\sigma$, le théorème \ref{thm:generateurs} dit aussi que $\SL_2(\Z)$ est engendré par $\sigma$ et $\rho$.
+
+\begin{remarque}
+Ce sont, à $\pm I$ près, les seuls types d'éléments d'ordre fini : un élément d'ordre fini de $\SL_2(\Z)$ a une trace entière $\zeta+\zeta^{-1}=2\cos\theta$, donc $\theta\in\{0,\frac\pi3,\frac\pi2,\frac{2\pi}3,\pi\}$, et son ordre vaut $1$, $2$, $3$, $4$ ou $6$ (exercice \ref{exo:ordres}). C'est la restriction cristallographique de la fiche 102.
+\end{remarque}
+
+% ==========================================================
+\section{Présenter : le lemme du ping-pong}
+% ==========================================================
+
+Savoir que $\sigma$ et $\rho$ engendrent ne dit pas quelles relations les lient. On en connaît déjà : $\sigma^4=1$ et $\sigma^2=\rho^3$. La question est de savoir s'il y en a d'autres. On la règle d'abord dans le quotient $\PSL_2(\Z)$, où les images $\bar\sigma$ et $\bar\rho$ sont d'ordre $2$ et $3$.
+
+\begin{lemme}[du ping-pong]\label{lem:pingpong}
+Soit $G$ un groupe qui agit sur un ensemble $X$, et $A$, $B$ deux sous-groupes de $G$, avec $|A|\geq2$ et $|B|\geq3$. On suppose qu'il existe deux parties disjointes non vides $X_A$ et $X_B$ de $X$ telles que
+\[
+  a(X_B)\subset X_A\ \text{ pour } a\in A\setminus\{1\},\qquad b(X_A)\subset X_B\ \text{ pour } b\in B\setminus\{1\}.
+\]
+Alors le morphisme naturel $A*B\to G$ est injectif.
+\end{lemme}
+
+\begin{proof}
+Un élément non trivial de $A*B$ s'écrit de façon unique comme un mot réduit $g=x_1x_2\cdots x_m$, les lettres $x_k$ étant alternativement dans $A\setminus\{1\}$ et $B\setminus\{1\}$. Il faut montrer que son image dans $G$ n'est pas l'identité.
+
+Si le mot commence et finit par une lettre de $B$, alors $g(X_A)\subset X_B$ : la dernière lettre envoie $X_A$ dans $X_B$, la suivante $X_B$ dans $X_A$, et ainsi de suite jusqu'à la première, qui envoie dans $X_B$. Comme $X_A$ est non vide et disjoint de $X_B$, $g$ n'agit pas trivialement.
+
+Dans les autres cas, on se ramène au précédent par conjugaison. Si $g$ commence et finit par une lettre de $A$, on choisit $b\in B\setminus\{1\}$ ; le mot $bgb^{-1}$ est réduit, commence et finit dans $B$. Si $g$ commence par une lettre de $A$ et finit par $x_m\in B$, on choisit $b\in B\setminus\{1,x_m^{-1}\}$, ce qui est possible car $|B|\geq3$ ; alors $bgb^{-1}$ est réduit, de dernière lettre $x_mb^{-1}\neq1$. Le cas où $g$ commence dans $B$ et finit dans $A$ se traite de même avec $b^{-1}gb$. Dans chaque cas, le conjugué n'agit pas trivialement, donc $g$ non plus.
+\end{proof}
+
+\begin{theoreme}\label{thm:pingpong}
+Le morphisme $\Z/2*\Z/3\to\PSL_2(\Z)$ qui envoie les générateurs sur $\bar\sigma$ et $\bar\rho$ est un isomorphisme.
+\end{theoreme}
+
+\begin{proof}
+Il est surjectif, puisque $\sigma$ et $\rho$ engendrent $\SL_2(\Z)$. Pour l'injectivité, faisons agir $\PSL_2(\Z)$ sur l'ensemble $X=\R\setminus\Q$ des irrationnels : une homographie à coefficients entiers envoie un irrationnel sur un irrationnel, et $\pm I$ agissent trivialement. Les éléments en jeu agissent par
+\[
+  \bar\sigma(x)=-\frac1x,\qquad \bar\rho(x)=\frac1{1-x},\qquad \bar\rho^2(x)=1-\frac1x .
+\]
+Posons $X_A=X\cap\,]-\infty,0[$ et $X_B=X\cap\,]0,+\infty[$, avec $A=\langle\bar\sigma\rangle$ et $B=\langle\bar\rho\rangle$. Pour $x>0$, $\bar\sigma(x)<0$ : $\bar\sigma(X_B)\subset X_A$. Pour $x<0$, $1-x>1$, donc $\bar\rho(x)\in\,]0,1[$, et $1-\frac1x>1$ : $\bar\rho(X_A)$ et $\bar\rho^2(X_A)$ sont dans $X_B$. Le lemme \ref{lem:pingpong} s'applique (figure \ref{fig:pingpong}).
+\end{proof}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=1.25,>={Stealth[length=2.4mm]}]
+  \draw[->,gray] (-4.2,0) -- (4.4,0);
+  \foreach \x/\l in {-3/-3,-2/-2,-1/-1,0/0,1/1,2/2,3/3} \draw[gray] (\x,0.06) -- (\x,-0.06) node[below,font=\scriptsize] {$\l$};
+  \draw[accent2,very thick] (-4,0) -- (-0.04,0);
+  \draw[accent,very thick] (0.04,0) -- (4.2,0);
+  \node[accent2,font=\small] at (-2.2,-1.25) {$X_A$ : irrationnels $<0$};
+  \node[accent,font=\small] at (2.6,-1.25) {$X_B$ : irrationnels $>0$};
+  \draw[->,accent2,thick] (2.5,-0.3) to[bend left=30] node[below,font=\small] {$\bar\sigma$} (-2.5,-0.3);
+  \draw[->,accent,thick] (-1.6,0.15) to[bend left=40] node[above,font=\small] {$\bar\rho$} (0.5,0.15);
+  \draw[->,accent,thick] (-2.6,0.15) to[bend left=40] node[above,font=\small] {$\bar\rho^{2}$} (1.7,0.15);
+  \draw[accent,decorate,decoration={brace,amplitude=4pt}] (0.05,1.75) -- (0.98,1.75) node[midway,above=3pt,font=\scriptsize] {$\bar\rho(X_A)$};
+  \draw[accent,decorate,decoration={brace,amplitude=4pt}] (1.02,1.75) -- (4.1,1.75) node[midway,above=3pt,font=\scriptsize] {$\bar\rho^2(X_A)$};
+\end{tikzpicture}
+\caption{Le ping-pong de $\PSL_2(\Z)$ sur les irrationnels : $\bar\sigma$ renvoie les positifs chez les négatifs, $\bar\rho$ et $\bar\rho^2$ renvoient les négatifs chez les positifs, dans $]0,1[$ et dans $]1,+\infty[$.}\label{fig:pingpong}
+\end{figure}
+
+La présentation de $\SL_2(\Z)$ s'en déduit, car on connaît le noyau de $\SL_2(\Z)\to\PSL_2(\Z)$.
+
+\begin{corollaire}\label{cor:presentation}
+$\SL_2(\Z)$ admet la présentation $\langle\sigma,\rho\mid\sigma^4=1,\ \sigma^2=\rho^3\rangle$, c'est-à-dire $\SL_2(\Z)\simeq\Z/4*_{\Z/2}\Z/6$, produit amalgamé de $\langle\sigma\rangle$ et $\langle\rho\rangle$ le long de leur sous-groupe commun $\{\pm I\}$.
+\end{corollaire}
+
+\begin{proof}
+Soit $\Gamma=\langle a,b\mid a^4=1,\ a^2=b^3\rangle$ et $f:\Gamma\to\SL_2(\Z)$, $a\mapsto\sigma$, $b\mapsto\rho$ : elle est bien définie, puisque $\sigma^4=1$ et $\sigma^2=\rho^3$, et surjective. L'élément $z=a^2=b^3$ commute avec $a$ et avec $b$, donc il est central, et $z^2=a^4=1$. Le quotient $\Gamma/\langle z\rangle$ a pour présentation $\langle a,b\mid a^2=1,\ b^3=1\rangle$, c'est $\Z/2*\Z/3$, et $f$ induit l'isomorphisme du théorème \ref{thm:pingpong}. Si $f(g)=I$, l'image de $g$ dans $\Z/2*\Z/3$ est triviale, donc $g\in\langle z\rangle=\{1,z\}$ ; et $f(z)=\omega\neq I$. Donc $g=1$, et $f$ est injective.
+\end{proof}
+
+\begin{remarque}
+On a de même $\GL_2(\Z)\simeq D_6*_{D_2}D_4$, où $D_m$ est le groupe diédral d'ordre $2m$ ; le quotient $\mathrm{PGL}_2(\Z)$ est le groupe engendré par trois réflexions $\Gamma_0,\Gamma_1,\Gamma_\infty$ avec les seules relations $\Gamma_i^2=1$, $(\Gamma_0\Gamma_\infty)^2=1$ et $(\Gamma_1\Gamma_0)^3=1$ : un groupe de Coxeter de type $(2,3,\infty)$, qui pave $\Hp$ par des triangles d'angles $\frac\pi2$, $\frac\pi3$ et $0$. C'est la forme que Grothendieck donne aux présentations dans son formulaire.
+\end{remarque}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=2.1]
+  \draw[->,gray] (-1.8,0) -- (1.9,0) node[right,font=\small] {$\operatorname{Re}z$};
+  \draw[->,gray] (0,-0.05) -- (0,2.45);
+  \fill[accent!18] (-0.5,2.3) -- (-0.5,0.866) arc[start angle=120,end angle=60,radius=1] -- (0.5,2.3) -- cycle;
+  \fill[accent2!15] (0,0) arc[start angle=180,end angle=120,radius=1] arc[start angle=60,end angle=120,radius=1] arc[start angle=60,end angle=0,radius=1] -- cycle;
+  \draw[gray!60] (-1,0) arc[start angle=180,end angle=0,radius=1];
+  \draw[gray!60] (0,0) arc[start angle=180,end angle=0,radius=1];
+  \draw[gray!60] (-2,0) arc[start angle=180,end angle=0,radius=1];
+  \foreach \x in {-1.5,-0.5,0.5,1.5} \draw[gray!60] (\x,0.866) -- (\x,2.3);
+  \node[accent,font=\small] at (0,1.6) {$F$};
+  \node[font=\small] at (1,1.6) {$T(F)$};
+  \node[font=\small] at (-1,1.6) {$T^{-1}(F)$};
+  \node[accent2,font=\small] at (0,0.62) {$S(F)$};
+  \fill (0,1) circle (0.7pt) node[above right,font=\scriptsize] {$i$};
+  \fill (-0.5,0.866) circle (0.7pt) node[left,font=\scriptsize] {$e^{2i\pi/3}$};
+  \fill (0.5,0.866) circle (0.7pt) node[right,font=\scriptsize] {$e^{i\pi/3}$};
+  \foreach \x/\l in {-1/-1,-0.5/-\frac12,0.5/\frac12,1/1} \node[below,font=\scriptsize] at (\x,0) {$\l$};
+\end{tikzpicture}
+\caption{Le domaine fondamental $F=\{|z|\geq1,\ |\operatorname{Re}z|\leq\frac12\}$ de l'action de $\PSL_2(\Z)$ sur $\Hp$, et trois de ses images. Les points fixés par un élément d'ordre fini sont $i$ (par $\bar\sigma$, d'ordre $2$) et $e^{i\pi/3}$ (par $\bar\rho$, d'ordre $3$).}\label{fig:domaine}
+\end{figure}
+
+\begin{remarque}
+L'action sur $\Hp$ donne une autre preuve du théorème \ref{thm:generateurs}, plus géométrique : tout point de $\Hp$ se ramène dans le domaine $F$ de la figure \ref{fig:domaine} par des translations $T^n$ et l'inversion $S$, en augmentant $\operatorname{Im}z$ à chaque inversion. Les stabilisateurs des points $i$ et $e^{i\pi/3}$ sont les groupes cycliques $\langle\bar\sigma\rangle$ et $\langle\bar\rho\rangle$ du produit libre.
+\end{remarque}
+
+% ==========================================================
+\section{Un sous-groupe libre : le théorème de Sanov}
+% ==========================================================
+
+Le même argument produit des groupes libres. Ce sont eux qui intéressent Grothendieck : le groupe fondamental de la sphère privée de trois points est libre de rang $2$, et ses trois lacets autour de $0$, $1$ et $\infty$ ont pour images, dans son formulaire, des matrices unipotentes de $\SL_2(\Z)$.
+
+\begin{proposition}[Sanov]\label{prop:sanov}
+Les matrices $A=\begin{pmatrix}1&2\\0&1\end{pmatrix}$ et $B=\begin{pmatrix}1&0\\2&1\end{pmatrix}$ engendrent un sous-groupe libre de rang $2$ de $\SL_2(\Z)$.
+\end{proposition}
+
+\begin{proof}
+On applique le lemme du ping-pong (version pour deux groupes infinis cycliques, dont la preuve est la même) à l'action sur $X=\R\setminus\Q$, avec $X_A=\{|x|>1\}$ et $X_B=\{|x|<1\}$. Pour $k\neq0$, $A^k(x)=x+2k$ envoie $X_B$ dans $X_A$, puisque $|x+2k|\geq2|k|-|x|>1$. Et $B^k(x)=\frac x{2kx+1}$ envoie $X_A$ dans $X_B$ : pour $|x|>1$, $|2kx+1|\geq2|k||x|-1>|x|$. Aucun mot réduit non trivial en $A$ et $B$ n'est donc l'identité, même modulo $\pm I$.
+\end{proof}
+
+\begin{remarque}
+Ces matrices sont, au signe près, les carrés $\varrho_0=\varepsilon_0^2$ et $\varrho_1=\varepsilon_1^2$ du formulaire ci-dessous. Elles engendrent, avec $-I$, le sous-groupe de congruence $\Gamma(2)$ des matrices congrues à $I$ modulo $2$, qui est d'indice $|\SL_2(\Z/2)|=6$ ; le quotient $\SL_2(\Z)/\Gamma(2)\simeq\mathfrak S_3$ est le groupe qui permute les trois points $0$, $1$, $\infty$.
+\end{remarque}
+
+% ==========================================================
+\section{Le formulaire de Grothendieck}\label{sec:formulaire}
+% ==========================================================
+
+Le dossier 144 des archives de Grothendieck, une liasse de notes de 1981 à 1983 autour de la « tour de Teichmüller », contient deux formulaires de matrices entières, de 1981 et de 1982. Le second pose $\omega=-I$ et
+\[
+  \rho=\begin{pmatrix}0&1\\-1&1\end{pmatrix},\quad
+  \sigma_\infty=\begin{pmatrix}0&1\\-1&0\end{pmatrix},\quad
+  \sigma_0=\begin{pmatrix}-1&1\\-2&1\end{pmatrix},\quad
+  \sigma_1=\begin{pmatrix}-1&2\\-1&1\end{pmatrix},
+\]
+les indices étant lus dans l'ordre cyclique $\infty\to0\to1\to\infty$, puis les unipotents
+\[
+  \varepsilon_0=\begin{pmatrix}1&-1\\0&1\end{pmatrix},\quad
+  \varepsilon_1=\begin{pmatrix}1&0\\1&1\end{pmatrix},\quad
+  \varepsilon_\infty=\begin{pmatrix}2&-1\\1&0\end{pmatrix},
+\]
+et leurs carrés $\varrho_i=\varepsilon_i^2$.
+
+\begin{proposition}\label{prop:formulaire}
+On a $\rho^3=\omega$, $\sigma_i^2=\omega$, $\rho\sigma_i\rho^{-1}=\sigma_{i+1}$, $\rho\varepsilon_i\rho^{-1}=\varepsilon_{i+1}$, $\varepsilon_i=\sigma_{i-1}^{-1}\rho$, et $\varrho_\infty\varrho_1\varrho_0=\omega$.
+\end{proposition}
+
+\begin{proof}
+Ce sont des produits de matrices $2\times2$. Par exemple
+\[
+  \rho\sigma_\infty\rho^{-1}=\begin{pmatrix}0&1\\-1&1\end{pmatrix}\begin{pmatrix}0&1\\-1&0\end{pmatrix}\begin{pmatrix}1&-1\\1&0\end{pmatrix}=\begin{pmatrix}-1&1\\-2&1\end{pmatrix}=\sigma_0,
+\]
+et
+\[
+  \sigma_1^{-1}\rho=\begin{pmatrix}1&-2\\1&-1\end{pmatrix}\begin{pmatrix}0&1\\-1&1\end{pmatrix}=\begin{pmatrix}2&-1\\1&0\end{pmatrix}=\varepsilon_\infty .
+\] Le fichier Lean vérifie chacune de ces égalités.
+\end{proof}
+
+La conjugaison par $\rho$, d'ordre $3$ dans $\PSL_2(\Z)$, permute circulairement les trois points $0$, $1$, $\infty$ et les objets qui leur sont attachés. Les $\varepsilon_i$ fixent chacun l'un de ces trois points ($\varepsilon_0$ fixe $\infty$, par exemple, puisque c'est une translation), et leurs carrés $\varrho'_i=\omega\varrho_i$ vérifient $\varrho'_\infty\varrho'_1\varrho'_0=I$ : c'est la relation entre les trois lacets de la sphère privée de trois points, dont le produit est trivial. Grothendieck en tire les présentations du corollaire \ref{cor:presentation} et de la remarque qui le suit.
+
+\begin{remarque}[deux lignes à corriger]
+La lecture du dossier relève deux formules fausses. La page écrit $\varepsilon_i=\sigma_i^{-1}\rho$ ; avec ses propres matrices, c'est faux pour chaque $i$, et l'indice juste est $i-1$, comme le montre le cas encadré $\varepsilon_0=\sigma_\infty^{-1}\rho$. Elle écrit aussi $\Gamma_\infty=\sigma\Gamma_0$, formule du formulaire de 1981, où $\sigma_\infty$ est l'inverse de celui de 1982 ; avec les matrices de 1982, il faut lire $\Gamma_\infty=\sigma^{-1}\Gamma_0$. Le fichier Lean démontre que les deux formules de la page sont fausses et que les formules corrigées sont justes.
+\end{remarque}
+
+% ==========================================================
+\section{Exercices}
+% ==========================================================
+
+\begin{exercice}\label{exo:ordres}
+Montrer qu'un élément d'ordre fini $M\neq\pm I$ de $\SL_2(\Z)$ a pour trace $0$, $1$ ou $-1$, et pour ordre $4$, $6$ ou $3$. En déduire que tout élément d'ordre $4$ est semblable à $\sigma$ dans $\mathrm M_2(\Q)$.
+\end{exercice}
+
+\begin{exercice}\label{exo:mot}
+Écrire $\begin{pmatrix}5&3\\3&2\end{pmatrix}$ comme un produit de puissances de $S$ et de $T$ en suivant la preuve du théorème \ref{thm:generateurs}.
+\end{exercice}
+
+\begin{exercice}\label{exo:abelianise}
+Déduire du corollaire \ref{cor:presentation} que l'abélianisé de $\SL_2(\Z)$ est $\Z/12$, et que celui de $\PSL_2(\Z)$ est $\Z/6$.
+\end{exercice}
+
+\begin{exercice}\label{exo:indice}
+Montrer que la réduction modulo $2$ induit un morphisme surjectif $\SL_2(\Z)\to\SL_2(\Z/2)$, que $\SL_2(\Z/2)\simeq\mathfrak S_3$, et en déduire que $\Gamma(2)$ est d'indice $6$.
+\end{exercice}
+
+% ==========================================================
+\section{Corrigés}
+% ==========================================================
+
+\paragraph{Exercice 1.} Les valeurs propres de $M$ sont des racines de l'unité $\zeta$, $\zeta^{-1}=\bar\zeta$, de produit $1$, et la trace $t=\zeta+\bar\zeta=2\operatorname{Re}\zeta$ est un entier de $[-2,2]$. Si $t=\pm2$, $\zeta=\pm1$ est valeur propre double, et $M$, diagonalisable (car d'ordre fini, donc annulée par un polynôme scindé à racines simples sur $\C$), vaut $\pm I$. Sinon $t\in\{-1,0,1\}$, et le polynôme caractéristique $X^2-tX+1$ divise $X^3+1$, $X^4-1$ ou $X^6-1$ selon que $t=1$, $0$, $-1$ : l'ordre est $6$, $4$ ou $3$. Pour $t=0$, $M$ et $\sigma$ ont le même polynôme caractéristique $X^2+1$, irréductible sur $\Q$. Pour tout vecteur $v\neq0$ de $\Q^2$, $(v,Mv)$ est alors une base (sinon $v$ serait vecteur propre, et $X^2+1$ aurait une racine rationnelle), dans laquelle $M$ a pour matrice la matrice compagnon de $X^2+1$. Il en va de même pour $\sigma$, d'où la similitude dans $\mathrm M_2(\Q)$.
+
+\paragraph{Exercice 2.} $T^{-1}M=\begin{pmatrix}2&1\\3&2\end{pmatrix}$, $ST^{-1}M=\begin{pmatrix}-3&-2\\2&1\end{pmatrix}$, puis $T^{2}ST^{-1}M=\begin{pmatrix}1&0\\2&1\end{pmatrix}$, et $\begin{pmatrix}1&0\\2&1\end{pmatrix}=ST^{-2}S^{-1}$. Donc $M=TS^{-1}T^{-2}ST^{-2}S^{-1}$. Les exposants de $T$ qui apparaissent dans la réduction, $1$ puis $-2$, sont les quotients des divisions euclidiennes successives sur la première colonne, $5=1\cdot3+2$ puis $-3=(-2)\cdot2+1$.
+
+\paragraph{Exercice 3.} Dans l'abélianisé, la présentation devient $\langle a,b\mid 4a=0,\ 2a=3b\rangle$ en notation additive, c'est-à-dire $\Z^2$ quotienté par le sous-groupe engendré par $(4,0)$ et $(2,-3)$. Le déterminant $\begin{vmatrix}4&0\\2&-3\end{vmatrix}=-12$ donne un groupe d'ordre $12$, et il est cyclique, car le pgcd des coefficients de la matrice est $1$ (forme de Smith $\operatorname{diag}(1,12)$). Pour $\PSL_2(\Z)\simeq\Z/2*\Z/3$, l'abélianisé est $\Z/2\times\Z/3\simeq\Z/6$.
+
+\paragraph{Exercice 4.} La réduction est un morphisme ; elle est surjective, car les images de $S$ et $T$ engendrent $\SL_2(\Z/2)$ (on le vérifie sur ses six éléments). Le groupe $\SL_2(\Z/2)=\GL_2(\Z/2)$ permute les trois vecteurs non nuls de $(\Z/2)^2$, fidèlement, d'où un morphisme injectif vers $\mathfrak S_3$, bijectif par cardinalité. Le noyau de la réduction est $\Gamma(2)$, d'indice $6$.
+
+\begin{thebibliography}{9}
+\bibitem{g144} A. Grothendieck, notes de travail réunies sous le titre « Teichmülleries », 1981-1983, dossier 144 des archives de Grothendieck (université de Montpellier) ; transcription et lecture modernisée sur \url{https://grothendieck.commutator.io}.
+\bibitem{serre} J.-P. Serre, \emph{Cours d'arithmétique}, PUF, 1970, chapitre VII (le groupe modulaire).
+\bibitem{serre-arbres} J.-P. Serre, \emph{Arbres, amalgames, $\SL_2$}, Astérisque 46, SMF, 1977, chapitre I.
+\bibitem{delaharpe} P. de la Harpe, \emph{Topics in Geometric Group Theory}, University of Chicago Press, 2000, chapitre II (le lemme du ping-pong).
+\bibitem{sanov} I. N. Sanov, \emph{Un exemple de groupe libre dans un groupe de matrices}, Doklady Akad. Nauk SSSR 57 (1947), pp. 657-659 (en russe).
+\end{thebibliography}
+
+\paragraph{Source.} Le dossier 144 des archives de Grothendieck, et plus précisément ses formulaires pour $\GL(2,\Z)$, lus dans la transcription et la lecture modernisée du dépôt grothendieck-project, qui n'ont pas encore été relues sur les pages par un humain. La fiche démontre les présentations que le formulaire énonce, vérifie ses relations et corrige deux de ses lignes.
+
+\end{document}

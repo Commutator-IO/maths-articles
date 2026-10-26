@@ -1,0 +1,274 @@
+% Le birapport et le groupe anharmonique, d'après le dossier 147 de Grothendieck
+% Compile avec pdflatex, xelatex ou lualatex.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+  \IfFileExists{lmodern.sty}{\usepackage{lmodern}}{}
+  \usepackage[french]{babel}
+\else
+  \usepackage{fontspec}
+  \usepackage{polyglossia}
+  \setdefaultlanguage{french}
+\fi
+\usepackage[margin=2.6cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{tikz}
+\input{../figures/tikz-setup.tex}
+\usepackage[hidelinks]{hyperref}
+\emergencystretch=1.5em
+
+% ---------- Environnements ----------
+\theoremstyle{plain}
+\newtheorem{theoreme}{Théorème}[section]
+\newtheorem{proposition}[theoreme]{Proposition}
+\newtheorem{lemme}[theoreme]{Lemme}
+\newtheorem{corollaire}[theoreme]{Corollaire}
+\theoremstyle{definition}
+\newtheorem{definition}[theoreme]{Définition}
+\newtheorem{exemple}[theoreme]{Exemple}
+\newtheorem{exercice}{Exercice}
+\theoremstyle{remark}
+\newtheorem{remarque}[theoreme]{Remarque}
+
+% ---------- Notations ----------
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Pu}{\mathbb{P}^1}
+\newcommand{\PGL}{\mathrm{PGL}}
+\newcommand{\Sym}{\mathfrak{S}}
+
+\title{Le birapport et le groupe anharmonique\\[2pt]
+\large Quatre points sur une droite, et ce qu'en garde l'action de \texorpdfstring{$\Sym_4$}{S4}}
+\author{Michel Hua, d'après le dossier 147 des archives de Grothendieck}
+\date{Octobre 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Quatre points distincts de la droite projective complexe ont un invariant, leur birapport, qui ne change pas par homographie et qui les caractérise à homographie près. Quand on permute les quatre points, le birapport prend six valeurs au plus : le groupe $\Sym_4$ agit à travers un quotient isomorphe à $\Sym_3$, le groupe anharmonique, qui opère sur $\Pu\setminus\{0,1,\infty\}$ par $\lambda\mapsto1-\lambda$, $\lambda\mapsto1/\lambda$, etc. Cette action a exactement deux orbites exceptionnelles, celle des quadruplets harmoniques et celle des équianharmoniques, et ses orbites sont les fibres d'une seule fraction rationnelle, l'invariant $j$. Grothendieck s'en sert, dans des notes du début des années 1980 sur la « structure à l'infini » des espaces de modules de courbes, pour décrire l'espace des sphères à quatre points marqués et calculer sa caractéristique d'Euler. On démontre ici tout ce que ce calcul utilise, avec la théorie élémentaire des actions de groupe.
+\end{abstract}
+
+\paragraph{Leçons concernées.} 101 (Groupe opérant sur un ensemble. Exemples et applications), et en partie 182 (Applications des nombres complexes à la géométrie) et 191 (Exemples d'utilisation de techniques d'algèbre en géométrie).
+
+\paragraph{Développements possibles.} L'action de $\Sym_4$ sur les birapports, son noyau $V_4$ et le groupe anharmonique (théorème \ref{thm:anharmonique}) ; les orbites exceptionnelles et l'invariant $j$ (théorème \ref{thm:j}). Le fichier \texttt{BirapportAnharmonique.lean} vérifie avec Mathlib l'invariance du birapport par les homographies (proposition \ref{prop:invariance}), la table du groupe anharmonique, les points fixes (proposition \ref{prop:orbites}), l'invariance de $j$ et sa factorisation (théorème \ref{thm:j}), et le calcul de la caractéristique d'Euler de la remarque \ref{rem:euler}.
+
+\paragraph{Prérequis.} Homographies et droite projective $\Pu(\C)=\C\cup\{\infty\}$, actions de groupe et formule orbite-stabilisateur, fractions rationnelles.
+
+\paragraph{Notations.} $\PGL_2(\C)$ agit sur $\Pu(\C)$ par homographies $z\mapsto\frac{az+b}{cz+d}$. On note $j_3=e^{2i\pi/3}$, et $V_4=\{\mathrm{id},(12)(34),(13)(24),(14)(23)\}$ le groupe de Klein, distingué dans $\Sym_4$.
+
+\tableofcontents
+
+% ==========================================================
+\section{Le birapport}
+% ==========================================================
+
+Une homographie est déterminée par l'image de trois points : le groupe $\PGL_2(\C)$ agit de façon simplement transitive sur les triplets de points distincts de $\Pu(\C)$. Pour comparer deux quadruplets, on envoie donc les trois premiers points sur une position de référence, $\infty$, $0$, $1$, et l'on regarde où va le quatrième.
+
+\begin{definition}
+Le \emph{birapport} de quatre points distincts $z_1,z_2,z_3,z_4$ de $\Pu(\C)$ est l'image de $z_4$ par l'unique homographie $h$ telle que $h(z_1)=\infty$, $h(z_2)=0$, $h(z_3)=1$. Quand les $z_i$ sont finis,
+\[
+  [z_1,z_2;z_3,z_4]=\frac{(z_3-z_1)(z_4-z_2)}{(z_3-z_2)(z_4-z_1)} ,
+\]
+et l'on prolonge la formule par continuité quand l'un des points est $\infty$.
+\end{definition}
+
+En effet $h(z)=\frac{(z-z_2)(z_3-z_1)}{(z-z_1)(z_3-z_2)}$ envoie $z_1,z_2,z_3$ sur $\infty,0,1$. Comme les points sont distincts, le birapport est différent de $0$, $1$ et $\infty$.
+
+\begin{proposition}\label{prop:invariance}
+Le birapport est invariant par homographie : $[g(z_1),g(z_2);g(z_3),g(z_4)]=[z_1,z_2;z_3,z_4]$ pour tout $g\in\PGL_2(\C)$. Deux quadruplets de points distincts sont dans la même orbite de $\PGL_2(\C)$ si et seulement s'ils ont le même birapport.
+\end{proposition}
+
+\begin{proof}
+Si $h$ envoie $z_1,z_2,z_3$ sur $\infty,0,1$, alors $h\circ g^{-1}$ envoie $g(z_1),g(z_2),g(z_3)$ sur $\infty,0,1$, et $g(z_4)$ sur $h(z_4)$ : c'est l'invariance. Réciproquement, si deux quadruplets ont le même birapport $\lambda$, les homographies $h$ et $h'$ correspondantes les envoient tous deux sur $(\infty,0,1,\lambda)$, et $h'^{-1}\circ h$ envoie le premier sur le second.
+\end{proof}
+
+Ainsi l'application « birapport » identifie l'ensemble des quadruplets ordonnés de points distincts, modulo homographie, à $\Pu(\C)\setminus\{0,1,\infty\}$. C'est l'égalité que Grothendieck écrit $\mathcal M_{0,4}\simeq\Pu\setminus\{0,1,\infty\}$ : l'espace des sphères munies de quatre points numérotés est la sphère privée de trois points.
+
+\begin{exemple}\label{ex:configurations}
+Les sommets $1,i,-1,-i$ d'un carré ont pour birapport $[1,i;-1,-i]=2$. Le centre et les sommets d'un triangle équilatéral, $0,1,j_3,j_3^2$, ont pour birapport $[0,1;j_3,j_3^2]=e^{-i\pi/3}$. On verra que ces deux nombres sont exceptionnels (figure \ref{fig:configurations}).
+\end{exemple}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=1.3,pt/.style={circle,fill,inner sep=1.4pt}]
+  \begin{scope}
+    \draw[gray!50] (0,0) circle (1);
+    \draw[accent,thick] (1,0) -- (0,1) -- (-1,0) -- (0,-1) -- cycle;
+    \foreach \p/\l/\pos in {{(1,0)}/z_1=1/right,{(0,1)}/z_2=i/above,{(-1,0)}/z_3=-1/left,{(0,-1)}/z_4=-i/below} \node[pt,label={\pos:$\l$}] at \p {};
+    \node[font=\small] at (0,-1.75) {harmonique : $\lambda=2$};
+  \end{scope}
+  \begin{scope}[xshift=4.4cm]
+    \draw[gray!50] (0,0) circle (1);
+    \draw[accent2,thick] (1,0) -- (-0.5,0.866) -- (-0.5,-0.866) -- cycle;
+    \draw[accent2,dashed] (0,0) -- (1,0) (0,0) -- (-0.5,0.866) (0,0) -- (-0.5,-0.866);
+    \foreach \p/\l/\pos in {{(0,0)}/z_1=0/below right,{(1,0)}/z_2=1/right,{(-0.5,0.866)}/z_3=j_3/above left,{(-0.5,-0.866)}/z_4=j_3^2/below left} \node[pt,label={\pos:$\l$}] at \p {};
+    \node[font=\small] at (0,-1.75) {équianharmonique : $\lambda=e^{-i\pi/3}$};
+  \end{scope}
+\end{tikzpicture}
+\caption{Les deux configurations exceptionnelles de quatre points : un carré, et un triangle équilatéral avec son centre. Leurs symétries expliquent leurs stabilisateurs, d'ordre $2$ et $3$ dans le groupe anharmonique.}\label{fig:configurations}
+\end{figure}
+
+% ==========================================================
+\section{Permuter les quatre points}
+% ==========================================================
+
+Le groupe $\Sym_4$ agit sur les quadruplets ordonnés en permutant les points, et cette action commute avec celle des homographies. Elle passe donc au quotient : $\Sym_4$ agit sur $\Pu\setminus\{0,1,\infty\}$, par $\pi\cdot[z_1,z_2;z_3,z_4]=[z_{\pi^{-1}(1)},\dots,z_{\pi^{-1}(4)}]$. Le calcul direct donne six valeurs.
+
+\begin{lemme}\label{lem:six}
+Si $\lambda=[z_1,z_2;z_3,z_4]$, alors
+\[
+  [z_2,z_1;z_3,z_4]=\frac1\lambda,\qquad [z_1,z_3;z_2,z_4]=1-\lambda,
+\]
+et les permutations de $z_1,z_2,z_3,z_4$ donnent les six valeurs
+\[
+  \lambda,\quad \frac1\lambda,\quad 1-\lambda,\quad \frac1{1-\lambda},\quad \frac{\lambda-1}\lambda,\quad \frac\lambda{\lambda-1} .
+\]
+Une double transposition ne change pas le birapport.
+\end{lemme}
+
+\begin{proof}
+Échanger $z_1$ et $z_2$ inverse la formule. Échanger $z_2$ et $z_3$ donne $\frac{(z_2-z_1)(z_4-z_3)}{(z_2-z_3)(z_4-z_1)}$, et l'identité $(z_3-z_1)(z_4-z_2)-(z_2-z_1)(z_4-z_3)=(z_3-z_2)(z_4-z_1)$, qui se vérifie en développant, montre que la somme des deux birapports vaut $1$. Pour $(12)(34)$, la formule devient $\frac{(z_4-z_2)(z_3-z_1)}{(z_4-z_1)(z_3-z_2)}$, qui est la même ; de même pour $(13)(24)$, et $(14)(23)$ est leur produit. Les transpositions $(12)$ et $(23)$ engendrent $\Sym_4$ modulo $V_4$, et leurs actions $\lambda\mapsto1/\lambda$ et $\lambda\mapsto1-\lambda$ engendrent les six fonctions de l'énoncé.
+\end{proof}
+
+\begin{theoreme}[le groupe anharmonique]\label{thm:anharmonique}
+Les six fonctions du lemme \ref{lem:six} forment, pour la composition, un groupe $A$ isomorphe à $\Sym_3$. L'action de $\Sym_4$ sur les birapports se fait à travers un morphisme surjectif $\Sym_4\to A$ de noyau $V_4$, d'où $\Sym_4/V_4\simeq\Sym_3$.
+\end{theoreme}
+
+\begin{proof}
+Chaque fonction du lemme est une homographie qui permute $\{0,1,\infty\}$ : par exemple $\lambda\mapsto1-\lambda$ échange $0$ et $1$ et fixe $\infty$, et $\lambda\mapsto\frac1{1-\lambda}$ envoie $0\mapsto1\mapsto\infty\mapsto0$. Une homographie qui fixe $0$, $1$ et $\infty$ est l'identité, donc l'application qui associe à une fonction sa permutation de $\{0,1,\infty\}$ est un morphisme injectif de $A$ dans $\Sym_3$ ; il est bijectif, car $A$ a six éléments, et $A$ est bien un groupe, image réciproque d'un groupe. L'action de $\Sym_4$ fournit un morphisme $\Sym_4\to A$, surjectif d'après le lemme, et dont le noyau contient $V_4$ ; par cardinalité ($24=4\cdot6$), le noyau est exactement $V_4$.
+\end{proof}
+
+\begin{remarque}
+Le morphisme $\Sym_4\to\Sym_3$ a une description sans birapport : $\Sym_4$ permute les trois façons de partager $\{1,2,3,4\}$ en deux paires, $\{12|34\}$, $\{13|24\}$, $\{14|23\}$, et le noyau de cette action est $V_4$. Grothendieck lit ces trois partitions comme les trois « points à l'infini » de $\overline{\mathcal M}_{0,4}$, les valeurs $0$, $1$, $\infty$ du birapport, où la sphère se casse en deux sphères portant chacune deux des quatre points.
+\end{remarque}
+
+% ==========================================================
+\section{Les orbites}
+% ==========================================================
+
+Le groupe anharmonique $A\simeq\Sym_3$ agit sur $U=\Pu(\C)\setminus\{0,1,\infty\}$. La formule orbite-stabilisateur dit qu'une orbite a $6$, $3$, $2$ ou $1$ éléments selon que le stabilisateur est trivial, d'ordre $2$, d'ordre $3$ ou $A$ tout entier.
+
+\begin{proposition}\label{prop:orbites}
+L'action de $A$ sur $U$ a exactement deux orbites non libres :
+\begin{enumerate}[nosep]
+\item l'orbite \emph{harmonique} $\{-1,\frac12,2\}$, où le stabilisateur est d'ordre $2$ ;
+\item l'orbite \emph{équianharmonique} $\{e^{i\pi/3},e^{-i\pi/3}\}=\{-j_3^2,-j_3\}$, où le stabilisateur est d'ordre $3$.
+\end{enumerate}
+Toutes les autres orbites ont six éléments.
+\end{proposition}
+
+\begin{proof}
+On cherche les points fixes des cinq éléments non triviaux de $A$, dans $U$. Pour les trois involutions : $1-\lambda=\lambda$ donne $\lambda=\frac12$ ; $\frac1\lambda=\lambda$ donne $\lambda=\pm1$, donc $\lambda=-1$ ; $\frac\lambda{\lambda-1}=\lambda$ donne $\lambda^2=2\lambda$, donc $\lambda=2$. Pour les deux éléments d'ordre $3$, $\frac1{1-\lambda}=\lambda$ et $\frac{\lambda-1}\lambda=\lambda$ équivalent tous deux à $\lambda^2-\lambda+1=0$, dont les racines sont $e^{\pm i\pi/3}$. Ces cinq points sont les seuls à avoir un stabilisateur non trivial, et ils se répartissent en une orbite de trois éléments ($\lambda\mapsto1-\lambda$ envoie $-1$ sur $2$, $\lambda\mapsto1/\lambda$ envoie $2$ sur $\frac12$) et une orbite de deux ($\lambda\mapsto1/\lambda$ échange $e^{i\pi/3}$ et $e^{-i\pi/3}$).
+\end{proof}
+
+Les quadruplets de l'exemple \ref{ex:configurations} sont dans ces orbites : un carré est harmonique, un triangle équilatéral avec son centre est équianharmonique. Le stabilisateur reflète leurs symétries. L'image réciproque dans $\Sym_4$ d'un stabilisateur d'ordre $2$ a $2\cdot4=8$ éléments : c'est le groupe diédral des symétries du carré. Celle d'un stabilisateur d'ordre $3$ a $12$ éléments : c'est le groupe alterné $\mathfrak A_4$, groupe des rotations d'un tétraèdre régulier, dont les sommets, sur la sphère de Riemann, sont justement un triangle équilatéral et son centre vus depuis le quatrième sommet.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=1.9,pt/.style={circle,fill,inner sep=1.3pt}]
+  \draw[->,gray] (-1.7,0) -- (2.7,0);
+  \draw[->,gray] (0,-1.25) -- (0,1.35);
+  \draw[gray!60] (0,0) circle (1);
+  \draw[gray!60] (1,0) circle (1);
+  \draw[gray!60] (0.5,-1.25) -- (0.5,1.35);
+  \node[pt,fill=white,draw] at (0,0) {};
+  \node[pt,fill=white,draw] at (1,0) {};
+  \node[below left,font=\small] at (0,0) {$0$};
+  \node[below right,font=\small] at (1,0) {$1$};
+  \foreach \x/\l in {-1/-1,0.5/\frac12,2/2} \node[pt,accent] at (\x,0) {};
+  \node[accent,below left,font=\small] at (-1,0) {$-1$};
+  \node[accent,below right,font=\small] at (0.5,0) {$\frac12$};
+  \node[accent,below right,font=\small] at (2,0) {$2$};
+  \node[pt,accent2] at (0.5,0.866) {};
+  \node[pt,accent2] at (0.5,-0.866) {};
+  \node[accent2,above right,font=\small] at (0.5,0.866) {$e^{i\pi/3}$};
+  \node[accent2,below right,font=\small] at (0.5,-0.866) {$e^{-i\pi/3}$};
+\end{tikzpicture}
+\caption{Les points exceptionnels de l'action anharmonique : l'orbite harmonique (en bleu) et l'orbite équianharmonique (en brun), aux intersections de la droite $\operatorname{Re}\lambda=\frac12$ et des cercles $|\lambda|=1$, $|\lambda-1|=1$, que le groupe anharmonique permute. Ces trois courbes découpent $\C\setminus\{0,1\}$ en domaines échangés par l'action.}\label{fig:orbites}
+\end{figure}
+
+% ==========================================================
+\section{L'invariant \texorpdfstring{$j$}{j}}
+% ==========================================================
+
+Pour séparer les orbites, il suffit d'une fonction invariante qui prenne des valeurs distinctes sur des orbites distinctes. On la fabrique à partir des fonctions symétriques des six valeurs du lemme \ref{lem:six}.
+
+\begin{theoreme}\label{thm:j}
+La fraction rationnelle
+\[
+  j(\lambda)=256\,\frac{(\lambda^2-\lambda+1)^3}{\lambda^2(\lambda-1)^2}
+\]
+est invariante par le groupe anharmonique, et deux points de $U$ ont même image par $j$ si et seulement s'ils sont dans la même orbite. De plus
+\[
+  j(\lambda)-1728=64\,\frac{(\lambda+1)^2(\lambda-2)^2(2\lambda-1)^2}{\lambda^2(\lambda-1)^2},
+\]
+de sorte que $j$ vaut $1728$ sur l'orbite harmonique et $0$ sur l'orbite équianharmonique.
+\end{theoreme}
+
+\begin{proof}
+L'invariance par $\lambda\mapsto1-\lambda$ est visible ($\lambda^2-\lambda+1$ et $\lambda(\lambda-1)$ sont invariants). Pour $\lambda\mapsto1/\lambda$, on multiplie numérateur et dénominateur par $\lambda^6$ : $(\lambda^{-2}-\lambda^{-1}+1)^3\lambda^6=(1-\lambda+\lambda^2)^3$ et $\lambda^{-2}(\lambda^{-1}-1)^2\lambda^6=(1-\lambda)^2\lambda^2$. Ces deux transformations engendrent $A$.
+
+Soit $c\in\C$. L'équation $j(\lambda)=c$ s'écrit $256(\lambda^2-\lambda+1)^3-c\,\lambda^2(\lambda-1)^2=0$, équation polynomiale de degré $6$ en $\lambda$, dont aucune racine n'est $0$ ou $1$ (en ces points, le premier terme vaut $256$). Elle a donc au plus six solutions dans $U$, et elle contient l'orbite de chacune d'elles. Si l'une des solutions a une orbite à six éléments, les solutions forment exactement cette orbite. Sinon, toutes les solutions ont un stabilisateur non trivial, donc sont parmi les cinq points de la proposition \ref{prop:orbites}, et l'identité de l'énoncé, qui se vérifie en développant, montre que $j$ vaut $1728$ sur l'orbite harmonique (racines doubles) et $0$ sur l'orbite équianharmonique (racines triples) : les deux orbites exceptionnelles ont des images distinctes. Dans tous les cas, la fibre de $c$ est une seule orbite.
+\end{proof}
+
+\begin{remarque}[courbes elliptiques]
+La courbe d'équation $y^2=x(x-1)(x-\lambda)$, sous la forme de Legendre, est une courbe elliptique dont les quatre points de $2$-torsion se projettent sur $0$, $1$, $\lambda$ et $\infty$. Changer l'ordre de ces quatre points change $\lambda$ par le groupe anharmonique, et $j(\lambda)$ est l'invariant $j$ de la courbe, qui la caractérise à isomorphisme près. Les orbites exceptionnelles correspondent aux courbes qui ont plus d'automorphismes que $\pm1$ : $j=1728$ pour la courbe harmonique $y^2=x^3-x$, d'automorphismes $\Z/4$, et $j=0$ pour la courbe équianharmonique $y^2=x^3-1$, d'automorphismes $\Z/6$. C'est le lien que Grothendieck fait, dans les mêmes pages, entre les sphères à quatre points et les courbes elliptiques.
+\end{remarque}
+
+\begin{remarque}[une caractéristique d'Euler]\label{rem:euler}
+Grothendieck calcule la caractéristique d'Euler de l'espace des quatre points non numérotés en comptant chaque point avec le poids $1/|\text{stabilisateur}|$. La sphère privée de trois points a pour caractéristique $\chi(U)=2-3=-1$. On la découpe en parties stables par $A$ : les deux points équianharmoniques, de stabilisateur d'ordre $3$, les trois points harmoniques, de stabilisateur d'ordre $2$, et le reste, de caractéristique $-1-2-3=-6$, où $A$ agit librement. Le poids total vaut
+\[
+  \frac{-6}6+\frac{3}{6}+\frac26=-1+\frac12+\frac13=-\frac16=\frac{\chi(U)}{|A|},
+\]
+ce que la formule orbite-stabilisateur garantit : sur une orbite $O$, $\sum_{x\in O}\frac1{|A|}=\frac1{|\mathrm{Stab}(x)|}$. Comme $\Sym_4$ agit à travers $A$ avec un noyau $V_4$ d'ordre $4$ qui fixe tout, il faut encore diviser par $4$ pour obtenir la caractéristique relative à $\Sym_4$ : $-\frac1{24}$. La page écrit « $-1+\frac13+\frac12=-\frac1{24}$ », ce qui ne fait pas le compte : la somme vaut $-\frac16$, et le facteur $\frac14$ du noyau $V_4$ est omis. La valeur finale, que la marge donne aussi, est juste.
+\end{remarque}
+
+% ==========================================================
+\section{Exercices}
+% ==========================================================
+
+\begin{exercice}\label{exo:carre}
+Vérifier les deux birapports de l'exemple \ref{ex:configurations}. Plus généralement, montrer que quatre points d'un cercle sont harmoniques si et seulement si, dans un ordre convenable, ils forment un quadrilatère dont les produits des côtés opposés sont égaux.
+\end{exercice}
+
+\begin{exercice}\label{exo:reel}
+Montrer que le birapport de quatre points distincts est réel si et seulement si les quatre points sont sur un même cercle ou une même droite.
+\end{exercice}
+
+\begin{exercice}\label{exo:car3}
+On remplace $\C$ par un corps $K$ de caractéristique $3$. Montrer que les deux orbites exceptionnelles se confondent : $-1$ est alors racine double de $\lambda^2-\lambda+1$, et $j(-1)=0=1728$. Que se passe-t-il en caractéristique $2$ ?
+\end{exercice}
+
+\begin{exercice}\label{exo:partitions}
+Montrer directement que l'action de $\Sym_4$ sur les trois partitions de $\{1,2,3,4\}$ en deux paires définit un morphisme surjectif $\Sym_4\to\Sym_3$ de noyau $V_4$.
+\end{exercice}
+
+% ==========================================================
+\section{Corrigés}
+% ==========================================================
+
+\paragraph{Exercice 1.} $[1,i;-1,-i]=\frac{(-1-1)(-i-i)}{(-1-i)(-i-1)}=\frac{4i}{(1+i)^2}=\frac{4i}{2i}=2$. Et $[0,1;j_3,j_3^2]=\frac{j_3(j_3^2-1)}{(j_3-1)j_3^2}=\frac{j_3+1}{j_3}=1+j_3^2=-j_3=e^{-i\pi/3}$, en utilisant $j_3^2-1=(j_3-1)(j_3+1)$ et $1+j_3+j_3^2=0$. Pour quatre points d'un cercle, le module du birapport est $\frac{|z_3-z_1||z_4-z_2|}{|z_3-z_2||z_4-z_1|}$, et le birapport est réel (exercice 2). Il vaut $-1$, ou une autre valeur de l'orbite harmonique selon l'ordre, si et seulement si son module vaut $1$ dans l'ordre où il est négatif, c'est-à-dire si les produits de côtés opposés sont égaux.
+
+\paragraph{Exercice 2.} Par une homographie, qui préserve à la fois le birapport et l'ensemble des cercles et droites de $\Pu(\C)$, on se ramène à $z_1=\infty$, $z_2=0$, $z_3=1$. Le birapport vaut alors $z_4$, et il est réel si et seulement si $z_4$ est sur la droite réelle, qui est le cercle généralisé passant par $\infty$, $0$ et $1$.
+
+\paragraph{Exercice 3.} En caractéristique $3$, $\lambda^2-\lambda+1=\lambda^2+2\lambda+1=(\lambda+1)^2$, et les trois points $-1$, $\frac12$ et $2$ sont tous égaux à $2=-1$ (car $2\cdot2=4=1$) : l'orbite harmonique devient le seul point $\lambda=-1$, qui est aussi la racine double équianharmonique. Le numérateur de $j$ s'annule en $-1$, et $1728=3^3\cdot64=0$. En caractéristique $2$, $\frac12$ n'a pas de sens, $-1=1$ est exclu, et l'orbite harmonique disparaît ; c'est pourquoi Grothendieck limite ses formules à $\mathbb Z[\frac16]$, en inversant $2$ et $3$.
+
+\paragraph{Exercice 4.} Une permutation envoie une partition en deux paires sur une partition en deux paires, d'où une action, donc un morphisme $\Sym_4\to\Sym_3$. Une double transposition, par exemple $(12)(34)$, fixe chaque partition : $\{12|34\}$, $\{13|24\}\mapsto\{24|13\}$, $\{14|23\}\mapsto\{23|14\}$. La transposition $(12)$ fixe $\{12|34\}$ et échange les deux autres, et le $3$-cycle $(234)$ les permute circulairement : l'image contient une transposition et un $3$-cycle, c'est $\Sym_3$. Le noyau a donc $24/6=4$ éléments et contient $V_4$ : c'est $V_4$.
+
+\begin{thebibliography}{9}
+\bibitem{g147} A. Grothendieck, \emph{Structure à l'infini des $M_{g,\nu}$}, notes manuscrites (début des années 1980), dossier 147 des archives de Grothendieck (université de Montpellier) ; transcription et lecture modernisée sur \url{https://grothendieck.commutator.io}.
+\bibitem{audin} M. Audin, \emph{Géométrie}, EDP Sciences, 2006, chapitre VI (géométrie projective, birapport).
+\bibitem{berger} M. Berger, \emph{Géométrie}, Nathan, 1990, chapitre 6.
+\bibitem{silverman} J. H. Silverman, \emph{The Arithmetic of Elliptic Curves}, Springer, 2009, chapitre III, § 1 (forme de Legendre et invariant $j$).
+\end{thebibliography}
+
+\paragraph{Source.} Le dossier 147 des archives de Grothendieck, notes sur la structure à l'infini des espaces de modules de courbes, lu dans la transcription et la lecture modernisée du dépôt grothendieck-project, qui n'ont pas encore été relues sur les pages par un humain. La fiche démontre les faits élémentaires que le dossier utilise pour la sphère à quatre points, et corrige une somme de son calcul de caractéristique d'Euler.
+
+\end{document}
