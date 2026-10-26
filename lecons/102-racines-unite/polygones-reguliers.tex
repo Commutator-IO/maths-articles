@@ -52,7 +52,7 @@
 \maketitle
 
 \begin{abstract}
-En 1977-1978, Grothendieck consacre son cours de DEA à une question d'allure naïve : qu'est-ce qu'un polygone régulier quand on n'a plus ni longueurs, ni angles, ni même nombres réels ? Il répond par les symétries. Un polygone est régulier si toute symétrie de son dessin combinatoire est réalisée par une transformation affine. Un seul nombre, l'invariant $\alpha$, décrit alors le polygone ; dans le plan réel, c'est $2\cos(2\pi k/n)$. Sur n'importe quel anneau, le polygone d'invariant $\alpha$ se referme après $n$ pas si et seulement si $F_n(\alpha)=0$, pour un polynôme $F_n$ à coefficients entiers qui est, au fond, un produit de polynômes minimaux des $2\cos(2\pi/d)$. Cette fiche suit les notes de Grothendieck (pages 109 à 120 du dossier 78), puis démontre ce qu'elles utilisent : l'irréductibilité des polynômes cyclotomiques, le degré de $2\cos(2\pi/n)$, et leur réduction modulo $p$. Elle en tire que le triangle, le carré et l'hexagone sont les seuls polygones réguliers définis sur $\Q$, et qu'en caractéristique $p$ le cercle circonscrit peut devenir une parabole.
+En 1977-1978, Grothendieck consacre son cours de DEA à une question d'allure naïve : qu'est-ce qu'un polygone régulier quand on n'a plus ni longueurs, ni angles, ni même nombres réels ? Il répond par les symétries. Un polygone est régulier si toute symétrie de son dessin combinatoire est réalisée par une transformation affine. Un seul nombre, l'invariant $\alpha$, décrit alors le polygone ; dans le plan réel, c'est $2\cos(2\pi k/n)$. Sur n'importe quel anneau, le polygone d'invariant $\alpha$ se referme après $n$ pas si et seulement si $F_n(\alpha)=0$, pour un polynôme $F_n$ à coefficients entiers qui est, au fond, un produit de polynômes minimaux des $2\cos(2\pi/d)$. Cette fiche suit les notes de Grothendieck (dossier 78 de ses archives), puis démontre ce qu'elles utilisent : l'irréductibilité des polynômes cyclotomiques, le degré de $2\cos(2\pi/n)$, et leur réduction modulo $p$. Elle en tire que le triangle, le carré et l'hexagone sont les seuls polygones réguliers définis sur $\Q$, et qu'en caractéristique $p$ le cercle circonscrit peut devenir une parabole.
 \end{abstract}
 
 \paragraph{Leçons concernées.} 102 (Groupe des nombres complexes de module $1$. Sous-groupes des racines de l'unité. Applications), et en partie 141 (Polynômes irréductibles à une indéterminée. Corps de rupture. Exemples et applications), 120 (Anneaux $\Z/n\Z$. Applications) et 191 (Exemples d'utilisation de techniques d'algèbre en géométrie).
@@ -85,7 +85,7 @@ Dans $\R^2=\C$, soit $\zeta=e^{2i\pi k/n}$ avec $k$ premier à $n$. Les points $
 Toute image de ce polygone par une bijection affine est encore régulière, avec le même $\alpha$ : c'est la trace de la partie linéaire de $u$, qui ne change pas par conjugaison.
 \end{exemple}
 
-Grothendieck montre que ce nombre $\alpha$ suffit à tout décrire. On se limite ici aux polygones \emph{unimodulaires}, ceux où la partie linéaire de $u$ est de déterminant $1$, comme dans l'exemple \ref{ex:reels} ; il étudie aussi l'autre cas (page 85 du dossier).
+Grothendieck montre que ce nombre $\alpha$ suffit à tout décrire. On se limite ici aux polygones \emph{unimodulaires}, ceux où la partie linéaire de $u$ est de déterminant $1$, comme dans l'exemple \ref{ex:reels} ; il étudie aussi l'autre cas dans le même dossier.
 
 \begin{proposition}\label{prop:universel}
 Soit $(s_i)$ un $n$-gone régulier non dégénéré et unimodulaire, et $\alpha$ la trace de la partie linéaire $L$ de $u$. Dans le repère affine d'origine $s_0$ où $s_1=(1,0)$ et $s_{-1}=(0,1)$,
@@ -138,7 +138,7 @@ Explicitement, $F_{2m+1}(U)=T^{-m}+T^{-m+1}+\dots+T^m$ et $F_{2m}(U)=T^{-(m-1)}+
 
 Tout le calcul de Grothendieck repose sur une identité entre trois produits consécutifs. Posons $X_n=F_nF_{n+1}$.
 
-\begin{proposition}[Grothendieck, page 109]\label{prop:identite}
+\begin{proposition}[Grothendieck]\label{prop:identite}
 Pour tout $n\in\Z$,
 \[
   F_nF_{n+1}-U\,F_{n-1}F_n+F_{n-2}F_{n-1}=1 .
@@ -162,7 +162,7 @@ Pour tout $n$, $(F_{n-2}-U\,F_n)\,F_{n-1}+F_n\,F_{n+1}=1$. En particulier $F_{n-
 \end{corollaire}
 
 \begin{remarque}
-La page 113 du dossier écrit le coefficient $F_{n-2}-U\,F_{n-1}$, ce qui ne donne pas de relation de Bézout : pour $n=4$, on trouve $1-U-U^2$ au lieu de $1$. La lecture moderne du dossier a relevé ce lapsus, et le coefficient correct se lit directement sur la proposition \ref{prop:identite}.
+Les notes écrivent le coefficient $F_{n-2}-U\,F_{n-1}$, ce qui ne donne pas de relation de Bézout : pour $n=4$, on trouve $1-U-U^2$ au lieu de $1$. La lecture moderne du dossier a relevé ce lapsus, et le coefficient correct se lit directement sur la proposition \ref{prop:identite}.
 \end{remarque}
 
 % ==========================================================
@@ -180,7 +180,7 @@ Sur tout anneau commutatif, les sommets du polygone universel sont
 Si $s_n=(x_n,y_n)$, la formule de $u_\alpha$ donne $y_{n+1}=x_n$ et $x_{n+1}=1-x_{n-1}+\alpha x_n$. La suite $(X_n(\alpha))$ vérifie la même récurrence d'ordre $2$, par la proposition \ref{prop:identite} évaluée en $\alpha$ et au rang $n+1$, et les mêmes valeurs initiales : $X_0=0$ et $X_{-1}=0$, puisque $F_0=0$. Les deux suites coïncident donc, dans les deux sens.
 \end{proof}
 
-\begin{theoreme}[Grothendieck, page 112]\label{thm:fermeture}
+\begin{theoreme}[Grothendieck]\label{thm:fermeture}
 Soit $k$ un anneau commutatif, $\alpha\in k$ et $n\in\Z$. Les conditions suivantes sont équivalentes :
 \begin{enumerate}[label=\alph*),nosep]
 \item $u_\alpha^n=\mathrm{id}$ ;
@@ -294,7 +294,7 @@ $2\cos\frac{2\pi}n\in\Q$ si et seulement si $n\in\{1,2,3,4,6\}$.
 Pour $n\leq2$, $2\cos\frac{2\pi}n=\pm2$. Pour $n\geq3$, il faut $\varphi(n)=2$. Si un premier $p\geq5$ divise $n$, $\varphi(n)\geq p-1\geq4$ ; si $8$ ou $9$ divise $n$, $\varphi(n)\geq4$. Il reste les diviseurs de $12$, et $\varphi(12)=4$ : on trouve $n=3,4,6$.
 \end{proof}
 
-Grothendieck en tire, page 120, que \emph{les seuls polygones réguliers définis sur $\Q$ sont le triangle, le carré et l'hexagone} : un $n$-gone régulier non dégénéré dont les sommets sont dans $\Q^2$ a une rotation $u$ à coefficients rationnels, donc un invariant $\alpha\in\Q$ (exercice \ref{exo:pentagone}). La même remarque est la \emph{restriction cristallographique} : une rotation d'ordre fini qui préserve un réseau du plan a, dans une base du réseau, une matrice entière, donc une trace $2\cos\theta$ entière, et son ordre vaut $1$, $2$, $3$, $4$ ou $6$. Il n'y a pas de cristal à symétrie d'ordre $5$, et pas de pentagone régulier à sommets entiers.
+Grothendieck en tire que \emph{les seuls polygones réguliers définis sur $\Q$ sont le triangle, le carré et l'hexagone} : un $n$-gone régulier non dégénéré dont les sommets sont dans $\Q^2$ a une rotation $u$ à coefficients rationnels, donc un invariant $\alpha\in\Q$ (exercice \ref{exo:pentagone}). La même remarque est la \emph{restriction cristallographique} : une rotation d'ordre fini qui préserve un réseau du plan a, dans une base du réseau, une matrice entière, donc une trace $2\cos\theta$ entière, et son ordre vaut $1$, $2$, $3$, $4$ ou $6$. Il n'y a pas de cristal à symétrie d'ordre $5$, et pas de pentagone régulier à sommets entiers.
 
 \begin{center}
 \renewcommand{\arraystretch}{1.2}
@@ -340,9 +340,9 @@ Les polynômes de degré $3$ ont trois racines réelles et sont irréductibles s
 \section{Réduction modulo \texorpdfstring{$p$}{p}}
 % ==========================================================
 
-La remarque \ref{rem:conique} a montré qu'en caractéristique $p$ des polygones d'un nombre de côtés inattendu apparaissent. La raison est la réduction des polynômes cyclotomiques modulo $p$, que Grothendieck établit page 117.
+La remarque \ref{rem:conique} a montré qu'en caractéristique $p$ des polygones d'un nombre de côtés inattendu apparaissent. La raison est la réduction des polynômes cyclotomiques modulo $p$, que Grothendieck établit dans ses notes.
 
-\begin{proposition}[Grothendieck, page 117]\label{prop:modp}
+\begin{proposition}[Grothendieck]\label{prop:modp}
 Soit $p$ premier et $n=p^rn'$ avec $p\nmid n'$. Alors $\Phi_n\equiv\Phi_{n'}^{\varphi(p^r)}\pmod p$.
 \end{proposition}
 
@@ -355,7 +355,7 @@ Par récurrence sur $n$. Pour $r=0$, il n'y a rien à démontrer. Supposons l'é
 Or $X^n-1=(X^{n'})^{p^r}-1=(X^{n'}-1)^{p^r}$ dans $\F_p[X]$, par le Frobenius. On simplifie par ce polynôme non nul, dans l'anneau intègre $\F_p[X]$.
 \end{proof}
 
-\begin{corollaire}[Grothendieck, pages 118-119]\label{cor:ordre}
+\begin{corollaire}[Grothendieck]\label{cor:ordre}
 Soit $k$ un corps de caractéristique $p$, $n\geq3$, $\alpha\in k$ tel que $\Psi_n(\alpha)=0$, et $n=p^rn'$ avec $p\nmid n'$. Le polygone universel d'invariant $\alpha$ a pour nombre de sommets $n'$ si $n'\geq3$, $2p$ si $n'=2$, $p$ si $n'=1$ et $p\neq2$, et $4$ si $n'=1$ et $p=2$.
 \end{corollaire}
 
@@ -364,7 +364,7 @@ Soit $k$ un corps de caractéristique $p$, $n\geq3$, $\alpha\in k$ tel que $\Psi
 \end{proof}
 
 \begin{remarque}
-La page 118 écrit « d'ordre $p$ si $n'=1$ » sans exception ; pour $p=2$, l'invariant $\alpha=2=0$ est celui du carré, d'ordre $4$, comme Grothendieck l'avait lui-même établi page 95.
+Les notes écrivent « d'ordre $p$ si $n'=1$ » sans exception ; pour $p=2$, l'invariant $\alpha=2=0$ est celui du carré, d'ordre $4$, comme Grothendieck l'avait lui-même établi plus haut dans le dossier.
 \end{remarque}
 
 % ==========================================================
@@ -397,16 +397,16 @@ Soit $p$ un nombre premier impair. Montrer que $\Psi_p(2)=p$, et en déduire que
 
 \paragraph{Exercice 3.} La récurrence $F_{n+4}=UF_{n+2}-F_n$ donne, dans la classe paire, $F_8=U\cdot F_6-F_4=U^3-2U$, $F_{10}=U\,F_8-F_6=U^4-3U^2+1$, puis $F_{12}=U\,F_{10}-F_8=U^5-4U^3+3U$. Et $\Psi_3\Psi_4\Psi_6\Psi_{12}=(U+1)\,U\,(U-1)(U^2-3)=U(U^2-1)(U^2-3)=U^5-4U^3+3U$.
 
-\paragraph{Exercice 4.} Pour $n=p$ premier, $\Phi_p=1+T+\dots+T^{p-1}$, donc $\Psi_p=F_p$, et $F_p(2)=p$ (faire $T=1$ dans la définition). Modulo $p$, la proposition \ref{prop:modp} avec $n'=1$ donne $\Phi_p\equiv(T-1)^{p-1}$, et $T^{-(p-1)/2}(T-1)^{p-1}=\big((T-1)^2/T\big)^{(p-1)/2}=(U-2)^{(p-1)/2}$. C'est la forme polynomiale du corollaire \ref{cor:ordre} : en caractéristique $p$, le $p$-gone n'a plus qu'un invariant, $\alpha=2$. Dans l'anneau $\Z[U]/\Psi_p$, l'élément $\alpha-2$ a pour norme $\pm\Psi_p(2)=\pm p$ : Grothendieck y lit, pages 125 à 127, la ramification totale de $p$.
+\paragraph{Exercice 4.} Pour $n=p$ premier, $\Phi_p=1+T+\dots+T^{p-1}$, donc $\Psi_p=F_p$, et $F_p(2)=p$ (faire $T=1$ dans la définition). Modulo $p$, la proposition \ref{prop:modp} avec $n'=1$ donne $\Phi_p\equiv(T-1)^{p-1}$, et $T^{-(p-1)/2}(T-1)^{p-1}=\big((T-1)^2/T\big)^{(p-1)/2}=(U-2)^{(p-1)/2}$. C'est la forme polynomiale du corollaire \ref{cor:ordre} : en caractéristique $p$, le $p$-gone n'a plus qu'un invariant, $\alpha=2$. Dans l'anneau $\Z[U]/\Psi_p$, l'élément $\alpha-2$ a pour norme $\pm\Psi_p(2)=\pm p$ : Grothendieck y lit, à la fin du dossier, la ramification totale de $p$.
 
 \begin{thebibliography}{9}
-\bibitem{g78} A. Grothendieck, \emph{Polygones réguliers et polynômes cyclotomiques}, dossier 78 des archives de Grothendieck (notes du cours de DEA 1977-1978), en particulier pages 109 à 120 ; transcription et lecture modernisée sur \url{https://grothendieck.commutator.io/#78/6/modern}.
+\bibitem{g78} A. Grothendieck, \emph{Polygones réguliers et polynômes cyclotomiques}, dossier 78 des archives de Grothendieck (notes du cours de DEA 1977-1978) ; transcription et lecture modernisée sur \url{https://grothendieck.commutator.io}.
 \bibitem{lehmer} D. H. Lehmer, \emph{A note on trigonometric algebraic numbers}, The American Mathematical Monthly 40 (1933), pp. 165-166.
 \bibitem{niven} I. Niven, \emph{Irrational Numbers}, Carus Mathematical Monographs 11, MAA, 1956, chapitre 3.
 \bibitem{perrin} D. Perrin, \emph{Cours d'algèbre}, Ellipses, 1996, chapitre III (polynômes cyclotomiques).
 \bibitem{ks} G. Korchmáros, T. Szőnyi, \emph{Affinely regular polygons in an affine plane}, Contributions to Discrete Mathematics 3 (2008), pp. 20-38.
 \end{thebibliography}
 
-\paragraph{Source.} Dossier 78 des archives de Grothendieck, d'après la transcription et la lecture modernisée du dépôt grothendieck-project, qui préviennent qu'elles n'ont pas encore été relues sur les pages par un humain. Les énoncés de Grothendieck sont repris avec leurs numéros de page ; la fiche corrige le coefficient de Bézout de la page 113 et l'exception $p=2$ de la page 118, et démontre ce que les notes supposent connu : l'irréductibilité des polynômes cyclotomiques et le degré de $2\cos(2\pi/n)$.
+\paragraph{Source.} Dossier 78 des archives de Grothendieck, d'après la transcription et la lecture modernisée du dépôt grothendieck-project, qui préviennent qu'elles n'ont pas encore été relues sur les pages par un humain. Les énoncés de Grothendieck sont signalés comme tels ; la fiche corrige un coefficient de Bézout et l'exception $p=2$ d'un corollaire des notes, et démontre ce que les notes supposent connu : l'irréductibilité des polynômes cyclotomiques et le degré de $2\cos(2\pi/n)$.
 
 \end{document}

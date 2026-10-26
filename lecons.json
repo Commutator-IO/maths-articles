@@ -1,7 +1,19 @@
 [
   {
+    "numero": "101",
+    "intitule": "Groupe opérant sur un ensemble. Exemples et applications."
+  },
+  {
     "numero": "102",
     "intitule": "Groupe des nombres complexes de module 1. Sous-groupes des racines de l'unité. Applications."
+  },
+  {
+    "numero": "106",
+    "intitule": "Groupe linéaire d'un espace vectoriel de dimension finie E, sous-groupes de GL(E). Applications."
+  },
+  {
+    "numero": "108",
+    "intitule": "Exemples de parties génératrices d'un groupe. Applications."
   },
   {
     "numero": "120",
@@ -42,6 +54,10 @@
   {
     "numero": "181",
     "intitule": "Convexité dans ℝⁿ. Applications en algèbre et en géométrie."
+  },
+  {
+    "numero": "182",
+    "intitule": "Applications des nombres complexes à la géométrie."
   },
   {
     "numero": "190",

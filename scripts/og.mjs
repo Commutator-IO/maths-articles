@@ -66,6 +66,7 @@ function body({ title, subtitle, kicker, macros, picture }) {
 \\input{tikz-setup.tex}
 ${macros}
 \\hyphenpenalty=10000 \\exhyphenpenalty=10000
+\\providecommand{\\texorpdfstring}[2]{#1}
 \\begin{document}
 ${picture ? `\\sbox0{${picture}}` : ''}
 \\begin{tikzpicture}

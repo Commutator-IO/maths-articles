@@ -10,9 +10,8 @@ Formalisation de la fiche « Polygones réguliers et polynômes cyclotomiques »
 octobre 2026), `polygones-reguliers.tex`. Les numéros des énoncés sont ceux de la fiche.
 
 Les sections 1 à 3 reprennent, en les traduisant, les définitions et les preuves du fichier
-`lean/Grothendieck/Folder78.lean` du dépôt grothendieck-project, qui formalise les pages 109
-à 113 du dossier 78 des archives de Grothendieck (cours de 1977-1978 sur les polygones
-réguliers).
+`lean/Grothendieck/Folder78.lean` du dépôt grothendieck-project, qui formalise une partie du dossier 78 des archives de
+Grothendieck (cours de 1977-1978 sur les polygones réguliers).
 
 ## Modèles
 
@@ -106,7 +105,7 @@ theorem F_add_four (n : ℤ) : F R (n + 4) = X * F R (n + 2) - F R n := by
     rw [show m + 2 - 1 = m + 1 by ring, show m + 1 - 1 = m by ring, h1, h2]
     ring
 
-/-- **Proposition 2.3** (Grothendieck, page 109) :
+/-- **Proposition 2.3** (Grothendieck) :
 `F_n F_{n+1} - U F_{n-1} F_n + F_{n-2} F_{n-1} = 1` pour tout `n ∈ ℤ`. -/
 theorem F_identity (n : ℤ) :
     F R n * F R (n + 1) - X * F R (n - 1) * F R n + F R (n - 2) * F R (n - 1) = 1 := by
@@ -169,7 +168,7 @@ theorem F_odd_closed {k : Type*} [CommRing k] (t t' : k) (ht : t * t' = 1) (m : 
     rw [hrec, eval_sub, eval_mul, eval_X]
     linear_combination (t + t') * t * ih1 - t ^ 2 * ih0 + (t ^ (2 * (m + 1) + 1) - 1) * ht
 
-/-- `F_{2m+1}(2) = 2m + 1` (Grothendieck, page 109). -/
+/-- `F_{2m+1}(2) = 2m + 1` (Grothendieck). -/
 theorem F_odd_eval_two {k : Type*} [CommRing k] (m : ℕ) :
     (F k (2 * m + 1)).eval 2 = 2 * (m : k) + 1 := by
   induction m using Nat.twoStepInduction with
@@ -270,7 +269,7 @@ theorem s_one (α : k) : s α 1 = (1, 0) := by simp [s, u_apply]
 
 theorem s_neg_one (α : k) : s α (-1) = (0, 1) := by simp [s, u_inv_apply]
 
-/-- **Théorème 3.2** (Grothendieck, page 112), b) ⇔ d) : `s_n = s_0 ⇔ F_n(α) = 0`. -/
+/-- **Théorème 3.2** (Grothendieck), b) ⇔ d) : `s_n = s_0 ⇔ F_n(α) = 0`. -/
 theorem vertex_eq_iff (α : k) (n : ℤ) : s α n = (0, 0) ↔ (F k n).eval α = 0 := by
   rw [vertex, Prod.mk.injEq]
   refine ⟨fun ⟨h1, h2⟩ => ?_, fun h => by simp [h]⟩
@@ -353,7 +352,7 @@ end Map
 theorem cyclotomic_irreducible {n : ℕ} (hn : 0 < n) : Irreducible (cyclotomic n ℚ) :=
   cyclotomic.irreducible_rat hn
 
-/-- **Proposition 6.1** (Grothendieck, page 117) : pour `n = p^r n'` avec `p ∤ n'` et
+/-- **Proposition 6.1** (Grothendieck) : pour `n = p^r n'` avec `p ∤ n'` et
 `r ≥ 1`, `Φ_n ≡ Φ_{n'}^{p^r - p^{r-1}} (mod p)`, et `p^r - p^{r-1} = φ(p^r)`. -/
 theorem cyclotomic_mod_p (p : ℕ) [Fact p.Prime] {n' r : ℕ} (hn' : ¬ p ∣ n') (hr : 0 < r) :
     cyclotomic (p ^ r * n') (ZMod p) = cyclotomic n' (ZMod p) ^ (p ^ r - p ^ (r - 1)) :=
