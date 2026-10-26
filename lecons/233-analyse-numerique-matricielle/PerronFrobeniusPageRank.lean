@@ -4,6 +4,7 @@ import Mathlib.Analysis.Normed.Group.Constructions
 import Mathlib.LinearAlgebra.Matrix.Notation
 import Mathlib.Topology.Instances.Matrix
 import Mathlib.Tactic.FinCases
+import Mathlib.Analysis.Convex.Birkhoff
 
 /-!
 # Du théorème de Perron-Frobenius à PageRank
@@ -45,7 +46,8 @@ Formalisation de la fiche « Du théorème de Perron-Frobenius à PageRank » (M
 Les sections 2 et 3 (théorèmes de Perron et de Perron-Frobenius, lemme `(I + A)^{n-1} > 0`) :
 Mathlib ne contient pas encore la théorie des matrices positives ; le théorème 4.2 pour une
 matrice stochastique quelconque ; l'exemple 5.4 (vitesse observée), l'exemple 6.1 (ferme de
-liens) et la section 7 (méthodes itératives) ; les exercices 1 et 3.
+liens) et la section 7 (méthodes itératives) ; la proposition 8.3 (Hardy, Littlewood et
+Pólya) ; les exercices 1 et 3.
 -/
 
 open Finset Matrix Filter Topology
@@ -437,5 +439,34 @@ theorem exercice_periodique (c : ℝ) (k : ℕ) :
     funext j
     fin_cases j <;>
       simp [vecMul, dotProduct, google, Fin.sum_univ_two] <;> ring
+
+/-! ## 8. Matrices doublement stochastiques -/
+
+section Double
+
+variable {ι : Type*} [Fintype ι] {c : ℝ} {P : Matrix ι ι ℝ}
+
+/-- **Proposition 8.1** : si les colonnes de `P` sont de somme `1` (en particulier si `P` est
+doublement stochastique) et `v` uniforme, la loi uniforme est un vecteur PageRank de la
+matrice Google (l'unique, par `existe_unique_pagerank`). -/
+theorem pagerank_uniforme [Nonempty ι] (hcol : ∀ j, ∑ i, P i j = 1) :
+    EstPageRank (google c P fun _ => 1 / (Fintype.card ι : ℝ)) fun _ => 1 / (Fintype.card ι : ℝ) := by
+  have hn : (Fintype.card ι : ℝ) ≠ 0 := Nat.cast_ne_zero.2 Fintype.card_ne_zero
+  have hd : EstDistribution fun _ : ι => 1 / (Fintype.card ι : ℝ) :=
+    ⟨fun _ => by positivity, by simp [Finset.sum_const, Finset.card_univ]⟩
+  refine ⟨hd, ?_⟩
+  rw [vecMul_google_of_distribution hd]
+  funext j
+  simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul, vecMul, dotProduct]
+  rw [← Finset.mul_sum, hcol]
+  ring
+
+/-- **Théorème 8.2** (Birkhoff-von Neumann) : les matrices doublement stochastiques sont
+les combinaisons convexes de matrices de permutation (Mathlib). -/
+theorem birkhoff [DecidableEq ι] :
+    doublyStochastic ℝ ι = convexHull ℝ {σ.permMatrix ℝ | σ : Equiv.Perm ι} :=
+  doublyStochastic_eq_convexHull_permMatrix
+
+end Double
 
 end PageRank

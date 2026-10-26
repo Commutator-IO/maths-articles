@@ -1,5 +1,10 @@
 import Mathlib.LinearAlgebra.Matrix.FixedDetMatrices
 import Mathlib.Tactic.NormNum
+import Mathlib.GroupTheory.CoprodI
+import Mathlib.NumberTheory.Real.Irrational
+import Mathlib.Tactic.FieldSimp
+import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.FinCases
 
 /-!
 # Engendrer et présenter `SL₂(ℤ)`
@@ -11,6 +16,10 @@ Formalisation de la fiche « Engendrer et présenter SL₂(ℤ) » (M. Hua, octo
 
 * **Théorème 1.1** : c'est `SpecialLinearGroup.SL2Z_generators` de Mathlib, avec les
   matrices `ModularGroup.S` et `ModularGroup.T` de la fiche.
+* **Le ping-pong** (théorème 2.2) : `PSL₂(ℤ)` agit fidèlement sur les irrationnels ; on prend
+  directement les permutations `σ̄ : x ↦ -1/x` et `ρ̄ : x ↦ 1/(1 - x)` de `{x : ℝ // Irrational x}`
+  et l'on applique `Monoid.CoprodI.lift_injective_of_ping_pong` de Mathlib aux sous-groupes
+  qu'elles engendrent, d'ordres `2` et `3`, avec les irrationnels négatifs et positifs.
 * **Le formulaire** (section 4) : les matrices de Grothendieck sont des éléments de
   `Matrix (Fin 2) (Fin 2) ℤ` écrits en clair, ainsi que leurs inverses, et chaque relation
   est un calcul de produits `2 × 2` (`Matrix.mul_fin_two`). Les indices `∞, 0, 1` sont
@@ -22,7 +31,8 @@ Formalisation de la fiche « Engendrer et présenter SL₂(ℤ) » (M. Hua, octo
 
 ## Omis
 
-Le lemme du ping-pong et le théorème 2.2 (`PSL₂(ℤ) ≃ ℤ/2 ∗ ℤ/3`), le corollaire 2.3
+La fidélité de l'action de `PSL₂(ℤ)` sur les irrationnels et la surjectivité, qui
+identifient le groupe engendré par `σ̄` et `ρ̄` à `PSL₂(ℤ)` (théorème 2.2) ; le corollaire 2.3
 (présentation de `SL₂(ℤ)`), la proposition 3.1 (Sanov), les remarques et les exercices.
 -/
 
@@ -113,5 +123,156 @@ theorem gamma_infini : ΓI = σIinv * Γ0 ∧ ΓI ≠ σI * Γ0 ∧ ω * ΓI = �
   refine ⟨by norm_num, fun h => ?_, by norm_num⟩
   have := congrArg (fun M : Matrix (Fin 2) (Fin 2) ℤ => M 0 0) h
   norm_num at this
+
+/-! ## 2. Le ping-pong -/
+
+section PingPong
+
+/-- Les irrationnels, sur lesquels les homographies à coefficients entiers agissent. -/
+abbrev Irr := {x : ℝ // Irrational x}
+
+theorem irr_one_sub (x : Irr) : Irrational (1 - x.1) := by simpa using x.2.natCast_sub 1
+
+/-- `σ̄ (x) = -1/x`, image de `σ` dans les permutations des irrationnels. -/
+noncomputable def sigmaBar : Equiv.Perm Irr where
+  toFun x := ⟨-x.1⁻¹, x.2.inv.neg⟩
+  invFun x := ⟨-x.1⁻¹, x.2.inv.neg⟩
+  left_inv x := Subtype.ext (by simp)
+  right_inv x := Subtype.ext (by simp)
+
+/-- `ρ̄ (x) = 1/(1 - x)`, image de `ρ`, de réciproque `x ↦ 1 - 1/x`. -/
+noncomputable def rhoBar : Equiv.Perm Irr where
+  toFun x := ⟨(1 - x.1)⁻¹, (irr_one_sub x).inv⟩
+  invFun x := ⟨1 - x.1⁻¹, by simpa using x.2.inv.natCast_sub 1⟩
+  left_inv x := Subtype.ext (by simp)
+  right_inv x := Subtype.ext (by simp)
+
+theorem sigmaBar_apply (x : Irr) : (sigmaBar x).1 = -x.1⁻¹ := rfl
+
+theorem rhoBar_apply (x : Irr) : (rhoBar x).1 = (1 - x.1)⁻¹ := rfl
+
+/-- Un point irrationnel quelconque, pour tester qu'une permutation n'est pas l'identité. -/
+noncomputable def sqrt2 : Irr := ⟨√2, irrational_sqrt_two⟩
+
+theorem sigmaBar_sq : sigmaBar ^ 2 = 1 := by
+  ext x
+  simp [sq, sigmaBar_apply]
+
+theorem rhoBar_cube : rhoBar ^ 3 = 1 := by
+  ext x
+  show (rhoBar (rhoBar (rhoBar x))).1 = x.1
+  have h0 := x.2.ne_zero
+  have h1 : 1 - x.1 ≠ 0 := sub_ne_zero.2 x.2.ne_one.symm
+  simp only [rhoBar_apply]
+  have e1 : 1 - (1 - x.1)⁻¹ = -x.1 / (1 - x.1) := by field_simp; ring
+  rw [e1, inv_div, show 1 - (1 - x.1) / -x.1 = x.1⁻¹ by field_simp; ring, inv_inv]
+
+/-- `σ̄` n'a pas de point fixe : `-1/x = x` donnerait `x² = -1`. -/
+theorem sigmaBar_ne_one : sigmaBar ≠ 1 := by
+  intro h
+  have := congrArg (fun g : Equiv.Perm Irr => (g sqrt2).1) h
+  simp only [sigmaBar_apply, Equiv.Perm.coe_one, id] at this
+  have h0 : sqrt2.1 ≠ 0 := sqrt2.2.ne_zero
+  field_simp at this
+  nlinarith [sq_nonneg sqrt2.1]
+
+/-- `ρ̄` n'a pas de point fixe : `1/(1 - x) = x` donnerait `x² - x + 1 = 0`. -/
+theorem rhoBar_ne_one : rhoBar ≠ 1 := by
+  intro h
+  have := congrArg (fun g : Equiv.Perm Irr => (g sqrt2).1) h
+  simp only [rhoBar_apply, Equiv.Perm.coe_one, id] at this
+  have h1 : 1 - sqrt2.1 ≠ 0 := sub_ne_zero.2 sqrt2.2.ne_one.symm
+  field_simp at this
+  nlinarith [sq_nonneg (sqrt2.1 - 1 / 2)]
+
+/-- **Section 2** : `σ̄` est d'ordre `2`. -/
+theorem orderOf_sigmaBar : orderOf sigmaBar = 2 :=
+  orderOf_eq_prime sigmaBar_sq sigmaBar_ne_one
+
+/-- **Section 2** : `ρ̄` est d'ordre `3`. -/
+theorem orderOf_rhoBar : orderOf rhoBar = 3 :=
+  haveI : Fact (Nat.Prime 3) := ⟨Nat.prime_three⟩
+  orderOf_eq_prime rhoBar_cube rhoBar_ne_one
+
+/-- Les deux générateurs, indexés par `Fin 2`. -/
+noncomputable def gen (i : Fin 2) : Equiv.Perm Irr := if i = 0 then sigmaBar else rhoBar
+
+/-- Les ensembles du ping-pong : les irrationnels négatifs, puis positifs. -/
+def pp (i : Fin 2) : Set Irr := if i = 0 then {x | x.1 < 0} else {x | 0 < x.1}
+
+theorem eq_of_mem_zpowers_two {g h : Equiv.Perm Irr} (hg : orderOf g = 2)
+    (hh : h ∈ Subgroup.zpowers g) (h1 : h ≠ 1) : h = g := by
+  obtain ⟨k, rfl⟩ := Subgroup.mem_zpowers_iff.1 hh
+  rw [← zpow_mod_orderOf, hg] at h1 ⊢
+  push_cast at h1 ⊢
+  rcases (by omega : k % 2 = 0 ∨ k % 2 = 1) with hk | hk
+  · rw [hk, zpow_zero] at h1; exact absurd rfl h1
+  · rw [hk, zpow_one]
+
+theorem eq_of_mem_zpowers_three {g h : Equiv.Perm Irr} (hg : orderOf g = 3)
+    (hh : h ∈ Subgroup.zpowers g) (h1 : h ≠ 1) : h = g ∨ h = g * g := by
+  obtain ⟨k, rfl⟩ := Subgroup.mem_zpowers_iff.1 hh
+  rw [← zpow_mod_orderOf, hg] at h1 ⊢
+  push_cast at h1 ⊢
+  rcases (by omega : k % 3 = 0 ∨ k % 3 = 1 ∨ k % 3 = 2) with hk | hk | hk
+  · rw [hk, zpow_zero] at h1; exact absurd rfl h1
+  · left; rw [hk, zpow_one]
+  · right; rw [hk, zpow_two]
+
+/-- **Théorème 2.2**, l'injectivité, par le lemme du ping-pong de Mathlib : le morphisme du
+produit libre des sous-groupes engendrés par `σ̄` (d'ordre `2`) et `ρ̄` (d'ordre `3`) vers les
+permutations des irrationnels est injectif. Le groupe engendré par les deux homographies
+`x ↦ -1/x` et `x ↦ 1/(1 - x)` est donc le produit libre `ℤ/2 ∗ ℤ/3`. -/
+theorem pingpong :
+    Function.Injective (Monoid.CoprodI.lift fun i => (Subgroup.zpowers (gen i)).subtype) := by
+  refine Monoid.CoprodI.lift_injective_of_ping_pong _ ?_ pp ?_ ?_ ?_
+  · -- `ρ̄` engendre un groupe à trois éléments.
+    refine Or.inr ⟨1, ?_⟩
+    have hc : Nat.card (Subgroup.zpowers (gen 1)) = 3 := by
+      rw [Nat.card_zpowers]; simpa [gen] using orderOf_rhoBar
+    have : Finite (Subgroup.zpowers (gen 1)) := Nat.finite_of_card_ne_zero (by rw [hc]; norm_num)
+    rw [← Nat.cast_card, hc]
+    norm_num
+  · intro i
+    fin_cases i
+    · exact ⟨⟨-√2, irrational_sqrt_two.neg⟩, by simp [pp]⟩
+    · exact ⟨sqrt2, by simp [pp, sqrt2]⟩
+  · intro i j hij
+    fin_cases i <;> fin_cases j
+    · exact absurd rfl hij
+    · exact Set.disjoint_left.2 fun x hx hx' => by simp [pp] at hx hx'; linarith
+    · exact Set.disjoint_left.2 fun x hx hx' => by simp [pp] at hx hx'; linarith
+    · exact absurd rfl hij
+  · intro i j hij h h1
+    fin_cases i <;> fin_cases j
+    · exact absurd rfl hij
+    · -- `σ̄` envoie les positifs chez les négatifs.
+      have hs : (h : Equiv.Perm Irr) = sigmaBar :=
+        eq_of_mem_zpowers_two orderOf_sigmaBar (by simpa [gen] using h.2)
+          (fun e => h1 (Subtype.ext e))
+      rintro _ ⟨x, hx, rfl⟩
+      have hx' : 0 < x.1 := by simpa [pp] using hx
+      show ((h : Equiv.Perm Irr) • x).1 < 0
+      rw [Equiv.Perm.smul_def, hs, sigmaBar_apply]
+      exact neg_neg_of_pos (inv_pos.2 hx' : (0 : ℝ) < x.1⁻¹)
+    · -- `ρ̄` et `ρ̄²` envoient les négatifs chez les positifs.
+      have hr := eq_of_mem_zpowers_three orderOf_rhoBar (by simpa [gen] using h.2)
+        (fun e => h1 (Subtype.ext e))
+      rintro _ ⟨x, hx, rfl⟩
+      have hx' : x.1 < 0 := by simpa [pp] using hx
+      show 0 < ((h : Equiv.Perm Irr) • x).1
+      have key : ∀ y : Irr, y.1 < 1 → 0 < (rhoBar y).1 ∧ (y.1 < 0 → (rhoBar y).1 < 1) := by
+        intro y hy
+        rw [rhoBar_apply]
+        refine ⟨inv_pos.2 (by linarith), fun hy0 => ?_⟩
+        rw [inv_lt_one₀ (by linarith)]
+        linarith
+      rw [Equiv.Perm.smul_def]
+      rcases hr with e | e <;> rw [e]
+      · exact (key x (by linarith)).1
+      · exact (key _ ((key x (by linarith)).2 hx')).1
+    · exact absurd rfl hij
+
+end PingPong
 
 end SL2ZGenerateurs

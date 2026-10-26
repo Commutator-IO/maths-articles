@@ -60,7 +60,7 @@ Le groupe $\SL_2(\Z)$ des matrices entières de déterminant $1$ est engendré p
 
 \paragraph{Leçons concernées.} 108 (Exemples de parties génératrices d'un groupe. Applications), et en partie 101 (Groupe opérant sur un ensemble. Exemples et applications) et 106 (Groupe linéaire d'un espace vectoriel de dimension finie, sous-groupes de $\GL(E)$. Applications).
 
-\paragraph{Développements possibles.} $\SL_2(\Z)$ est engendré par $S$ et $T$ (théorème \ref{thm:generateurs}) ; $\PSL_2(\Z)\simeq\Z/2*\Z/3$ par le ping-pong (théorème \ref{thm:pingpong}) et la présentation de $\SL_2(\Z)$ qui s'en déduit (corollaire \ref{cor:presentation}) ; le théorème de Sanov (proposition \ref{prop:sanov}). Le fichier \texttt{SL2ZGenerateurs.lean} vérifie avec Mathlib le théorème \ref{thm:generateurs} et toutes les relations du formulaire de la section \ref{sec:formulaire}, y compris les deux lignes fausses.
+\paragraph{Développements possibles.} $\SL_2(\Z)$ est engendré par $S$ et $T$ (théorème \ref{thm:generateurs}) ; $\PSL_2(\Z)\simeq\Z/2*\Z/3$ par le ping-pong (théorème \ref{thm:pingpong}) et la présentation de $\SL_2(\Z)$ qui s'en déduit (corollaire \ref{cor:presentation}) ; le théorème de Sanov (proposition \ref{prop:sanov}). Le fichier \texttt{SL2ZGenerateurs.lean} vérifie avec Mathlib le théorème \ref{thm:generateurs}, le cœur du théorème \ref{thm:pingpong} (les homographies $x\mapsto-1/x$ et $x\mapsto1/(1-x)$, d'ordres $2$ et $3$, engendrent un produit libre, par le lemme du ping-pong de Mathlib), et toutes les relations du formulaire de la section \ref{sec:formulaire}, y compris les deux lignes fausses.
 
 \paragraph{Prérequis.} Groupes, sous-groupe engendré, produit libre et présentation par générateurs et relations, action de groupe, division euclidienne.
 
