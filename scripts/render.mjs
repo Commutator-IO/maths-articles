@@ -704,6 +704,26 @@ function tocHtml(doc) {
   return `<nav class="ltx_TOC"><h6 class="ltx_title ltx_title_contents">Table des matières</h6><ul class="ltx_toclist">${entries.join('\n')}</ul></nav>`;
 }
 
+/**
+ * Une formule de titre en texte brut : \texorpdfstring garde sa version texte,
+ * les macros du préambule sont développées, les commandes de police tombent.
+ */
+function plainTex(s, macros) {
+  const FONTS = ['mathrm', 'mathbb', 'mathcal', 'mathfrak', 'mathbf', 'operatorname', 'text',
+    'emph', 'textbf', 'textit', 'large', 'Large', 'small', 'normalsize'];
+  let t = s.replace(/\\texorpdfstring\{((?:[^{}]|\{[^{}]*\})*)\}\{([^{}]*)\}/g, '$2');
+  for (let k = 0; k < 4; k++) {
+    t = t.replace(/\\([a-zA-Z]+)/g, (m, c) => {
+      if (c === 'sqrt') return '√';
+      const body = macros[`\\${c}`];
+      if (typeof body === 'string') return body;
+      return FONTS.includes(c) ? '' : m;
+    });
+  }
+  return t.replace(/\\[a-zA-Z]+/g, '').replace(/\$([^$]*)\$/g, '$1')
+    .replace(/[{}]/g, '').replace(/\s+/g, ' ').trim();
+}
+
 export function render(tex, file, rootRel = '../../') {
   const at = tex.indexOf('\\begin{document}');
   const end = tex.lastIndexOf('\\end{document}');
@@ -724,12 +744,12 @@ export function render(tex, file, rootRel = '../../') {
   checkMath(held, pre.macros);
   html = dropMathBack(html, held, rootRel);
 
-  const plainTitle = pre.title.split(/\\\\/)[0].replace(/\$([^$]*)\$/g, '$1')
-    .replace(/\\([a-zA-Z]+)/g, (_, c) => (c === 'sqrt' ? '√' : pre.macros[`\\${c}`] ?? '').replace(/\\mathbb\{(.)\}/, '$1'))
-    .replace(/[{}]/g, '').replace(/\s+/g, ' ').trim();
-  const plainSubtitle = (pre.title.split(/\\\\(?:\[[^\]]*\])?/)[1] ?? '')
-    .replace(/\\(large|Large|small|normalsize)\b/g, '').replace(/\$([^$]*)\$/g, '$1')
-    .replace(/[{}]/g, '').replace(/\s+/g, ' ').trim();
+  // Le titre en texte brut (index, onglet, Open Graph) : le sous-titre est la
+  // dernière ligne s'il est composé en \large, les autres lignes font le titre.
+  const parts = pre.title.split(/\\\\(?:\[[^\]]*\])?/);
+  const hasSub = parts.length > 1 && /\\(large|Large)\b/.test(parts.at(-1));
+  const plainTitle = plainTex((hasSub ? parts.slice(0, -1) : parts).join(' '), pre.macros);
+  const plainSubtitle = hasSub ? plainTex(parts.at(-1), pre.macros) : '';
   return { html, title: plainTitle, subtitle: plainSubtitle, macros: pre.macros };
 }
 
