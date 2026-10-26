@@ -1,8 +1,8 @@
 name: site
 
-# Le site : les vues de lecture rendues depuis lecons/**/*.tex, l'index des
-# leçons, les sources et les PDF. Vérifié sur chaque pull request ; publié sur
-# GitHub Pages depuis main seulement.
+# The site: reading views rendered from lecons/**/*.tex, the index of leçons,
+# the sources and the PDFs. Checked on every pull request; published to GitHub
+# Pages from main only.
 on:
   push:
     branches: [main]
@@ -15,14 +15,14 @@ permissions:
   pages: write
   id-token: write
 
-# Une publication à la fois, sans annuler celle en cours.
+# One deployment at a time, without cancelling the one in progress.
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
   build:
-    name: Construire
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -32,15 +32,14 @@ jobs:
           node-version: 22
           cache: npm
 
-      # postinstall copie KaTeX dans public/vendor/katex/, que les vues de
-      # lecture chargent ; il n'est pas versionné.
+      # postinstall copies KaTeX into public/vendor/katex/, which the reading
+      # views load; it is not versioned.
       - run: npm ci
 
-      # Les PDF sont construits ici, jamais versionnés. Un document qui ne
-      # compile pas n'empêche pas la publication : sa page n'aura simplement
-      # pas de lien PDF. C'est le workflow latex qui fait échouer la pull
-      # request dans ce cas.
-      - name: Installer Tectonic
+      # The PDFs are built here and never versioned. A document that does not
+      # compile does not block publication: its page simply has no PDF link.
+      # The latex workflow is the one that fails the pull request in that case.
+      - name: Install Tectonic
         run: |
           curl -fsSL https://drop-sh.fullyjustified.net | sh
           sudo mv tectonic /usr/local/bin/
@@ -49,20 +48,20 @@ jobs:
         with:
           path: ~/.cache/Tectonic
           key: tectonic-${{ runner.os }}-v1
-      - name: Compiler les PDF
-        run: npm run pdf -- --require || echo "::warning::au moins un PDF n'a pas compilé (voir le workflow latex)"
+      - name: Compile the PDFs
+        run: npm run pdf -- --require || echo "::warning::at least one PDF did not compile (see the latex workflow)"
 
-      # Un .tex qui sort du sous-ensemble pris en charge, un renvoi sans
-      # étiquette ou une formule que KaTeX refuse font échouer cette étape.
-      - name: Rendre les vues de lecture
+      # A .tex outside the supported subset, a reference without a label or a
+      # formula that KaTeX rejects fails this step.
+      - name: Render the reading views
         run: npm run render
 
-      # Le domaine agreg.commutator.io est déclaré dans les réglages Pages du
-      # dépôt ; public/CNAME, copié tel quel dans dist/, le rappelle. Cette
-      # étape garde le fichier contre une suppression par mégarde.
-      - name: Vérifier le domaine personnalisé
+      # The agreg.commutator.io domain is set in the repository's Pages
+      # settings; public/CNAME, copied as is into dist/, records it. This step
+      # guards the file against accidental deletion.
+      - name: Check the custom domain
         run: |
-          test -f dist/CNAME || { echo "::error::dist/CNAME absent : le domaine agreg.commutator.io serait perdu"; exit 1; }
+          test -f dist/CNAME || { echo "::error::dist/CNAME is missing: the agreg.commutator.io domain would be lost"; exit 1; }
           cat dist/CNAME
 
       - uses: actions/configure-pages@v6
@@ -76,7 +75,7 @@ jobs:
           path: dist
 
   deploy:
-    name: Publier
+    name: Deploy
     needs: build
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest

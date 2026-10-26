@@ -1,7 +1,7 @@
 name: lean
 
-# Les formalisations Lean 4 rangées avec les documents (lecons/**/*.lean),
-# vérifiées contre le Mathlib figé dans lean/lake-manifest.json.
+# The Lean 4 formalisations kept next to the documents (lecons/**/*.lean),
+# checked against the Mathlib pinned in lean/lake-manifest.json.
 on:
   push:
     branches: [main]
@@ -15,22 +15,22 @@ permissions:
 
 jobs:
   lean:
-    name: Vérifier les preuves
+    name: Check the proofs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
-      # Installe la version de Lean de lean/lean-toolchain, récupère le cache
-      # précompilé de Mathlib et lance `lake build` (la racine, vide).
-      # Version figée. Depuis v1.6.0, l'action calcule correctement la clé du
-      # cache GitHub quand le paquet Lake est dans un sous-dossier, comme ici
+      # Installs the Lean version from lean/lean-toolchain, fetches Mathlib's
+      # prebuilt cache and runs `lake build` (the root, which is empty).
+      # Pinned version. Since v1.6.0, the action computes the GitHub cache key
+      # correctly when the Lake package lives in a subdirectory, as here
       # (lean/).
       - uses: leanprover/lean-action@v1.6.2
         with:
           lake-package-directory: lean
 
-      # Chaque fichier, avertissements traités comme des erreurs ; `sorry`,
-      # `native_decide` et `axiom` refusés.
-      - name: Vérifier lecons/**/*.lean
+      # Every file, with warnings treated as errors; `sorry`, `native_decide`
+      # and `axiom` are refused.
+      - name: Check lecons/**/*.lean
         working-directory: lean
         run: ./check.sh

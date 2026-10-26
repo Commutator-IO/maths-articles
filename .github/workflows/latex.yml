@@ -1,7 +1,7 @@
 name: latex
 
-# Chaque document de lecons/ doit compiler. Les PDF sont gardés 30 jours
-# comme artefact du run, pour relire une pull request sans rien installer.
+# Every document under lecons/ must compile. The PDFs are kept for 30 days as
+# a run artifact, so a pull request can be read without installing anything.
 on:
   push:
     branches: [main]
@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   pdf:
-    name: Compiler avec Tectonic
+    name: Compile with Tectonic
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -24,9 +24,9 @@ jobs:
         with:
           node-version: 22
 
-      # Tectonic plutôt que TeX Live : un binaire, qui ne télécharge que les
-      # paquets utilisés. Son cache de paquets est gardé entre les runs.
-      - name: Installer Tectonic
+      # Tectonic rather than TeX Live: a single binary that downloads only the
+      # packages a document uses. Its package cache is kept between runs.
+      - name: Install Tectonic
         run: |
           curl -fsSL https://drop-sh.fullyjustified.net | sh
           sudo mv tectonic /usr/local/bin/
@@ -36,8 +36,8 @@ jobs:
           path: ~/.cache/Tectonic
           key: tectonic-${{ runner.os }}-v1
 
-      # Ici, un document qui ne compile pas fait échouer le run.
-      - name: Compiler
+      # Here, a document that does not compile fails the run.
+      - name: Compile
         run: node scripts/pdf.mjs --require
 
       - uses: actions/upload-artifact@v4
