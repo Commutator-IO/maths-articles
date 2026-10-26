@@ -138,10 +138,10 @@ theorem exists_pow_of_norm {x y : ℤ} (hx : 0 ≤ x) (hy : 0 ≤ y)
       subst this; rfl
     · have hy1 : (1 : ℤ) ≤ y := by exact_mod_cast hy0
       have hxy : (y : ℤ) ≤ x := by
-        by_contra hc; have hc := not_le.1 hc
+        by_contra! hc
         rcases h with h | h <;> nlinarith
       have hx2 : x < 2 * y := by
-        by_contra hc; have hc := not_lt.1 hc
+        by_contra! hc
         rcases h with h | h <;> nlinarith
       obtain ⟨y', hy'⟩ : ∃ y' : ℕ, (y' : ℤ) = x - y := ⟨(x - y).toNat, by omega⟩
       have hlt : y' < y := by omega
@@ -235,8 +235,7 @@ theorem pow_coeffs_nonneg {d : ℤ} (hd : 0 ≤ d) {w : ℤ√d} (h1 : 0 ≤ w.r
   | succ q ih =>
     rw [pow_succ, Zsqrtd.re_mul, Zsqrtd.im_mul]
     constructor
-    · have := mul_nonneg (mul_nonneg hd ih.2) h2
-      nlinarith [mul_nonneg ih.1 h1]
+    · nlinarith [mul_nonneg ih.1 h1, mul_nonneg (mul_nonneg hd ih.2) h2]
     · nlinarith [mul_nonneg ih.1 h2, mul_nonneg ih.2 h1]
 
 /-- Passage de `ℤ[√d]` aux réels : `(a + b√d)^q = A_q + B_q √d`. -/
@@ -289,8 +288,7 @@ theorem prop_2_8 (d a b : ℕ) (h : (a : ℤ) ^ 2 - d * b ^ 2 = 1 ∨ (a : ℤ) 
 
 /-- Fiche, § 1 et exemple 2.9 : l'exercice d'origine, `(1 + √2)^q = √(n+1) + √n`, `n` unique. -/
 theorem exercice_origine (q : ℕ) : ∃! n : ℕ, (1 + √2) ^ q = √((n : ℝ) + 1) + √(n : ℝ) := by
-  have := prop_2_8 2 1 1 (by norm_num) q
-  simpa using this
+  simpa using prop_2_8 2 1 1 (by norm_num) q
 
 /-- `3` n'est pas un carré parfait. -/
 theorem not_isSquare_three : ¬IsSquare (3 : ℕ) := by
@@ -311,15 +309,10 @@ theorem prop_3_1 (a b c : ℤ × ℤ) (h1 : dist2 a b = dist2 b c) (h2 : dist2 b
   obtain ⟨b1, b2⟩ := b
   obtain ⟨c1, c2⟩ := c
   simp only [dist2] at h1 h2
-  obtain ⟨u1, hu1⟩ : ∃ t, t = b1 - a1 := ⟨_, rfl⟩
-  obtain ⟨u2, hu2⟩ : ∃ t, t = b2 - a2 := ⟨_, rfl⟩
-  obtain ⟨v1, hv1⟩ : ∃ t, t = c1 - a1 := ⟨_, rfl⟩
-  obtain ⟨v2, hv2⟩ : ∃ t, t = c2 - a2 := ⟨_, rfl⟩
-  have hb1 : b1 = a1 + u1 := by omega
-  have hb2 : b2 = a2 + u2 := by omega
-  have hc1 : c1 = a1 + v1 := by omega
-  have hc2 : c2 = a2 + v2 := by omega
-  subst hb1 hb2 hc1 hc2
+  obtain ⟨u1, rfl⟩ : ∃ t, b1 = a1 + t := ⟨b1 - a1, by ring⟩
+  obtain ⟨u2, rfl⟩ : ∃ t, b2 = a2 + t := ⟨b2 - a2, by ring⟩
+  obtain ⟨v1, rfl⟩ : ∃ t, c1 = a1 + t := ⟨c1 - a1, by ring⟩
+  obtain ⟨v2, rfl⟩ : ∃ t, c2 = a2 + t := ⟨c2 - a2, by ring⟩
   -- `|u|² = |v|²` et `2 u·v = |u|²`
   have hS : v1 ^ 2 + v2 ^ 2 = u1 ^ 2 + u2 ^ 2 := by linear_combination -h1 - h2
   have hP : 2 * (u1 * v1 + u2 * v2) = u1 ^ 2 + u2 ^ 2 := by linear_combination h1 + hS
@@ -358,9 +351,7 @@ theorem two_pi_div_mem {n : ℕ} (hn : 3 ≤ n) : 2 * π / n ∈ Set.Icc 0 π :=
 /-- Auxiliaire : `2π/n = 2π/m` entraîne `n = m`. -/
 theorem eq_of_two_pi_div {n : ℕ} {m : ℝ} (hn : 3 ≤ n) (hm : 0 < m) (h : 2 * π / n = 2 * π / m) :
     (n : ℝ) = m := by
-  have hn' : (0 : ℝ) < n := by
-    have : (3 : ℝ) ≤ n := by exact_mod_cast hn
-    linarith
+  have hn' : (0 : ℝ) < n := Nat.cast_pos.2 (by omega)
   rw [div_eq_div_iff hn'.ne' hm.ne'] at h
   exact (mul_left_cancel₀ (by positivity : (2 * π : ℝ) ≠ 0) h).symm
 
@@ -392,12 +383,9 @@ alors `n ∈ {3, 4, 6}`. -/
 theorem trace_entiere {n : ℕ} (hn : 3 ≤ n) {k : ℤ} (hk : 2 * cos (2 * π / n) = k) :
     n = 3 ∨ n = 4 ∨ n = 6 := by
   obtain ⟨h1, h2⟩ := cos_two_pi_div_bounds hn
-  have hk1 : (-1 : ℝ) ≤ k := by linarith
-  have hk2 : (k : ℝ) < 2 := by linarith
-  have hk1' : -1 ≤ k := by exact_mod_cast hk1
-  have hk2' : k < 2 := by exact_mod_cast hk2
-  have : k = -1 ∨ k = 0 ∨ k = 1 := by omega
-  rcases this with rfl | rfl | rfl
+  have hk1 : -1 ≤ k := by exact_mod_cast (by linarith : (-1 : ℝ) ≤ k)
+  have hk2 : k < 2 := by exact_mod_cast (by linarith : (k : ℝ) < 2)
+  obtain rfl | rfl | rfl : k = -1 ∨ k = 0 ∨ k = 1 := by omega
   · left; exact eq_three_of_cos hn (by push_cast at hk; linarith)
   · right; left; exact eq_four_of_cos hn (by push_cast at hk; linarith)
   · right; right; exact eq_six_of_cos hn (by push_cast at hk; linarith)
@@ -438,10 +426,9 @@ theorem rotation_entiere {n : ℕ} (hn : 3 ≤ n) {s : ℝ}
   have half : ∀ c : ℝ, cos θ = c → c ^ 2 = 1 / 4 → False := by
     intro c hcθ hc2
     have key : (2 * (p₁ * q₂ - p₂ * q₁)) ^ 2 = (3 : ℕ) * N ^ 2 := by
-      have hs2' := hs2
-      rw [hcθ, hc2] at hs2'
+      rw [hcθ, hc2] at hs2
       have : (2 * ((p₁ * q₂ - p₂ * q₁ : ℤ) : ℝ)) ^ 2 = (3 : ℝ) * (N : ℝ) ^ 2 := by
-        rw [← hsN]; linear_combination (4 * (N : ℝ) ^ 2) * hs2'
+        rw [← hsN]; linear_combination (4 * (N : ℝ) ^ 2) * hs2
       exact_mod_cast this
     exact hN0 (sq_eq_mul_sq not_isSquare_three key).2
   rcases hniv with h | h | h | h | h

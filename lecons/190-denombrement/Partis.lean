@@ -48,23 +48,17 @@ def sumChoose (n j : ℕ) : ℕ := ∑ k ∈ range j, n.choose k
 /-- La formule de Pascal, sommée : `∑_{k<j+1} C(n+1, k) = ∑_{k<j+1} C(n, k) + ∑_{k<j} C(n, k)`. -/
 theorem sumChoose_succ (n j : ℕ) :
     sumChoose (n + 1) (j + 1) = sumChoose n (j + 1) + sumChoose n j := by
-  induction j with
-  | zero => simp [sumChoose]
-  | succ j ih =>
-    simp only [sumChoose] at ih ⊢
-    rw [sum_range_succ (fun k => (n + 1).choose k) (j + 1), ih, Nat.choose_succ_succ,
-      sum_range_succ (fun k => n.choose k) (j + 1), sum_range_succ (fun k => n.choose k) j]
-    ring
+  simp only [sumChoose, sum_range_succ' _ j, Nat.choose_succ_succ, sum_add_distrib,
+    Nat.choose_zero_right]
+  ring
 
 /-- **Théorème 3.3**, la formule close : `G i j = (∑_{k<j} C(N, k)) / 2^N`, `N = i + j - 1`. -/
 def G (i j : ℕ) : ℚ := (sumChoose (i + j - 1) j : ℚ) / 2 ^ (i + j - 1)
 
 theorem G_zero_left (j : ℕ) (hj : 1 ≤ j) : G 0 j = 1 := by
   obtain ⟨n, rfl⟩ := Nat.exists_eq_add_of_le' hj
-  have h : sumChoose n (n + 1) = 2 ^ n := Nat.sum_range_choose n
-  rw [G, show 0 + (n + 1) - 1 = n by omega, h]
-  push_cast
-  exact div_self (pow_ne_zero _ two_ne_zero)
+  rw [G, show 0 + (n + 1) - 1 = n by omega, sumChoose, Nat.sum_range_choose]
+  simp
 
 theorem G_zero_right (i : ℕ) : G i 0 = 0 := by
   simp [G, sumChoose]
@@ -120,17 +114,13 @@ theorem jamais_egal (n : ℕ) : 6 ^ n ≠ 2 * 5 ^ n := by
   rcases n with _ | n
   · norm_num at h
   have h3 : 3 ∣ 2 * 5 ^ (n + 1) := h ▸ dvd_pow (by norm_num : 3 ∣ 6) n.succ_ne_zero
-  rcases (Nat.prime_three.dvd_mul).1 h3 with h2 | h5
-  · norm_num at h2
-  · have := Nat.prime_three.dvd_of_dvd_pow h5
-    norm_num at this
+  norm_num [Nat.prime_three.dvd_mul, Nat.prime_three.prime.dvd_pow_iff_dvd] at h3
 
 /-- **Proposition 5.3**, sous forme de probabilité : `1 - (5/6)^n ≠ 1/2`. -/
 theorem jamais_egal_proba (n : ℕ) : 1 - (5 / 6 : ℚ) ^ n ≠ 1 / 2 := by
   intro h
   have h' : ((6 ^ n : ℕ) : ℚ) = ((2 * 5 ^ n : ℕ) : ℚ) := by
     push_cast
-    have h6 : (6 : ℚ) ^ n ≠ 0 := pow_ne_zero _ (by norm_num)
     rw [div_pow] at h
     field_simp at h
     linarith

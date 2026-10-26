@@ -194,8 +194,8 @@ theorem red_pow_eq_zero_of_isNilpotent (A : Matrix (Fin n) (Fin n) ℤ) (hA : Is
     rw [red, ← RingHom.mapMatrix_apply, ← map_pow, RingHom.mapMatrix_apply,
       pow_eq_zero_of_isNilpotent hA]
     simp
-  calc red p A ^ p = red p A ^ n * red p A ^ (p - n) := by rw [← pow_add, Nat.add_sub_cancel' hp]
-    _ = 0 := by rw [hn, zero_mul]
+  obtain ⟨m, rfl⟩ := Nat.exists_eq_add_of_le hp
+  rw [pow_add, hn, zero_mul]
 
 /-- **Théorème 8.11, 4 ⇒ 2** : si `(A mod p)ᵖ = 0` pour une infinité de nombres premiers `p`,
 alors `A` est nilpotente. Preuve de la note : le polynôme caractéristique de `A mod p` est `tⁿ`,
@@ -411,7 +411,7 @@ theorem euler_pow_char : (mulX K * Dx K) ^ p = mulX K * Dx K := by
   have := charP_end p (LaurentSeries K)
   have h := pow_mul_pow_char p (Dx_mulX K)
   rw [Dx_pow_char p K, mul_zero] at h
-  exact (sub_eq_zero.mp h.symm)
+  exact sub_eq_zero.mp h.symm
 
 /-- **La `p`-courbure de `y' = (λ/x) y`** sur `K((x))` : `(D − λx⁻¹)ᵖ = −(λᵖ − λ) x⁻ᵖ`, soit
 `ψ_p = −Ψ(λ/x)` avec les notations du §8.4. Elle n'est pas nulle si `λᵖ ≠ λ`, par exemple pour

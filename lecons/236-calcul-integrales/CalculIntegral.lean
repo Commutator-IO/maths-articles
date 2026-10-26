@@ -190,9 +190,7 @@ theorem W_mul {n : ℕ} (hn : 1 ≤ n) : (n : ℝ) * W n * W (n - 1) = π / 2 :=
 
 /-- §1 : `W n > 0`. -/
 theorem W_pos (n : ℕ) : 0 < W n := by
-  have := two_mul_W n
-  have := integral_sin_pow_pos (n := n)
-  linarith
+  linarith [two_mul_W n, integral_sin_pow_pos (n := n)]
 
 /-- **Théorème 1.3**, 3 : `W (n + 1) < W n`. -/
 theorem W_succ_lt (n : ℕ) : W (n + 1) < W n := by
@@ -283,9 +281,8 @@ theorem stirling_constant {C : ℝ} (hC : 0 < C)
     have : (0 : ℝ) < √n := sqrt_pos.2 this
     have : (0 : ℝ) < √(2 * π) := sqrt_pos.2 (by positivity)
     field_simp
-  have := tendsto_nhds_unique tendsto_const_nhds hc
-  rw [div_eq_one_iff_eq (sqrt_pos.2 (by positivity)).ne'] at this
-  exact this
+  exact (div_eq_one_iff_eq (sqrt_pos.2 (by positivity)).ne').1
+    (tendsto_nhds_unique tendsto_const_nhds hc)
 
 /-- **Proposition 1.5**, forme finale : `n! ~ √(2πn) (n/e)ⁿ`. -/
 theorem stirling : (fun n : ℕ => (n ! : ℝ)) ~[atTop] fun n => √(2 * π * n) * (n / exp 1) ^ n := by
@@ -534,10 +531,8 @@ theorem I_le (n : ℕ) : I n ≤ 1 / (n + 1) := by
   apply integral_mono_on zero_le_one
     ((by fun_prop : Continuous fun x : ℝ => x ^ n * exp (-x)).intervalIntegrable 0 1)
     ((continuous_pow n).intervalIntegrable 0 1)
-  intro x hx
-  calc x ^ n * exp (-x) ≤ x ^ n * 1 :=
-        mul_le_mul_of_nonneg_left (exp_le_one_iff.2 (by linarith [hx.1])) (pow_nonneg hx.1 n)
-    _ = x ^ n := mul_one _
+  exact fun x hx =>
+    mul_le_of_le_one_right (pow_nonneg hx.1 n) (exp_le_one_iff.2 (by linarith [hx.1]))
 
 /-- **Proposition 3.1**, 3 : `I n → 0`. -/
 theorem I_tendsto : Tendsto I atTop (𝓝 0) :=
@@ -574,11 +569,9 @@ theorem irrational_exp_one : Irrational (exp 1) := by
     obtain ⟨k, hk⟩ := Nat.dvd_factorial r.den_pos hden
     refine ⟨k * r.num, ?_⟩
     have hd : (r.den : ℝ) ≠ 0 := by positivity
-    rw [← hr, Rat.cast_def, hk, div_eq_mul_inv]
+    rw [← hr, Rat.cast_def, hk]
     push_cast
-    calc (r.den : ℝ) * k * (r.num * (r.den : ℝ)⁻¹) = k * r.num * (r.den * (r.den : ℝ)⁻¹) := by
-          ring
-      _ = k * r.num := by rw [mul_inv_cancel₀ hd, mul_one]
+    field_simp
   have hsum : (n ! : ℝ) * ∑ k ∈ range (n + 1), 1 / (k ! : ℝ) =
       ((∑ k ∈ range (n + 1), n ! / k ! : ℕ) : ℝ) := by
     push_cast [mul_sum]
@@ -601,8 +594,7 @@ theorem irrational_exp_one : Irrational (exp 1) := by
           mul_le_mul_of_nonneg_left (I_le n) (exp_pos 1).le
       _ < 1 := by
         rw [mul_one_div, div_lt_one (by positivity)]; linarith [exp_one_lt_three]
-  have h0' : (0 : ℤ) < m := by exact_mod_cast h0
-  have h1' : (m : ℝ) ≥ 1 := by exact_mod_cast h0'
+  have : (1 : ℝ) ≤ m := by exact_mod_cast (show (0 : ℤ) < m by exact_mod_cast h0)
   linarith
 
 /-! ## §4. Le problème de Bâle par le noyau de Dirichlet -/

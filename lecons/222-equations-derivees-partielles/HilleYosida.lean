@@ -1,4 +1,4 @@
-import Mathlib
+import Mathlib.Analysis.InnerProductSpace.Projection.Submodule
 
 /-!
 # Hille-Yosida : la limite de la résolvante, et le rôle de la densité
@@ -56,66 +56,44 @@ namespace MaxMono
 /-- Le produit scalaire de l'équation stationnaire avec sa solution. -/
 lemma inner_eq {s : ℝ} (hs : 0 < s) (f : H) :
     ⟪f, (M.J s f : H)⟫_ℝ = ‖(M.J s f : H)‖ ^ 2 + s * ⟪A (M.J s f), (M.J s f : H)⟫_ℝ := by
-  have h := M.hJ s hs f
-  calc ⟪f, (M.J s f : H)⟫_ℝ
-      = ⟪(M.J s f : H) + s • A (M.J s f), (M.J s f : H)⟫_ℝ := by rw [h]
-    _ = ‖(M.J s f : H)‖ ^ 2 + s * ⟪A (M.J s f), (M.J s f : H)⟫_ℝ := by
-        rw [inner_add_left, real_inner_smul_left, real_inner_self_eq_norm_sq]
+  have h := congrArg (⟪·, (M.J s f : H)⟫_ℝ) (M.hJ s hs f)
+  simp only [inner_add_left, real_inner_smul_left, real_inner_self_eq_norm_sq] at h
+  exact h.symm
 
 /-- **Brezis VII.1 c** : la résolvante est une contraction, `‖J_λ f‖ ≤ ‖f‖`. -/
 lemma norm_J_le {s : ℝ} (hs : 0 < s) (f : H) : ‖(M.J s f : H)‖ ≤ ‖f‖ := by
   have h1 := M.inner_eq hs f
   have h2 : 0 ≤ s * ⟪A (M.J s f), (M.J s f : H)⟫_ℝ := mul_nonneg hs.le (M.mono _)
   have h3 : ⟪f, (M.J s f : H)⟫_ℝ ≤ ‖f‖ * ‖(M.J s f : H)‖ := real_inner_le_norm _ _
-  have h4 : ‖(M.J s f : H)‖ ^ 2 ≤ ‖f‖ * ‖(M.J s f : H)‖ := by linarith
-  rcases (norm_nonneg (M.J s f : H)).eq_or_lt with h | h
-  · rw [← h]; exact norm_nonneg f
-  · nlinarith
+  nlinarith [norm_nonneg f, norm_nonneg (M.J s f : H)]
 
 /-- Unicité de la solution de l'équation stationnaire (monotonie). -/
 lemma eq_J {s : ℝ} (hs : 0 < s) (u : D) {f : H} (hu : (u : H) + s • A u = f) :
     (u : H) = M.J s f := by
   set w : D := u - M.J s f with hwdef
   have hw : (w : H) + s • A w = 0 := by
-    simp only [hwdef, Submodule.coe_sub, map_sub, smul_sub]
-    calc (u : H) - (M.J s f : H) + (s • A u - s • A (M.J s f))
-        = ((u : H) + s • A u) - ((M.J s f : H) + s • A (M.J s f)) := by abel
-      _ = 0 := by rw [hu, M.hJ s hs f, sub_self]
+    rw [hwdef, Submodule.coe_sub, map_sub, smul_sub, sub_add_sub_comm, hu, M.hJ s hs f, sub_self]
   have h := congrArg (fun x => ⟪x, (w : H)⟫_ℝ) hw
   simp only [inner_add_left, real_inner_smul_left, real_inner_self_eq_norm_sq,
     inner_zero_left] at h
   have h2 := mul_nonneg hs.le (M.mono w)
-  have h3 : ‖(w : H)‖ ^ 2 = 0 := le_antisymm (by linarith) (sq_nonneg _)
-  have h4 : (w : H) = 0 := norm_eq_zero.mp (pow_eq_zero_iff two_ne_zero |>.mp h3)
-  rw [hwdef, Submodule.coe_sub, sub_eq_zero] at h4
-  exact h4
+  have h4 : ‖(w : H)‖ = 0 := by nlinarith [norm_nonneg (w : H)]
+  rwa [norm_eq_zero, hwdef, Submodule.coe_sub, sub_eq_zero] at h4
 
 lemma J_add {s : ℝ} (hs : 0 < s) (f g : H) :
     (M.J s (f + g) : H) = M.J s f + M.J s g := by
-  symm
-  apply M.eq_J hs (M.J s f + M.J s g)
-  simp only [Submodule.coe_add, map_add, smul_add]
-  calc (M.J s f : H) + M.J s g + (s • A (M.J s f) + s • A (M.J s g))
-      = ((M.J s f : H) + s • A (M.J s f)) + ((M.J s g : H) + s • A (M.J s g)) := by abel
-    _ = f + g := by rw [M.hJ s hs f, M.hJ s hs g]
+  refine (M.eq_J hs (M.J s f + M.J s g) ?_).symm
+  rw [Submodule.coe_add, map_add, smul_add, add_add_add_comm, M.hJ s hs f, M.hJ s hs g]
 
 lemma J_sub {s : ℝ} (hs : 0 < s) (f g : H) :
     (M.J s (f - g) : H) = M.J s f - M.J s g := by
-  symm
-  apply M.eq_J hs (M.J s f - M.J s g)
-  simp only [Submodule.coe_sub, map_sub, smul_sub]
-  calc (M.J s f : H) - M.J s g + (s • A (M.J s f) - s • A (M.J s g))
-      = ((M.J s f : H) + s • A (M.J s f)) - ((M.J s g : H) + s • A (M.J s g)) := by abel
-    _ = f - g := by rw [M.hJ s hs f, M.hJ s hs g]
+  refine (M.eq_J hs (M.J s f - M.J s g) ?_).symm
+  rw [Submodule.coe_sub, map_sub, smul_sub, sub_add_sub_comm, M.hJ s hs f, M.hJ s hs g]
 
 lemma J_smul {s : ℝ} (hs : 0 < s) (c : ℝ) (f : H) :
     (M.J s (c • f) : H) = c • (M.J s f : H) := by
-  symm
-  apply M.eq_J hs (c • M.J s f)
-  simp only [Submodule.coe_smul, map_smul]
-  calc c • (M.J s f : H) + s • c • A (M.J s f)
-      = c • ((M.J s f : H) + s • A (M.J s f)) := by rw [smul_add, smul_comm s c]
-    _ = c • f := by rw [M.hJ s hs f]
+  refine (M.eq_J hs (c • M.J s f) ?_).symm
+  rw [Submodule.coe_smul, map_smul, smul_comm s c, ← smul_add, M.hJ s hs f]
 
 /-- Sur le domaine : `J_λ v + λ J_λ (A v) = v`, c'est-à-dire `J_λ (I + λ A) v = v`. -/
 lemma J_add_smul_J {s : ℝ} (hs : 0 < s) (v : D) :
@@ -127,12 +105,8 @@ lemma J_add_smul_J {s : ℝ} (hs : 0 < s) (v : D) :
 `‖J_λ v - v‖ = λ ‖J_λ (A v)‖ ≤ λ ‖A v‖`. -/
 theorem norm_J_sub_le {s : ℝ} (hs : 0 < s) (v : D) :
     ‖(M.J s v : H) - v‖ ≤ s * ‖A v‖ := by
-  have h := M.J_add_smul_J hs v
   have e : (M.J s v : H) - v = -(s • (M.J s (A v) : H)) := by
-    refine eq_neg_of_add_eq_zero_left ?_
-    calc (M.J s v : H) - v + s • (M.J s (A v) : H)
-        = ((M.J s v : H) + s • (M.J s (A v) : H)) - v := by abel
-      _ = 0 := by rw [h, sub_self]
+    rw [eq_neg_iff_add_eq_zero, sub_add_eq_add_sub, M.J_add_smul_J hs v, sub_self]
   rw [e, norm_neg, norm_smul, Real.norm_of_nonneg hs.le]
   exact mul_le_mul_of_nonneg_left (M.norm_J_le hs _) hs.le
 
@@ -140,11 +114,7 @@ theorem norm_J_sub_le {s : ℝ} (hs : 0 < s) (v : D) :
 `A_λ v = (v - J_λ v) / λ` vaut `J_λ (A v)`. -/
 theorem yosida_eq {s : ℝ} (hs : 0 < s) (v : D) :
     s⁻¹ • ((v : H) - M.J s v) = M.J s (A v) := by
-  have h := M.J_add_smul_J hs v
-  have e : (v : H) - M.J s v = s • (M.J s (A v) : H) := by
-    calc (v : H) - M.J s v = ((M.J s v : H) + s • (M.J s (A v) : H)) - M.J s v := by rw [h]
-      _ = s • (M.J s (A v) : H) := by abel
-  rw [e, smul_smul, inv_mul_cancel₀ hs.ne', one_smul]
+  rw [← eq_sub_of_add_eq' (M.J_add_smul_J hs v), inv_smul_smul₀ hs.ne']
 
 /-- **Brezis VII.2 b**, comme le dit le courriel : `‖A_λ v‖ ≤ ‖A v‖` découle de VII.2 a2 et de
 `‖J_λ‖ ≤ 1`. -/
@@ -171,12 +141,10 @@ theorem dense_domain [CompleteSpace H] : Dense (D : Set H) := by
     have h0 : ⟪f, (M.J 1 f : H)⟫_ℝ = 0 :=
       Submodule.inner_left_of_mem_orthogonal (M.J 1 f).property hf
     have h2 := M.mono (M.J 1 f)
-    have h3 : ‖(M.J 1 f : H)‖ ^ 2 = 0 := le_antisymm (by nlinarith) (sq_nonneg _)
-    have h4 : M.J 1 f = 0 :=
-      (Submodule.coe_eq_zero).mp (norm_eq_zero.mp (pow_eq_zero_iff two_ne_zero |>.mp h3))
-    have h5 := M.hJ 1 one_pos f
-    rw [h4] at h5
-    simpa using h5.symm
+    have h4 : M.J 1 f = 0 := by
+      rw [← Submodule.coe_eq_zero, ← norm_eq_zero]
+      nlinarith [norm_nonneg (M.J 1 f : H)]
+    simpa [h4] using (M.hJ 1 one_pos f).symm
   exact Submodule.dense_iff_topologicalClosure_eq_top.mpr
     (Submodule.topologicalClosure_eq_top_iff.mpr hbot)
 

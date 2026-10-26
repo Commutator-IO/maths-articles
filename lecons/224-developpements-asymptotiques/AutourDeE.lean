@@ -72,17 +72,16 @@ theorem log_le_sub_one (y : ℝ) (hy : 0 < y) : log y ≤ y - 1 := Real.log_le_s
 /-- **Lemme 2.1** (minoration) : `2 ≤ (1 + 1/n)^n` (inégalité de Bernoulli). -/
 theorem two_le_one_add_inv_pow (n : ℕ) (hn : 1 ≤ n) : 2 ≤ (1 + 1 / (n : ℝ)) ^ n := by
   have hpos : (0 : ℝ) < n := by exact_mod_cast hn
-  have h := one_add_mul_le_pow (a := 1 / (n : ℝ)) (by have : (0 : ℝ) ≤ 1 / n := by positivity
-                                                      linarith) n
-  have : (n : ℝ) * (1 / n) = 1 := by field_simp
+  have h := one_add_mul_le_pow (a := 1 / (n : ℝ))
+    (by linarith [show (0 : ℝ) ≤ 1 / n by positivity]) n
+  rw [mul_one_div_cancel hpos.ne'] at h
   linarith
 
 /-- **Lemme 2.1** (majoration) : `(1 + 1/n)^n < e`. -/
 theorem one_add_inv_pow_lt_exp (n : ℕ) (hn : 1 ≤ n) : (1 + 1 / (n : ℝ)) ^ n < exp 1 := by
   have hpos : (0 : ℝ) < n := by exact_mod_cast hn
   have h1 : 1 + 1 / (n : ℝ) < exp (1 / n) := by
-    have := add_one_lt_exp (x := 1 / (n : ℝ)) (by positivity)
-    linarith
+    linarith [add_one_lt_exp (x := 1 / (n : ℝ)) (by positivity)]
   calc (1 + 1 / (n : ℝ)) ^ n < (exp (1 / n)) ^ n :=
         pow_lt_pow_left₀ h1 (by positivity) (by omega)
     _ = exp 1 := by rw [← exp_nat_mul]; congr 1; field_simp
@@ -94,8 +93,7 @@ lemma u_nonneg (n : ℕ) : 0 ≤ u n := by unfold u; positivity
 
 /-- **Prop. 2.2** : `u (n+1) / u n = (1 + 1/n)^n`. -/
 theorem u_succ (n : ℕ) (hn : 1 ≤ n) : u (n + 1) = u n * (1 + 1 / (n : ℝ)) ^ n := by
-  have hpos : (n : ℝ) ≠ 0 := by have : (0 : ℝ) < n := by exact_mod_cast hn
-                                exact this.ne'
+  have hpos : (n : ℝ) ≠ 0 := Nat.cast_ne_zero.2 (by omega)
   unfold u
   rw [show (1 + 1 / (n : ℝ)) = ((n : ℝ) + 1) / n by field_simp, div_pow, Nat.factorial_succ]
   push_cast
@@ -107,14 +105,9 @@ theorem u_bounds (n : ℕ) (hn : 1 ≤ n) : (2 : ℝ) ^ (n - 1) ≤ u n ∧ u n 
   induction n, hn using Nat.le_induction with
   | base => simp [u]
   | succ n hn ih =>
-    rw [u_succ n hn]
-    obtain ⟨h1, h2⟩ := ih
-    have a := two_le_one_add_inv_pow n hn
-    have b := (one_add_inv_pow_lt_exp n hn).le
-    have : n + 1 - 1 = (n - 1) + 1 := by omega
-    rw [this, pow_succ, pow_succ]
-    exact ⟨mul_le_mul h1 a (by norm_num) (u_nonneg n),
-      mul_le_mul h2 b (by positivity) (by positivity)⟩
+    rw [u_succ n hn, show n + 1 - 1 = n - 1 + 1 by omega, pow_succ, pow_succ]
+    exact ⟨mul_le_mul ih.1 (two_le_one_add_inv_pow n hn) (by norm_num) (u_nonneg n),
+      mul_le_mul ih.2 (one_add_inv_pow_lt_exp n hn).le (by positivity) (by positivity)⟩
 
 /-- **Prop. 2.2** : `n^n / e^(n-1) ≤ n! ≤ n^n / 2^(n-1)` pour `n ≥ 1`. -/
 theorem factorial_bounds (n : ℕ) (hn : 1 ≤ n) :
@@ -161,11 +154,8 @@ theorem tendsto_factorial_div_pow (a : ℝ) (ha : 0 < a) :
 `Stirling.factorial_isEquivalent_stirling`, au réordonnancement `2πn = 2nπ` près. -/
 theorem stirling :
     (fun n : ℕ => (n ! : ℝ)) ~[atTop] fun n => √(2 * π * n) * ((n : ℝ) / exp 1) ^ n := by
-  have e : (fun n : ℕ => √(2 * π * n) * ((n : ℝ) / exp 1) ^ n) =
-      fun n : ℕ => √(2 * (n : ℝ) * π) * ((n : ℝ) / exp 1) ^ n := by
-    funext n; rw [mul_right_comm]
-  rw [e]
-  exact Stirling.factorial_isEquivalent_stirling
+  convert Stirling.factorial_isEquivalent_stirling using 4
+  ring
 
 /-- La suite `w n = ln n! - (n + 1/2) ln n + n` de la fiche. -/
 def w (n : ℕ) : ℝ := log n ! - (n + 1 / 2) * log n + n
@@ -194,8 +184,7 @@ theorem w_sub_bounds (n : ℕ) (hn : 1 ≤ n) :
     convert h0 using 1
     · push_cast; field_simp; ring
     · ring
-  · have := Stirling.log_stirlingSeq_sdiff_le n
-    linarith
+  · linarith [Stirling.log_stirlingSeq_sdiff_le n]
 
 /-- **Théorème 2.7** (avec reste) : pour `n ≥ 1`, il existe `θ ∈ ]0, 1]` tel que
 `n! = √(2πn) (n/e)^n e^{θ/(12n)}`. -/
@@ -233,27 +222,17 @@ theorem stirling_remainder (n : ℕ) (hn : 1 ≤ n) :
   have hGlim : Tendsto G atTop (𝓝 (log √π)) := by
     have h1 : Tendsto (fun k : ℕ => L (k + 1)) atTop (𝓝 (log √π)) :=
       hLlim.comp (tendsto_add_atTop_nat 1)
-    have h2 : Tendsto (fun k : ℕ => 1 / (12 * ((k : ℝ) + 1))) atTop (𝓝 0) := by
-      refine tendsto_const_nhds.div_atTop ?_
-      exact Tendsto.const_mul_atTop (by norm_num)
-        (tendsto_atTop_add_const_right _ 1 tendsto_natCast_atTop_atTop)
-    have := h1.sub h2
-    rw [sub_zero] at this
-    exact this
+    have h2 : Tendsto (fun k : ℕ => 1 / (12 * ((k : ℝ) + 1))) atTop (𝓝 0) :=
+      tendsto_const_nhds.div_atTop (Tendsto.const_mul_atTop (by norm_num)
+        (tendsto_atTop_add_const_right _ 1 tendsto_natCast_atTop_atTop))
+    simpa only [sub_zero] using h1.sub h2
   have hup : L n - 1 / (12 * (n : ℝ)) ≤ log √π := by
-    have := hGmono.ge_of_tendsto hGlim (n - 1)
-    simp only [hG] at this
-    have e : n - 1 + 1 = n := by omega
-    rw [e] at this
-    have e' : ((n - 1 : ℕ) : ℝ) + 1 = n := by
-      rw [Nat.cast_sub hn]; push_cast; ring
-    rw [e'] at this
-    exact this
+    simpa only [hG, Nat.sub_add_cancel hn, Nat.cast_sub hn, Nat.cast_one, sub_add_cancel]
+      using hGmono.ge_of_tendsto hGlim (n - 1)
   have hnpos : (0 : ℝ) < n := by exact_mod_cast hn
   refine ⟨12 * n * (L n - log √π), ⟨by positivity, ?_⟩, ?_⟩
-  · have : L n - log √π ≤ 1 / (12 * n) := by linarith
-    calc 12 * n * (L n - log √π) ≤ 12 * n * (1 / (12 * n)) := by gcongr
-      _ = 1 := by field_simp
+  · rw [← le_div_iff₀' (by positivity)]
+    linarith
   · have hθ : 12 * n * (L n - log √π) / (12 * n) = L n - log √π := by field_simp
     rw [hθ, exp_sub, exp_log (hspos n hn), exp_log hpi]
     simp only [Stirling.stirlingSeq]
@@ -297,7 +276,6 @@ theorem moyG_le_moyA (hs : s.Nonempty) (ha : ∀ i ∈ s, 0 < a i) : moyG s a �
 theorem moyG_eq_moyA_iff (hs : s.Nonempty) (ha : ∀ i ∈ s, 0 < a i) :
     moyG s a = moyA s a ↔ ∀ j ∈ s, ∀ k ∈ s, a j = a k := by
   rw [moyA_eq, moyG]
-  have : (0 : ℝ) < s.card := by exact_mod_cast hs.card_pos
   exact Real.geom_mean_eq_arith_mean_weighted_iff_of_pos s _ a (fun _ _ => by positivity)
     (sum_weights hs) (fun i hi => (ha i hi).le)
 
@@ -310,8 +288,7 @@ theorem moyH_le_moyG (hs : s.Nonempty) (ha : ∀ i ∈ s, 0 < a i) : moyH s a �
     rw [moyH, ← inv_div, sum_div]
     congr 1
     exact sum_congr rfl fun i _ => div_right_comm _ _ _
-  rw [e, moyG]
-  exact h
+  rwa [e, moyG]
 
 variable (s a) in
 /-- Moyenne d'ordre `p ≠ 0` : `M_p = ((1/n) ∑ aᵢ^p)^{1/p}`. -/
@@ -351,7 +328,7 @@ end Moyennes
 
 /-- **Exemple 3.1** : pour `(4, 10, 25)`, `m = 13`. -/
 theorem ex_moyA : moyA univ ![(4 : ℝ), 10, 25] = 13 := by
-  simp [moyA, Fin.sum_univ_three]; norm_num
+  norm_num [moyA, Fin.sum_univ_three]
 
 /-- **Exemple 3.1** : `g = 10`. -/
 theorem ex_moyG : moyG univ ![(4 : ℝ), 10, 25] = 10 := by
@@ -364,7 +341,7 @@ theorem ex_moyG : moyG univ ![(4 : ℝ), 10, 25] = 10 := by
 
 /-- **Exemple 3.1** : `h = 100/13`. -/
 theorem ex_moyH : moyH univ ![(4 : ℝ), 10, 25] = 100 / 13 := by
-  simp [moyH, Fin.sum_univ_three]; norm_num
+  norm_num [moyH, Fin.sum_univ_three]
 
 /-- **Exemple 3.1** : pour une progression géométrique `(a, ar, ar²)`, `m h = g²`. -/
 theorem geom_prog_mul (a r : ℝ) (ha : 0 < a) (hr : 0 < r) :
@@ -397,9 +374,8 @@ lemma U_succ (n : ℕ) : U (n + 1) = U n + 1 / ((n + 1) ! : ℝ) := by
 /-- **Prop. 4.1** : `(U n)` est strictement croissante. -/
 theorem U_strictMono : StrictMono U := by
   refine strictMono_nat_of_lt_succ (f := U) fun n => ?_
-  rw [U_succ]
-  have : (0 : ℝ) < (n + 1) ! := by positivity
-  linarith [one_div_pos.2 this]
+  rw [U_succ, lt_add_iff_pos_right]
+  positivity
 
 /-- **Prop. 4.1** : `V (n+1) - V n = -1/(n (n+1) (n+1)!)` pour `n ≥ 1`. -/
 theorem V_succ_sub (n : ℕ) (hn : 1 ≤ n) :
@@ -414,11 +390,8 @@ theorem V_succ_sub (n : ℕ) (hn : 1 ≤ n) :
 /-- **Prop. 4.1** : `(V n)_{n ≥ 1}` est strictement décroissante. -/
 theorem V_strictAnti : StrictAnti fun n => V (n + 1) :=
   strictAnti_nat_of_succ_lt fun n => by
-    have h := V_succ_sub (n + 1) (by omega)
-    have : 0 < ((n + 1 : ℕ) : ℝ) * ((n + 1 : ℕ) + 1) * ((n + 1 + 1) ! : ℝ) := by positivity
-    have : -1 / (((n + 1 : ℕ) : ℝ) * ((n + 1 : ℕ) + 1) * ((n + 1 + 1) ! : ℝ)) < 0 :=
-      div_neg_of_neg_of_pos (by norm_num) this
-    linarith
+    rw [← sub_neg, V_succ_sub (n + 1) (by omega)]
+    exact div_neg_of_neg_of_pos (by norm_num) (by positivity)
 
 /-- **Prop. 4.3** : `U n → e`, c'est-à-dire `e = ∑ 1/k!` (série exponentielle de Mathlib,
 `NormedSpace.expSeries_div_hasSum_exp`). -/
@@ -444,8 +417,8 @@ theorem U_lt_e_lt_V (n : ℕ) (hn : 1 ≤ n) : U n < exp 1 ∧ exp 1 < V n := by
   · exact (U_strictMono (Nat.lt_succ_self n)).trans_le
       (U_strictMono.monotone.ge_of_tendsto tendsto_U (n + 1))
   · have hV : Tendsto (fun n => V (n + 1)) atTop (𝓝 (exp 1)) := by
-      have := (tendsto_V_sub_U.add tendsto_U).comp (tendsto_add_atTop_nat 1)
-      simpa [Function.comp_def] using this
+      simpa [Function.comp_def] using
+        (tendsto_V_sub_U.add tendsto_U).comp (tendsto_add_atTop_nat 1)
     obtain ⟨m, rfl⟩ : ∃ m, n = m + 1 := ⟨n - 1, by omega⟩
     exact (V_strictAnti.antitone.le_of_tendsto hV (m + 1)).trans_lt
       (V_strictAnti (Nat.lt_succ_self m))
@@ -456,10 +429,8 @@ theorem e_sub_U_bounds (n : ℕ) :
     1 / ((n + 1) ! : ℝ) < exp 1 - U n ∧ exp 1 - U n < exp 1 / ((n + 1) ! : ℝ) := by
   have he : (2 : ℝ) < exp 1 := lt_trans (by norm_num) exp_one_gt_d9
   rcases Nat.eq_zero_or_pos n with rfl | hn
-  · have hU0 : U 0 = 1 := by simp [U]
-    have hf0 : ((0 + 1) ! : ℝ) = 1 := by norm_num
-    rw [hU0, hf0, div_one, div_one]
-    exact ⟨by linarith, by linarith⟩
+  · norm_num [U]
+    linarith
   have h1 := (U_lt_e_lt_V (n + 1) (by omega)).1
   have h2 := (U_lt_e_lt_V n hn).2
   rw [U_succ] at h1

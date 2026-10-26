@@ -64,10 +64,8 @@ theorem continuousAt_mul_of_jump {g h : ℝ → ℝ} {a gl gr : ℝ}
   have h0 : Tendsto h (𝓝 a) (𝓝 0) := by simpa [ha] using hh.tendsto
   rw [continuousAt_iff_continuous_left'_right']
   constructor
-  · have := hgl.mul (h0.mono_left nhdsWithin_le_nhds)
-    simpa [ContinuousWithinAt, ha] using this
-  · have := hgr.mul (h0.mono_left nhdsWithin_le_nhds)
-    simpa [ContinuousWithinAt, ha] using this
+  · simpa [ContinuousWithinAt, ha] using hgl.mul (h0.mono_left nhdsWithin_le_nhds)
+  · simpa [ContinuousWithinAt, ha] using hgr.mul (h0.mono_left nhdsWithin_le_nhds)
 
 /-- **Prop. 2.1 (2)**, à gauche : `(g h)'_g(a) = g(a⁻) h'(a)`. -/
 theorem hasDerivWithinAt_Iio_mul {g h : ℝ → ℝ} {a gl h' : ℝ}
@@ -115,14 +113,9 @@ theorem differentiableAt_mul_iff {g h : ℝ → ℝ} {a gl gr h' : ℝ}
     have e2 := UniqueDiffWithinAt.eq_deriv _ (uniqueDiffWithinAt_Ioi a)
       hd.hasDerivAt.hasDerivWithinAt hR
     have : (gl - gr) * h' = 0 := by linear_combination e2 - e1
-    rcases mul_eq_zero.1 this with h | h
-    · exact Or.inr (by linarith)
-    · exact Or.inl h
+    exact (mul_eq_zero.1 this).symm.imp_right sub_eq_zero.1
   · intro H
-    have e : gr * h' = gl * h' := by
-      rcases H with H | H
-      · simp [H]
-      · rw [H]
+    have e : gr * h' = gl * h' := by rcases H with H | H <;> simp [H]
     exact (hasDerivAt_of_Iio_Ioi hL (hR.congr_deriv e)).differentiableAt
 
 /-! ### La partie entière -/
@@ -234,9 +227,8 @@ theorem F_eqOn : EqOn F (fun x => sin (π * x)) (Icc 1 2) := by
   intro x hx
   rcases eq_or_lt_of_le hx.2 with h | h
   · subst h
-    have : sin (π * 2) = 0 := by rw [mul_comm]; exact sin_two_pi
-    simp [F, this]
-  · have : ⌊x⌋ = 1 := Int.floor_eq_iff.2 ⟨by exact_mod_cast hx.1, by norm_num; exact h⟩
+    simp [F, show π * 2 = 2 * π by ring]
+  · have : ⌊x⌋ = 1 := Int.floor_eq_iff.2 ⟨by exact_mod_cast hx.1, by norm_num [h]⟩
     simp [F, this]
 
 /-- **Exemple 1.1** : `f` est strictement décroissante sur `[1, 3/2]`. -/
@@ -311,11 +303,9 @@ theorem hasDerivAt_f2 (x : ℝ) : HasDerivAt f2 (f2' x) x := by
     rw [sin_two_pi_int] at hd
     have hL := hasDerivWithinAt_Iio_mul (floor_left k) hd h0
     have hR := hasDerivWithinAt_Ioi_mul (floor_right k) hd h0
-    have := hasDerivAt_of_Iio_Ioi (hL.congr_deriv (by ring : _ = (0 : ℝ)))
-      (hR.congr_deriv (by ring : _ = (0 : ℝ)))
     have e : f2' k = 0 := by simp [f2', sin_two_pi_int]
     rw [e]
-    exact this
+    exact hasDerivAt_of_Iio_Ioi (hL.congr_deriv (by ring)) (hR.congr_deriv (by ring))
   · simp only [not_exists] at hx
     exact hasDerivAt_floor_mul hx (hasDerivAt_sin_pi_sq x)
 
@@ -333,12 +323,10 @@ theorem f2'_left_right (k : ℤ) :
     HasDerivWithinAt f2' (((k : ℝ) - 1) * (2 * π ^ 2)) (Iio k) k ∧
     HasDerivWithinAt f2' ((k : ℝ) * (2 * π ^ 2)) (Ioi k) k := by
   have hd : HasDerivAt (fun y => π * sin (2 * π * y)) (2 * π ^ 2) k := by
-    have := (((hasDerivAt_id (k : ℝ)).const_mul (2 * π)).sin).const_mul π
-    convert this using 1
-    show 2 * π ^ 2 = π * (cos (2 * π * k) * (2 * π * 1))
-    rw [cos_two_pi_int]
-    ring
-    rfl
+    convert (((hasDerivAt_id (k : ℝ)).const_mul (2 * π)).sin).const_mul π using 1
+    · simp
+    · simp [cos_two_pi_int]
+      ring
   have h0 : π * sin (2 * π * k) = 0 := by rw [sin_two_pi_int]; ring
   exact ⟨hasDerivWithinAt_Iio_mul (floor_left k) hd h0,
     hasDerivWithinAt_Ioi_mul (floor_right k) hd h0⟩
@@ -354,8 +342,7 @@ theorem not_differentiableAt_deriv_f2 (k : ℤ) : ¬ DifferentiableAt ℝ (deriv
   have e2 := UniqueDiffWithinAt.eq_deriv _ (uniqueDiffWithinAt_Ioi _)
     hd.hasDerivAt.hasDerivWithinAt hR
   have : 2 * π ^ 2 = 0 := by linear_combination e1 - e2
-  have := pi_pos
-  nlinarith
+  exact absurd this (by positivity)
 
 /-- **Cor. 3.6, `m = 2`** : `f₂` n'est pas de classe `C²`. -/
 theorem not_contDiff_two_f2 : ¬ ContDiff ℝ 2 f2 := by
@@ -423,7 +410,7 @@ theorem ex1_at_one :
     rcases lt_or_ge x 1 with h | h
     · have : ⌊x⌋ = 0 := Int.floor_eq_iff.2 ⟨by simpa using hx.1.le, by simpa using h⟩
       simp [this]
-    · have : ⌊x⌋ = 1 := Int.floor_eq_iff.2 ⟨by simpa using h, by norm_num; exact hx.2⟩
+    · have : ⌊x⌋ = 1 := Int.floor_eq_iff.2 ⟨by simpa using h, by norm_num [hx.2]⟩
       simp [this]
   have hh : HasDerivAt (fun x : ℝ => x - 1) 1 1 := (hasDerivAt_id 1).sub_const 1
   have h1 : ((1 : ℤ) : ℝ) = 1 := by norm_num
@@ -455,11 +442,10 @@ theorem ell_le_G (n : ℤ) (x : ℝ) : ell n x ≤ G x := by
   have key : G x - ell n x = ((N : ℝ) - n) * (x - ((N : ℝ) + n + 1) / 2) := by
     simp only [G, ell, ← hN]; ring
   rw [← sub_nonneg, key]
-  rcases le_or_gt n N with h | h
-  · rcases eq_or_lt_of_le h with h' | h'
-    · simp [h']
-    · have : (n : ℝ) + 1 ≤ N := by exact_mod_cast h'
-      apply mul_nonneg <;> linarith
+  rcases lt_trichotomy n N with h | h | h
+  · have : (n : ℝ) + 1 ≤ N := by exact_mod_cast h
+    apply mul_nonneg <;> linarith
+  · simp [h]
   · have : (N : ℝ) + 1 ≤ n := by exact_mod_cast h
     apply mul_nonneg_of_nonpos_of_nonpos <;> linarith
 
@@ -468,14 +454,14 @@ theorem G_eq_ell (x : ℝ) : G x = ell ⌊x⌋ x := by simp [G, ell]
 /-- **Exercice 5.2** : `G` est convexe sur `ℝ`. -/
 theorem convexOn_G : ConvexOn ℝ univ G := by
   refine ⟨convex_univ, fun a _ b _ s t hs ht hst => ?_⟩
-  set z := s • a + t • b
+  obtain rfl : t = 1 - s := by linarith
+  set z := s • a + (1 - s) • b
   rw [G_eq_ell z]
   have ha := ell_le_G ⌊z⌋ a
   have hb := ell_le_G ⌊z⌋ b
-  have : ell ⌊z⌋ z = s * ell ⌊z⌋ a + t * ell ⌊z⌋ b := by
+  have : ell ⌊z⌋ z = s * ell ⌊z⌋ a + (1 - s) * ell ⌊z⌋ b := by
     simp only [z, ell, smul_eq_mul]
-    have : t = 1 - s := by linarith
-    subst this; ring
+    ring
   rw [this, smul_eq_mul, smul_eq_mul]
   nlinarith [mul_le_mul_of_nonneg_left ha hs, mul_le_mul_of_nonneg_left hb ht]
 

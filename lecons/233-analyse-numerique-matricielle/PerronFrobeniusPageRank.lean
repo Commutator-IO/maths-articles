@@ -1,4 +1,9 @@
-import Mathlib
+import Mathlib.Analysis.SpecificLimits.Basic
+import Mathlib.Analysis.Normed.Group.Real
+import Mathlib.Analysis.Normed.Group.Constructions
+import Mathlib.LinearAlgebra.Matrix.Notation
+import Mathlib.Topology.Instances.Matrix
+import Mathlib.Tactic.FinCases
 
 /-!
 # Du théorème de Perron-Frobenius à PageRank
@@ -108,11 +113,9 @@ theorem l1_sub_le_two {x y : ι → ℝ} (hx : EstDistribution x) (hy : EstDistr
     l1 (x - y) ≤ 2 := by
   have h : ∀ z : ι → ℝ, EstDistribution z → l1 z = 1 := fun z hz => by
     rw [l1, ← hz.2]; exact sum_congr rfl fun i _ => abs_of_nonneg (hz.1 i)
-  have hx' : ∑ i, |x i| = 1 := h x hx
-  have hy' : ∑ i, |y i| = 1 := h y hy
-  calc l1 (x - y) ≤ ∑ i, (|x i| + |y i|) := sum_le_sum fun i _ => by
-        simpa using abs_sub_le (x i) 0 (y i)
-    _ = 2 := by rw [sum_add_distrib, hx', hy']; norm_num
+  calc l1 (x - y) ≤ l1 x + l1 y := by
+        rw [l1, l1, l1, ← sum_add_distrib]; exact sum_le_sum fun i _ => abs_sub _ _
+    _ = 2 := by rw [h x hx, h y hy]; norm_num
 
 /-! ## Matrices stochastiques -/
 
@@ -202,8 +205,7 @@ theorem valeur_propre_google {K : Type*} [Field K] {P : Matrix ι ι K}
     have h := sum_vecMul hP w
     rw [hw] at h
     simp only [Pi.smul_apply, smul_eq_mul, ← mul_sum] at h
-    have : (μ - 1) * ∑ i, w i = 0 := by rw [sub_mul, h, one_mul, sub_self]
-    exact (mul_eq_zero.1 this).resolve_left (sub_ne_zero.2 hμ)
+    exact (mul_left_eq_self₀.1 h).resolve_left hμ
   rw [vecMul_google, hw, hs, mul_zero, zero_smul, add_zero, smul_smul]
 
 end Google
@@ -288,10 +290,8 @@ theorem existe_unique_pagerank (hP : EstStochastique P) (hv : EstDistribution v)
     ((continuous_apply i).tendsto π).comp hπ
   have hdist : EstDistribution π := by
     refine ⟨fun i => ge_of_tendsto (hcoord i) (Eventually.of_forall fun k => (hu k).1 i), ?_⟩
-    have h := tendsto_finsetSum univ fun i _ => hcoord i
-    have h1 : (fun k => ∑ i, u k i) = fun _ => 1 := funext fun k => (hu k).2
-    rw [h1] at h
-    exact tendsto_nhds_unique h tendsto_const_nhds
+    exact tendsto_nhds_unique ((tendsto_finsetSum univ fun i _ => hcoord i).congr
+      fun k => (hu k).2) tendsto_const_nhds
   have hfix : π ᵥ* google c P v = π := by
     have hcont : Continuous f := continuous_id.matrix_vecMul continuous_const
     have h1 : Tendsto (fun k => f (u k)) atTop (𝓝 (f π)) := (hcont.tendsto π).comp hπ
@@ -309,10 +309,7 @@ theorem existe_unique_pagerank (hP : EstStochastique P) (hv : EstDistribution v)
 /-- **Prop. 4.4** : le vecteur PageRank résout le système linéaire `(I - c P₁ᵀ) π = (1 - c) v`. -/
 theorem pagerank_systeme {π : ι → ℝ} (h : EstPageRank (google c P v) π) :
     π - c • (π ᵥ* P) = (1 - c) • v := by
-  have := h.2
-  rw [vecMul_google_of_distribution h.1] at this
-  rw [sub_eq_iff_eq_add']
-  exact this.symm
+  rw [sub_eq_iff_eq_add', ← vecMul_google_of_distribution h.1, h.2]
 
 /-- **Exercice 4** : `πⱼ ≥ (1 - c) vⱼ`. -/
 theorem pagerank_ge (hP : EstStochastique P) (hc0 : 0 ≤ c) {π : ι → ℝ}
@@ -320,8 +317,7 @@ theorem pagerank_ge (hP : EstStochastique P) (hc0 : 0 ≤ c) {π : ι → ℝ}
   have e := congr_fun h.2 j
   rw [vecMul_google_of_distribution h.1] at e
   simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul] at e
-  have : 0 ≤ (π ᵥ* P) j := ((distribution_vecMul hP h.1).1 j)
-  nlinarith
+  nlinarith [(distribution_vecMul hP h.1).1 j]
 
 /-- **Th. 5.3** : `‖π⁽ᵏ⁾ - π‖₁ ≤ cᵏ ‖π⁽⁰⁾ - π‖₁`. -/
 theorem l1_iterate_sub_le (hP : EstStochastique P) (hv : EstDistribution v) (hc0 : 0 ≤ c)
@@ -359,8 +355,7 @@ theorem abs_valeur_propre_le (hP : EstStochastique P) (hv : EstDistribution v) (
     have h := sum_vecMul (stochastique_google hP hv hc0 hc1).2 w
     rw [hw] at h
     simp only [Pi.smul_apply, smul_eq_mul, ← mul_sum] at h
-    have : (l - 1) * ∑ i, w i = 0 := by rw [sub_mul, h, one_mul, sub_self]
-    exact (mul_eq_zero.1 this).resolve_left (sub_ne_zero.2 hl)
+    exact (mul_left_eq_self₀.1 h).resolve_left hl
   have e : l • w = c • (w ᵥ* P) := by
     rw [← hw, vecMul_google, hs, mul_zero, zero_smul, add_zero]
   have h := congr_arg l1 e

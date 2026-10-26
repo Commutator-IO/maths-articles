@@ -58,9 +58,7 @@ theorem F_even (n m : ℤ) (h : n = 2 * m) : F R n = S R (m - 1) := by
 
 theorem F_odd (n m : ℤ) (h : n = 2 * m + 1) : F R n = S R m + S R (m - 1) := by
   subst h
-  have h2 : (2 * m + 1) / 2 = m := by omega
-  have hne : ¬ Even (2 * m + 1) := Int.not_even_iff_odd.mpr (odd_two_mul_add_one m)
-  simp [F, h2, hne]
+  simp [F, show (2 * m + 1) / 2 = m by omega]
 
 theorem F_zero : F R 0 = 0 := by
   rw [F_even R 0 0 (by ring)]; simp
@@ -178,8 +176,7 @@ theorem F_odd_eval_two {k : Type*} [CommRing k] (m : ℕ) :
   | zero => simp [F_one]
   | one =>
     rw [show 2 * ((1 : ℕ) : ℤ) + 1 = 3 by norm_num, F_three]
-    simp only [eval_add, eval_X, eval_one]
-    push_cast; ring
+    norm_num
   | more m ih0 ih1 =>
     have hrec := F_add_four k (2 * (m : ℤ) + 1)
     rw [show 2 * (m : ℤ) + 1 + 4 = 2 * ((m + 2 : ℕ) : ℤ) + 1 by push_cast; ring,
@@ -249,14 +246,7 @@ theorem u_V (α : k) (n : ℤ) (p : k × k) : u α (V α n p) = V α (n + 1) p :
 theorem u_zpow_apply (α : k) (n : ℤ) (p : k × k) : (u α ^ n) p = V α n p := by
   induction n using Int.induction_on with
   | zero =>
-    have h0 : xs α 0 = 0 := by simp [xs, F_zero]
-    have h1 : xs α 1 = 1 := by
-      simp [xs, F_one, show (1 : ℤ) + 1 = 2 by norm_num, F_two]
-    have hm1 : xs α (-1) = 0 := by simp [xs, F_zero]
-    have hm2 : xs α (-2) = 1 := by
-      simp [xs, F_neg, show (-2 : ℤ) + 1 = -1 by norm_num, F_one, F_two]
-    simp only [zpow_zero, Equiv.Perm.coe_one, id, V, zero_add, zero_sub, h0, h1, hm1, hm2]
-    ext <;> simp
+    ext <;> simp [V, xs, F_neg, F_zero, F_one, F_two]
   | succ n ih => rw [zpow_succ_apply, ih, u_V]
   | pred n ih =>
     have h := u_V α (-(n : ℤ) - 1) p
@@ -353,10 +343,7 @@ theorem parabole_zpow (p : ℕ) [hp : Fact p.Prime] [CharP k p] (hp2 : p ≠ 2) 
   rw [zpow_eq_one_iff]
   obtain ⟨m, hm⟩ := hp.out.odd_of_ne_two hp2
   rw [show (p : ℤ) = 2 * ((m : ℕ) : ℤ) + 1 by rw [hm]; push_cast; ring, F_odd_eval_two]
-  have h := CharP.cast_eq_zero k p
-  rw [hm] at h
-  push_cast at h
-  exact h
+  exact_mod_cast hm ▸ CharP.cast_eq_zero k p
 
 end Map
 
